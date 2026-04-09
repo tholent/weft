@@ -1,14 +1,14 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import TopicStatus
 
 
 class TopicCreate(BaseModel):
-    default_title: str
-    creator_email: str | None = None
+    default_title: str = Field(min_length=1, max_length=200)
+    creator_email: EmailStr | None = None
 
 
 class TopicResponse(BaseModel):
@@ -22,5 +22,4 @@ class TopicResponse(BaseModel):
 
 class TopicCreateResponse(BaseModel):
     topic: TopicResponse
-    token: str
     magic_link: str

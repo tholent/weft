@@ -25,7 +25,6 @@ async def auto_archive_task() -> None:
         result = await session.execute(
             select(Topic).where(
                 Topic.status == TopicStatus.active,
-                Topic.created_at < cutoff,
             )
         )
         topics = result.scalars().all()
@@ -35,7 +34,7 @@ async def auto_archive_task() -> None:
             result = await session.execute(
                 select(Token).join(Member, Token.member_id == Member.id).where(
                     Member.topic_id == topic.id,
-                    Token.last_used_at is not None,
+                    Token.last_used_at.is_not(None),  # type: ignore[union-attr]
                     Token.last_used_at > cutoff,
                 )
             )
@@ -78,7 +77,7 @@ async def transfer_deadline_task() -> None:
             result = await session.execute(
                 select(Token).where(
                     Token.member_id == creator.id,
-                    Token.last_used_at is not None,
+                    Token.last_used_at.is_not(None),  # type: ignore[union-attr]
                     Token.last_used_at > transfer.created_at,
                 )
             )

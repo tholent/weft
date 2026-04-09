@@ -1,17 +1,27 @@
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./weft.db"
-    secret_key: str = "change-me"
+    secret_key: str = ""
     resend_api_key: str = ""
     base_url: str = "http://localhost:5173"
     creator_transfer_deadline_hours: int = 24
     auto_archive_days: int = 30
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+    @model_validator(mode="after")
+    def validate_secret_key(self) -> "Settings":
+        if not self.secret_key or self.secret_key == "change-me":
+            raise ValueError(
+                "SECRET_KEY must be set to a non-empty, non-default value. "
+                "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+            )
+        return self
 
 
 @lru_cache

@@ -1,4 +1,5 @@
 import hashlib
+import uuid
 from datetime import UTC, datetime
 
 from fastapi import Depends, HTTPException, Request
@@ -63,6 +64,51 @@ async def get_current_member(
     return member
 
 
+def _verify_topic_access(member: Member, topic_id: uuid.UUID) -> None:
+    """Verify the member belongs to the requested topic."""
+    if member.topic_id != topic_id:
+        raise HTTPException(status_code=403, detail="Access denied: wrong topic")
+
+
+async def require_topic_member(
+    topic_id: uuid.UUID,
+    member: Member = Depends(get_current_member),
+) -> Member:
+    _verify_topic_access(member, topic_id)
+    return member
+
+
+async def require_topic_moderator(
+    topic_id: uuid.UUID,
+    member: Member = Depends(get_current_member),
+) -> Member:
+    _verify_topic_access(member, topic_id)
+    if member.role not in (MemberRole.creator, MemberRole.admin, MemberRole.moderator):
+        raise HTTPException(status_code=403, detail="Moderator or above required")
+    return member
+
+
+async def require_topic_admin(
+    topic_id: uuid.UUID,
+    member: Member = Depends(get_current_member),
+) -> Member:
+    _verify_topic_access(member, topic_id)
+    if member.role not in (MemberRole.creator, MemberRole.admin):
+        raise HTTPException(status_code=403, detail="Admin or above required")
+    return member
+
+
+async def require_topic_creator(
+    topic_id: uuid.UUID,
+    member: Member = Depends(get_current_member),
+) -> Member:
+    _verify_topic_access(member, topic_id)
+    if member.role != MemberRole.creator:
+        raise HTTPException(status_code=403, detail="Creator required")
+    return member
+
+
+# Keep bare versions for non-topic-scoped endpoints (e.g., /auth/revoke)
 async def require_moderator(
     member: Member = Depends(get_current_member),
 ) -> Member:

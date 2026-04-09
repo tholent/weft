@@ -7,7 +7,7 @@ from sqlmodel import select
 from app.models.enums import MemberRole, TopicStatus
 from app.models.member import Member
 from app.models.topic import Topic
-from app.services.auth import create_magic_link, generate_token
+from app.services.auth import create_magic_link
 from app.services.purge import purge_emails
 
 
@@ -15,8 +15,8 @@ async def create_topic(
     session: AsyncSession,
     default_title: str,
     creator_email: str | None = None,
-) -> tuple[Topic, Member, str, str]:
-    """Create a topic with a creator member. Returns (topic, member, raw_token, magic_link)."""
+) -> tuple[Topic, Member, str]:
+    """Create a topic with a creator member. Returns (topic, member, magic_link)."""
     topic = Topic(default_title=default_title)
     session.add(topic)
     await session.flush()
@@ -29,10 +29,9 @@ async def create_topic(
     session.add(member)
     await session.flush()
 
-    raw_token = await generate_token(session, member.id)
-    magic_link = create_magic_link(str(member.id), raw_token)
+    magic_link = create_magic_link(str(member.id))
 
-    return topic, member, raw_token, magic_link
+    return topic, member, magic_link
 
 
 async def close_topic(session: AsyncSession, topic_id: uuid.UUID) -> Topic:

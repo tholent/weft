@@ -30,3 +30,4 @@ htmlcov/
 
 # State
 .state/
+.analysis/

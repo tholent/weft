@@ -13,7 +13,7 @@ async def test_create_topic_returns_magic_link(client):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["token"]
+    assert "token" not in data  # raw token should not be in response
     assert data["magic_link"]
     assert data["topic"]["default_title"] == "Family Update"
     assert data["topic"]["status"] == "active"

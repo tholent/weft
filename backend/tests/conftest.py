@@ -1,5 +1,8 @@
 import os
 
+# Set SECRET_KEY before any app imports to satisfy config validation
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing")
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

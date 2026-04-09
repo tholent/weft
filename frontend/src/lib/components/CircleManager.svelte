@@ -1,0 +1,76 @@
+<script lang="ts">
+	import { circles } from '$lib/stores/topic';
+	import { session } from '$lib/stores/session';
+	import { createCircle, renameCircle, deleteCircle, listCircles } from '$lib/api/circles';
+
+	let newName = '';
+	let newScopedTitle = '';
+	let editingId: string | null = null;
+	let editName = '';
+	let editScopedTitle = '';
+
+	async function handleCreate() {
+		if (!newName.trim() || !$session.topicId) return;
+		await createCircle($session.topicId, newName, newScopedTitle || undefined);
+		circles.set(await listCircles($session.topicId));
+		newName = '';
+		newScopedTitle = '';
+	}
+
+	function startEdit(circle: { id: string; name: string; scoped_title: string | null }) {
+		editingId = circle.id;
+		editName = circle.name;
+		editScopedTitle = circle.scoped_title || '';
+	}
+
+	async function handleRename() {
+		if (!editingId || !$session.topicId) return;
+		await renameCircle($session.topicId, editingId, editName, editScopedTitle || undefined);
+		circles.set(await listCircles($session.topicId));
+		editingId = null;
+	}
+
+	async function handleDelete(circleId: string) {
+		if (!$session.topicId || !confirm('Delete this circle?')) return;
+		try {
+			await deleteCircle($session.topicId, circleId);
+			circles.set(await listCircles($session.topicId));
+		} catch (e) {
+			alert(e instanceof Error ? e.message : 'Cannot delete circle');
+		}
+	}
+</script>
+
+<section>
+	<h2>Circles</h2>
+	{#each $circles as circle (circle.id)}
+		<div class="circle-row">
+			{#if editingId === circle.id}
+				<input bind:value={editName} placeholder="Name" />
+				<input bind:value={editScopedTitle} placeholder="Scoped title (optional)" />
+				<button on:click={handleRename}>Save</button>
+				<button on:click={() => (editingId = null)}>Cancel</button>
+			{:else}
+				<strong>{circle.name}</strong>
+				{#if circle.scoped_title}<span class="scoped">({circle.scoped_title})</span>{/if}
+				<button on:click={() => startEdit(circle)}>Edit</button>
+				<button class="danger" on:click={() => handleDelete(circle.id)}>Delete</button>
+			{/if}
+		</div>
+	{/each}
+
+	<form class="create-form" on:submit|preventDefault={handleCreate}>
+		<input bind:value={newName} placeholder="New circle name" />
+		<input bind:value={newScopedTitle} placeholder="Scoped title (optional)" />
+		<button type="submit">Add Circle</button>
+	</form>
+</section>
+
+<style>
+	.circle-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+	.scoped { color: #666; font-size: 0.9rem; }
+	.create-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+	input { padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
+	button { padding: 0.3rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: white; }
+	.danger { color: #c00; border-color: #c00; }
+</style>

@@ -1,3 +1,17 @@
+# Copyright 2026 Chris Wells <chris@tholent.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import uuid
 
 from fastapi import APIRouter, Depends, Request
@@ -7,6 +21,7 @@ from app.db.session import get_session
 from app.deps import require_topic_creator, require_topic_member
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
+from app.config import get_settings
 from app.rate_limit import limiter
 from app.schemas.topic import TopicCreate, TopicCreateResponse, TopicResponse
 from app.services.email import send_invite_email
@@ -15,8 +30,12 @@ from app.services.topic import close_topic, create_topic, get_topic
 router = APIRouter(prefix="/topics", tags=["topics"])
 
 
+def _topic_creation_rate_limit() -> str:
+    return get_settings().topic_creation_rate_limit
+
+
 @router.post("", response_model=TopicCreateResponse)
-@limiter.limit("10/hour")
+@limiter.limit(_topic_creation_rate_limit)
 async def create_topic_endpoint(
     request: Request,
     payload: TopicCreate,

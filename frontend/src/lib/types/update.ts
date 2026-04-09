@@ -18,8 +18,10 @@ export interface Update {
 	author_member_id: string;
 	author_handle: string | null;
 	circle_ids: string[];
+	body_variants: Record<string, string>;
 	created_at: string;
 	edited_at: string | null;
 	deleted_at: string | null;
 	reply_count: number;
+	pending_reply_count: number;
 }

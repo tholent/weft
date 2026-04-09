@@ -53,7 +53,7 @@ async def create_reply_endpoint(
 ):
     """Create a reply to an update. Any authenticated member."""
     reply = await create_reply(
-        session, update_id, member.id, payload.body, payload.wants_to_share
+        session, update_id, member.id, payload.body, payload.wants_to_share, member.role
     )
     return ReplyResponse(
         id=reply.id,

@@ -24,9 +24,9 @@
 
 	$: preview = update.deleted_at ? '[removed]' : update.body;
 
-	$: circleNames = update.circle_ids
-		.map((id) => circles.find((c) => c.id === id)?.name)
-		.filter((name): name is string => name !== undefined);
+	$: circleEntries = update.circle_ids
+		.map((id) => ({ name: circles.find((c) => c.id === id)?.name, hasVariant: id in update.body_variants }))
+		.filter((e): e is { name: string; hasVariant: boolean } => e.name !== undefined);
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
@@ -39,11 +39,16 @@
 			{#if update.edited_at}<span class="edited">(edited)</span>{/if}
 		</div>
 		<div class="right">
-			{#each circleNames as name}
-				<span class="pill">{name}</span>
+			{#each circleEntries as entry}
+				<span class="pill" class:pill-variant={entry.hasVariant}>
+					{entry.name}{#if entry.hasVariant}<span class="pill-alt">ALT</span>{/if}
+				</span>
 			{/each}
+			{#if update.pending_reply_count > 0}
+				<span class="pending-badge" title="Awaiting moderation">{update.pending_reply_count} pending</span>
+			{/if}
 			{#if update.reply_count > 0}
-				<span class="reply-count">{update.reply_count} {update.reply_count === 1 ? 'reply' : 'replies'}</span>
+				<span class="reply-badge">{update.reply_count} {update.reply_count === 1 ? 'reply' : 'replies'}</span>
 			{/if}
 		</div>
 	</div>
@@ -51,14 +56,19 @@
 
 <style>
 	.update-row {
-		border: 1px solid var(--color-border); border-radius: 8px;
-		padding: 0.75rem 1rem; margin: 0.5rem 0;
-		cursor: pointer; transition: background 0.1s, box-shadow 0.1s;
+		border: 1px solid var(--color-border); border-left: 3px solid var(--color-border);
+		border-radius: 8px; padding: 0.75rem 1rem; margin: 0.5rem 0;
+		cursor: pointer; transition: background 0.15s, box-shadow 0.15s, border-left-color 0.15s;
 	}
-	.update-row:hover { background: var(--color-surface-hover); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+	.update-row:hover {
+		background: var(--color-surface-hover);
+		box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+		border-left-color: var(--color-accent);
+	}
 	.update-row.deleted { opacity: 0.5; }
 	.preview {
-		margin: 0 0 0.5rem; line-height: 1.5;
+		margin: 0 0 0.5rem; line-height: 1.6;
+		font-family: var(--font-display); font-size: var(--text-base);
 		display: -webkit-box;
 		-webkit-line-clamp: 3;
 		-webkit-box-orient: vertical;
@@ -68,6 +78,29 @@
 	.meta { font-size: var(--text-sm); color: var(--color-text-secondary); display: flex; gap: 0.5rem; flex-wrap: wrap; }
 	.edited { font-style: italic; }
 	.right { display: flex; gap: 0.25rem; align-items: center; flex-wrap: wrap; }
-	.pill { font-size: var(--text-xs); background: var(--color-accent-light); border-radius: 999px; padding: 0.1rem 0.6rem; color: var(--color-accent); border: 1px solid #f0d0b0; }
-	.reply-count { font-size: var(--text-xs); color: var(--color-text-muted); }
+	.pill {
+		font-size: var(--text-xs); background: var(--color-accent-light);
+		border-radius: 4px; padding: 0.1rem 0.6rem;
+		color: var(--color-accent); border: 1px solid #f0d0b0;
+		display: inline-flex; align-items: stretch; gap: 0;
+	}
+	.pill-variant { padding-right: 0; overflow: hidden; }
+	.pill-alt {
+		display: inline-flex; align-items: center; align-self: stretch;
+		background: var(--color-accent); color: white;
+		font-size: 0.55rem; font-weight: 700; letter-spacing: 0.06em;
+		padding: 0 0.35rem; margin-left: 0.4rem;
+		margin-top: -0.1rem; margin-bottom: -0.1rem;
+		border-radius: 0 3px 3px 0;
+	}
+	.pending-badge {
+		font-size: var(--text-xs); color: #92400e;
+		background: #fef3c7; border: 1px solid #fcd34d;
+		border-radius: 4px; padding: 0.1rem 0.5rem; font-weight: 500;
+	}
+	.reply-badge {
+		font-size: var(--text-xs); color: var(--color-text-secondary);
+		background: var(--color-surface-hover); border: 1px solid var(--color-border);
+		border-radius: 4px; padding: 0.1rem 0.5rem;
+	}
 </style>

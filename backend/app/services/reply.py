@@ -28,12 +28,16 @@ async def create_reply(
     author_member_id: uuid.UUID,
     body: str,
     wants_to_share: bool = False,
+    author_role: MemberRole = MemberRole.recipient,
 ) -> Reply:
+    # Replies from moderators and above bypass the moderation queue
+    auto_relay = author_role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator)
     reply = Reply(
         update_id=update_id,
         author_member_id=author_member_id,
         body=body,
         wants_to_share=wants_to_share,
+        relay_status=RelayStatus.relayed if auto_relay else RelayStatus.pending,
     )
     session.add(reply)
     await session.flush()
@@ -115,7 +119,7 @@ async def get_replies_for_update(
 
     Moderators+ see all replies. Recipients see their own + relayed to their circles.
     """
-    if viewer_member.role in (MemberRole.creator, MemberRole.admin, MemberRole.moderator):
+    if viewer_member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         result = await session.execute(
             select(Reply)
             .where(Reply.update_id == update_id)
@@ -179,7 +183,7 @@ async def get_mod_responses_for_reply(
     )
     all_responses = list(result.scalars().all())
 
-    if viewer_member.role in (MemberRole.creator, MemberRole.admin, MemberRole.moderator):
+    if viewer_member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         return all_responses
 
     # Get the reply to check if viewer is the author

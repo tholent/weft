@@ -20,17 +20,27 @@ export async function getFeed(topicId: string): Promise<Update[]> {
 	return data.items;
 }
 
-export function createUpdate(topicId: string, body: string, circle_ids: string[]): Promise<Update> {
+export function createUpdate(
+	topicId: string,
+	body: string,
+	circle_ids: string[],
+	circle_bodies: Record<string, string> = {}
+): Promise<Update> {
 	return request(`/topics/${topicId}/updates`, {
 		method: 'POST',
-		body: JSON.stringify({ body, circle_ids })
+		body: JSON.stringify({ body, circle_ids, circle_bodies })
 	});
 }
 
-export function editUpdate(topicId: string, updateId: string, body: string): Promise<Update> {
+export function editUpdate(
+	topicId: string,
+	updateId: string,
+	body: string,
+	circle_bodies: Record<string, string> = {}
+): Promise<Update> {
 	return request(`/topics/${topicId}/updates/${updateId}`, {
 		method: 'PATCH',
-		body: JSON.stringify({ body })
+		body: JSON.stringify({ body, circle_bodies })
 	});
 }
 

@@ -15,8 +15,9 @@
 import type { Reply, ModResponse, ModResponseScope } from '$lib/types/reply';
 import { request } from './client';
 
-export function getReplies(topicId: string, updateId: string): Promise<Reply[]> {
-	return request(`/topics/${topicId}/updates/${updateId}/replies`);
+export async function getReplies(topicId: string, updateId: string): Promise<Reply[]> {
+	const data = await request<{ items: Reply[] }>(`/topics/${topicId}/updates/${updateId}/replies`);
+	return data.items;
 }
 
 export function createReply(topicId: string, updateId: string, body: string, wants_to_share = false): Promise<Reply> {

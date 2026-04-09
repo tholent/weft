@@ -226,12 +226,73 @@ async def test_something(client, topic_with_creator):
 
 Vitest for unit tests, Playwright for E2E. Component tests are minimal; focus on integration and E2E flows.
 
+## License
+
+This project is licensed under the Apache License, Version 2.0. All source code files must include the following license header. Add it to every new `.py`, `.ts`, `.js`, and `.svelte` file. Do not add it to empty `__init__.py` files or auto-generated Alembic migration files.
+
+**Python files** (`.py`):
+
+```python
+# Copyright 2026 Chris Wells <chris@tholent.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+```
+
+**TypeScript/JavaScript files** (`.ts`, `.js`):
+
+```typescript
+// Copyright 2026 Chris Wells <chris@tholent.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+```
+
+**Svelte files** (`.svelte`) — place above the `<script>` tag:
+
+```html
+<!--
+  Copyright 2026 Chris Wells <chris@tholent.com>
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+```
+
 ## When Modifying Code
 
 Before making changes:
 1. Understand the architectural rules above. Many constraints cannot be relaxed.
 2. Check if the change affects schema — migrations are required for database changes.
 3. Ensure service layer raises `ValueError` for business logic, not routers.
-4. Run tests: `make test` from the workspace root.
-5. Run linting: `make lint` from the workspace root.
-6. Run type checking: `mypy` for backend, `svelte-check` for frontend.
+4. Add the license header to any new source files (see License section above).
+5. Run tests: `make test` from the workspace root.
+6. Run linting: `make lint` from the workspace root.
+7. Run type checking: `mypy` for backend, `svelte-check` for frontend.

@@ -29,13 +29,13 @@ async def request_transfer(
     topic_id: uuid.UUID,
     requesting_member_id: uuid.UUID,
 ) -> CreatorTransfer:
-    """Request a creator transfer. Only admins can request."""
+    """Request a dead-man's-switch transfer. Only admins can request."""
     result = await session.execute(
         select(Member).where(Member.id == requesting_member_id)
     )
     member = result.scalar_one_or_none()
     if member is None or member.role != MemberRole.admin:
-        raise ValueError("Only admins can request a creator transfer")
+        raise ValueError("Only admins can request an ownership transfer")
 
     # Check no pending transfer exists
     result = await session.execute(
@@ -61,7 +61,7 @@ async def request_transfer(
 
 
 async def cancel_transfer(session: AsyncSession, topic_id: uuid.UUID) -> None:
-    """Cancel pending transfer. Called from auth dependency when creator authenticates."""
+    """Cancel pending transfer. Called when owner authenticates."""
     result = await session.execute(
         select(CreatorTransfer).where(
             CreatorTransfer.topic_id == topic_id,
@@ -76,7 +76,7 @@ async def cancel_transfer(session: AsyncSession, topic_id: uuid.UUID) -> None:
 
 
 async def execute_transfer(session: AsyncSession, transfer_id: uuid.UUID) -> None:
-    """Execute a transfer: promote requesting admin to creator, demote current creator."""
+    """Execute a dead-man's-switch transfer: promote requesting admin to owner, demote current owner."""
     result = await session.execute(
         select(CreatorTransfer).where(CreatorTransfer.id == transfer_id)
     )
@@ -88,27 +88,65 @@ async def execute_transfer(session: AsyncSession, transfer_id: uuid.UUID) -> Non
     if transfer.deadline > datetime.now(UTC):
         raise ValueError("Transfer deadline has not passed")
 
-    # Get current creator
+    # Get current owner
     result = await session.execute(
         select(Member).where(
             Member.topic_id == transfer.topic_id,
-            Member.role == MemberRole.creator,
+            Member.role == MemberRole.owner,
         )
     )
-    current_creator = result.scalar_one()
+    current_owner = result.scalar_one()
 
-    # Get requesting admin
+    # Get requesting admin (becomes new owner)
     result = await session.execute(
         select(Member).where(Member.id == transfer.requested_by_member_id)
     )
-    new_creator = result.scalar_one()
+    new_owner = result.scalar_one()
 
-    # Swap roles
-    current_creator.role = MemberRole.admin
-    new_creator.role = MemberRole.creator
-    session.add(current_creator)
-    session.add(new_creator)
+    current_owner.role = MemberRole.admin
+    new_owner.role = MemberRole.owner
+    session.add(current_owner)
+    session.add(new_owner)
 
     transfer.status = TransferStatus.expired
     transfer.resolved_at = datetime.now(UTC)
     session.add(transfer)
+
+
+async def execute_direct_transfer(
+    session: AsyncSession,
+    topic_id: uuid.UUID,
+    target_member_id: uuid.UUID,
+    owner_member_id: uuid.UUID,
+) -> CreatorTransfer:
+    """Immediately transfer ownership to any member. Owner only."""
+    result = await session.execute(select(Member).where(Member.id == owner_member_id))
+    owner = result.scalar_one_or_none()
+    if owner is None or owner.role != MemberRole.owner:
+        raise ValueError("Only the owner can directly transfer ownership")
+
+    result = await session.execute(select(Member).where(Member.id == target_member_id))
+    target = result.scalar_one_or_none()
+    if target is None or target.topic_id != topic_id:
+        raise ValueError("Target member not found in this topic")
+    if target.id == owner.id:
+        raise ValueError("Cannot transfer ownership to yourself")
+
+    now = datetime.now(UTC)
+    transfer = CreatorTransfer(
+        topic_id=topic_id,
+        requested_by_member_id=target_member_id,
+        deadline=now,
+        status=TransferStatus.confirmed,
+        direct=True,
+        resolved_at=now,
+    )
+    session.add(transfer)
+    await session.flush()
+
+    owner.role = MemberRole.admin
+    target.role = MemberRole.owner
+    session.add(owner)
+    session.add(target)
+
+    return transfer

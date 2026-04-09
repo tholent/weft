@@ -22,7 +22,7 @@ class TopicStatus(enum.StrEnum):
 
 
 class MemberRole(enum.StrEnum):
-    creator = "creator"
+    owner = "owner"
     admin = "admin"
     moderator = "moderator"
     recipient = "recipient"

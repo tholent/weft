@@ -19,12 +19,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_creator
+from app.deps import require_topic_admin, require_topic_owner
 from app.models.enums import TransferStatus
 from app.models.member import Member
 from app.models.transfer import CreatorTransfer
-from app.schemas.transfer import TransferResponse
-from app.services.transfer import cancel_transfer, request_transfer
+from app.schemas.transfer import DirectTransferRequest, TransferResponse
+from app.services.transfer import cancel_transfer, execute_direct_transfer, request_transfer
 
 router = APIRouter(prefix="/topics/{topic_id}/transfer", tags=["transfer"])
 
@@ -35,7 +35,7 @@ async def request_transfer_endpoint(
     member: Member = Depends(require_topic_admin),
     session: AsyncSession = Depends(get_session),
 ):
-    """Request a creator transfer. Admin only."""
+    """Request a dead-man's-switch transfer. Admin only."""
     try:
         transfer = await request_transfer(session, topic_id, member.id)
     except ValueError as e:
@@ -54,7 +54,7 @@ async def get_transfer_status_endpoint(
     member: Member = Depends(require_topic_admin),
     session: AsyncSession = Depends(get_session),
 ):
-    """Get current transfer status. Admin+ only."""
+    """Get current pending transfer status. Admin+ only."""
     result = await session.execute(
         select(CreatorTransfer).where(
             CreatorTransfer.topic_id == topic_id,
@@ -75,9 +75,31 @@ async def get_transfer_status_endpoint(
 @router.post("/cancel")
 async def cancel_transfer_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_creator),
+    member: Member = Depends(require_topic_owner),
     session: AsyncSession = Depends(get_session),
 ):
-    """Cancel a pending transfer. Creator only."""
+    """Cancel a pending transfer. Owner only."""
     await cancel_transfer(session, topic_id)
     return {"detail": "Transfer cancelled"}
+
+
+@router.post("/direct", response_model=TransferResponse)
+async def direct_transfer_endpoint(
+    topic_id: uuid.UUID,
+    payload: DirectTransferRequest,
+    member: Member = Depends(require_topic_owner),
+    session: AsyncSession = Depends(get_session),
+):
+    """Immediately pass ownership to any member. Owner only."""
+    try:
+        transfer = await execute_direct_transfer(
+            session, topic_id, payload.target_member_id, member.id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return TransferResponse(
+        id=transfer.id,
+        status=transfer.status,
+        deadline=transfer.deadline,
+        created_at=transfer.created_at,
+    )

@@ -37,7 +37,7 @@ async def create_topic(
 
     member = Member(
         topic_id=topic.id,
-        role=MemberRole.creator,
+        role=MemberRole.owner,
         email=creator_email,
     )
     session.add(member)

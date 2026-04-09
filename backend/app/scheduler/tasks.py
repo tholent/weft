@@ -81,7 +81,7 @@ async def transfer_deadline_task() -> None:
             result = await session.execute(
                 select(Member).where(
                     Member.topic_id == transfer.topic_id,
-                    Member.role == MemberRole.creator,
+                    Member.role == MemberRole.owner,
                 )
             )
             creator = result.scalar_one_or_none()

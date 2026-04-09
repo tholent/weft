@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
-from app.deps import require_topic_creator, require_topic_member
+from app.deps import require_topic_owner, require_topic_member
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
 from app.config import get_settings
@@ -104,7 +104,7 @@ async def get_topic_endpoint(
 @router.post("/{topic_id}/close", response_model=TopicResponse)
 async def close_topic_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_creator),
+    member: Member = Depends(require_topic_owner),
     session: AsyncSession = Depends(get_session),
 ):
     """Close a topic. Creator only. Purges all emails."""

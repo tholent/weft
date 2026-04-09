@@ -30,17 +30,18 @@ async def invite_member(
     email: str,
     circle_id: uuid.UUID,
     role: MemberRole = MemberRole.recipient,
+    display_handle: str | None = None,
 ) -> tuple[Member, str]:
     """Invite a member to a topic. Returns (member, raw_token)."""
-    if role in (MemberRole.creator, MemberRole.admin):
-        raise ValueError("Cannot invite members as admin or creator")
+    if role == MemberRole.owner:
+        raise ValueError("Cannot invite members as creator")
     # Validate circle belongs to topic
     result = await session.execute(select(Circle).where(Circle.id == circle_id))
     circle = result.scalar_one_or_none()
     if circle is None or circle.topic_id != topic_id:
         raise ValueError("Circle does not belong to this topic")
 
-    member = Member(topic_id=topic_id, role=role, email=email)
+    member = Member(topic_id=topic_id, role=role, email=email, display_handle=display_handle or None)
     session.add(member)
     await session.flush()
 
@@ -91,14 +92,14 @@ async def promote_member(
     promoting_member: Member,
 ) -> Member:
     """Promote a member. Only creator can promote to admin. Cannot promote to creator."""
-    if new_role == MemberRole.creator:
+    if new_role == MemberRole.owner:
         raise ValueError("Cannot promote to creator — use the transfer mechanism")
 
-    if new_role == MemberRole.admin and promoting_member.role != MemberRole.creator:
+    if new_role == MemberRole.admin and promoting_member.role != MemberRole.owner:
         raise ValueError("Only the creator can promote to admin")
 
     if new_role == MemberRole.moderator and promoting_member.role not in (
-        MemberRole.creator,
+        MemberRole.owner,
         MemberRole.admin,
     ):
         raise ValueError("Only admin or creator can promote to moderator")

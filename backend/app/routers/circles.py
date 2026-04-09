@@ -50,7 +50,7 @@ async def list_circles_endpoint(
     session: AsyncSession = Depends(get_session),
 ):
     """List circles. Admin+ sees all; recipients see only their own circle."""
-    if member.role in (MemberRole.creator, MemberRole.admin, MemberRole.moderator):
+    if member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         circles = await list_circles(session, topic_id)
     else:
         # Recipient: only their active circle

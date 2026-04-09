@@ -61,8 +61,8 @@ async def get_current_member(
     token_row.last_used_at = datetime.now(UTC)
     session.add(token_row)
 
-    # If creator authenticates, cancel any pending transfer
-    if member.role == MemberRole.creator:
+    # If owner authenticates, cancel any pending dead-man's-switch transfer
+    if member.role == MemberRole.owner:
         result = await session.execute(
             select(CreatorTransfer).where(
                 CreatorTransfer.topic_id == member.topic_id,
@@ -97,7 +97,7 @@ async def require_topic_moderator(
     member: Member = Depends(get_current_member),
 ) -> Member:
     _verify_topic_access(member, topic_id)
-    if member.role not in (MemberRole.creator, MemberRole.admin, MemberRole.moderator):
+    if member.role not in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         raise HTTPException(status_code=403, detail="Moderator or above required")
     return member
 
@@ -107,18 +107,18 @@ async def require_topic_admin(
     member: Member = Depends(get_current_member),
 ) -> Member:
     _verify_topic_access(member, topic_id)
-    if member.role not in (MemberRole.creator, MemberRole.admin):
+    if member.role not in (MemberRole.owner, MemberRole.admin):
         raise HTTPException(status_code=403, detail="Admin or above required")
     return member
 
 
-async def require_topic_creator(
+async def require_topic_owner(
     topic_id: uuid.UUID,
     member: Member = Depends(get_current_member),
 ) -> Member:
     _verify_topic_access(member, topic_id)
-    if member.role != MemberRole.creator:
-        raise HTTPException(status_code=403, detail="Creator required")
+    if member.role != MemberRole.owner:
+        raise HTTPException(status_code=403, detail="Owner required")
     return member
 
 
@@ -126,7 +126,7 @@ async def require_topic_creator(
 async def require_moderator(
     member: Member = Depends(get_current_member),
 ) -> Member:
-    if member.role not in (MemberRole.creator, MemberRole.admin, MemberRole.moderator):
+    if member.role not in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         raise HTTPException(status_code=403, detail="Moderator or above required")
     return member
 
@@ -134,14 +134,14 @@ async def require_moderator(
 async def require_admin(
     member: Member = Depends(get_current_member),
 ) -> Member:
-    if member.role not in (MemberRole.creator, MemberRole.admin):
+    if member.role not in (MemberRole.owner, MemberRole.admin):
         raise HTTPException(status_code=403, detail="Admin or above required")
     return member
 
 
-async def require_creator(
+async def require_owner(
     member: Member = Depends(get_current_member),
 ) -> Member:
-    if member.role != MemberRole.creator:
-        raise HTTPException(status_code=403, detail="Creator required")
+    if member.role != MemberRole.owner:
+        raise HTTPException(status_code=403, detail="Owner required")
     return member

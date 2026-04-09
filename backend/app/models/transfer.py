@@ -28,5 +28,6 @@ class CreatorTransfer(SQLModel, table=True):
     requested_by_member_id: uuid.UUID = Field(foreign_key="member.id")
     deadline: datetime
     status: TransferStatus = Field(default=TransferStatus.pending)
+    direct: bool = Field(default=False)
     resolved_at: datetime | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

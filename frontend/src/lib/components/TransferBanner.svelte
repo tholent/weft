@@ -16,7 +16,7 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { session, isCreator, isAdmin } from '$lib/stores/session';
+	import { session, isOwner, isAdmin } from '$lib/stores/session';
 	import { requestTransfer, getTransferStatus, cancelTransfer } from '$lib/api/transfer';
 	import type { CreatorTransfer } from '$lib/types/transfer';
 
@@ -64,11 +64,11 @@
 	{#if transfer}
 		<div class="pending">
 			<p>Creator transfer pending — {timeLeft} remaining</p>
-			{#if $isCreator}
+			{#if $isOwner}
 				<button on:click={handleCancel}>Cancel Transfer</button>
 			{/if}
 		</div>
-	{:else if $isAdmin && !$isCreator}
+	{:else if $isAdmin && !$isOwner}
 		<button on:click={handleRequest}>Request Creator Transfer</button>
 	{/if}
 </div>

@@ -24,6 +24,10 @@ class TransferRequest(BaseModel):
     deadline_hours: int | None = None
 
 
+class DirectTransferRequest(BaseModel):
+    target_member_id: uuid.UUID
+
+
 class TransferResponse(BaseModel):
     id: uuid.UUID
     status: TransferStatus

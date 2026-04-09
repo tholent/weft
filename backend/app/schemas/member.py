@@ -24,12 +24,14 @@ class MemberInvite(BaseModel):
     email: EmailStr
     circle_id: uuid.UUID
     role: MemberRole = MemberRole.recipient
+    display_handle: str | None = None
 
     @field_validator("role")
     @classmethod
     def validate_invite_role(cls, v: MemberRole) -> MemberRole:
-        if v not in (MemberRole.recipient, MemberRole.moderator):
-            raise ValueError("Invited members can only be assigned recipient or moderator roles")
+        if v not in (MemberRole.recipient, MemberRole.moderator, MemberRole.admin):
+            raise ValueError("Invited members can only be assigned recipient, moderator, or admin roles")
+        # owner role is assigned only via direct transfer, never via invite
         return v
 
 

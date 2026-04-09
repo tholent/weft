@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_creator, require_topic_member
+from app.deps import require_topic_admin, require_topic_owner, require_topic_member
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
 from app.schemas.member import MemberInvite, MemberMove, MemberPromote, MemberRename, MemberResponse
@@ -39,9 +39,11 @@ async def invite_member_endpoint(
     session: AsyncSession = Depends(get_session),
 ):
     """Invite a member. Admin+ only. Sends invite email with magic link."""
+    if payload.role == MemberRole.admin and member.role != MemberRole.owner:
+        raise HTTPException(status_code=403, detail="Only the owner can invite members as admin")
     try:
         new_member, raw_token = await invite_member(
-            session, topic_id, payload.email, payload.circle_id, payload.role
+            session, topic_id, payload.email, payload.circle_id, payload.role, payload.display_handle
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -74,7 +76,7 @@ async def list_members_endpoint(
     if member.role == MemberRole.recipient:
         return PaginatedResponse(items=[], total=0, limit=limit, offset=offset)
 
-    if member.role in (MemberRole.creator, MemberRole.admin):
+    if member.role in (MemberRole.owner, MemberRole.admin):
         all_members = await list_members(session, topic_id)
     else:
         # Moderator: members in their circles only
@@ -153,7 +155,7 @@ async def rename_member_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: MemberRename,
-    member: Member = Depends(require_topic_creator),
+    member: Member = Depends(require_topic_owner),
     session: AsyncSession = Depends(get_session),
 ):
     """Set a member's display handle. Creator only."""

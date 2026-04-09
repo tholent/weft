@@ -26,3 +26,10 @@ export function getTransferStatus(topicId: string): Promise<CreatorTransfer | nu
 export function cancelTransfer(topicId: string): Promise<void> {
 	return request(`/topics/${topicId}/transfer/cancel`, { method: 'POST' });
 }
+
+export function directTransfer(topicId: string, target_member_id: string): Promise<void> {
+	return request(`/topics/${topicId}/transfer/direct`, {
+		method: 'POST',
+		body: JSON.stringify({ target_member_id })
+	});
+}

@@ -15,10 +15,10 @@
 import type { Member, MemberRole } from '$lib/types/member';
 import { request } from './client';
 
-export function inviteMember(topicId: string, email: string, circle_id: string, role: MemberRole = 'recipient'): Promise<Member> {
+export function inviteMember(topicId: string, email: string, circle_id: string, role: MemberRole = 'recipient', display_handle?: string): Promise<Member> {
 	return request(`/topics/${topicId}/members`, {
 		method: 'POST',
-		body: JSON.stringify({ email, circle_id, role })
+		body: JSON.stringify({ email, circle_id, role, display_handle: display_handle || undefined })
 	});
 }
 

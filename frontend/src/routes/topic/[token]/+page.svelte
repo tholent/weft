@@ -80,6 +80,6 @@
 </main>
 
 <style>
-	main { max-width: 640px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
-	.reply-btn { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 0.25rem 0.75rem; cursor: pointer; margin: 0.5rem 0; }
+	main { max-width: var(--content-width); margin: 2rem auto; padding: 0 1rem; }
+	.reply-btn { background: none; border: 1px solid var(--color-border); border-radius: 4px; padding: 0.25rem 0.75rem; cursor: pointer; margin: 0.5rem 0; }
 </style>

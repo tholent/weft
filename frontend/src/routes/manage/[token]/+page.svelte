@@ -23,17 +23,16 @@
 	import { listCircles } from '$lib/api/circles';
 	import { listMembers } from '$lib/api/members';
 	import UpdateCard from '$lib/components/UpdateCard.svelte';
+	import UpdateModal from '$lib/components/UpdateModal.svelte';
 	import ComposeBox from '$lib/components/ComposeBox.svelte';
 	import CircleManager from '$lib/components/CircleManager.svelte';
 	import MemberRow from '$lib/components/MemberRow.svelte';
 	import TransferBanner from '$lib/components/TransferBanner.svelte';
-	import ReplyThread from '$lib/components/ReplyThread.svelte';
-	import { getReplies } from '$lib/api/replies';
-	import type { Reply } from '$lib/types/reply';
+	import type { Update } from '$lib/types/update';
 
 	let activeTab: 'updates' | 'members' | 'circles' | 'settings' = 'updates';
 	let loading = true;
-	let repliesMap: Record<string, Reply[]> = {};
+	let selectedUpdate: Update | null = null;
 
 	onMount(async () => {
 		if (!$session.topicId) return;
@@ -57,12 +56,6 @@
 		if (!$session.topicId) return;
 		await createUpdate($session.topicId, data.body as string, data.circle_ids as string[]);
 		updates.set(await getFeed($session.topicId));
-	}
-
-	async function loadReplies(updateId: string) {
-		if (!$session.topicId) return;
-		repliesMap[updateId] = await getReplies($session.topicId, updateId);
-		repliesMap = repliesMap;
 	}
 
 	async function handleClose() {
@@ -93,18 +86,7 @@
 				<ComposeBox mode="update" targetCircles={$circles} onSubmit={handleNewUpdate} />
 			{/if}
 			{#each $updates as update (update.id)}
-				<UpdateCard
-					{update}
-					canReply={true}
-					canEdit={update.author_member_id === $session.memberId}
-					canDelete={update.author_member_id === $session.memberId || $isAdmin}
-				/>
-				<button class="reply-btn" on:click={() => loadReplies(update.id)}>
-					Replies ({update.reply_count})
-				</button>
-				{#if repliesMap[update.id]}
-					<ReplyThread replies={repliesMap[update.id]} isModerator={$isModerator} />
-				{/if}
+				<UpdateCard {update} circles={$circles} onClick={() => (selectedUpdate = update)} />
 			{/each}
 		{:else if activeTab === 'members'}
 			<h2>Members</h2>
@@ -123,11 +105,27 @@
 	{/if}
 </main>
 
+{#if selectedUpdate && $session.topicId}
+	<UpdateModal
+		update={selectedUpdate}
+		circles={$circles}
+		isModerator={$isModerator}
+		topicId={$session.topicId}
+		onClose={() => (selectedUpdate = null)}
+	/>
+{/if}
+
 <style>
-	main { max-width: 720px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
-	nav { display: flex; gap: 0.5rem; margin: 1rem 0; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; }
-	nav button { background: none; border: none; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; }
-	nav button.active { background: #111; color: white; }
-	.reply-btn { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 0.25rem 0.75rem; cursor: pointer; margin: 0.5rem 0; }
-	.danger { background: #c00; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 1rem; }
+	main { max-width: var(--content-width); margin: 2rem auto; padding: 0 1rem; }
+	h1 { padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1.5rem; }
+	nav { display: flex; gap: 0.5rem; margin: 1rem 0; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; }
+	nav button {
+		background: none; border: none; border-bottom: 2px solid transparent;
+		padding: 0.5rem 1rem; cursor: pointer; border-radius: 0;
+		letter-spacing: 0.03em; text-transform: uppercase; font-size: var(--text-xs);
+		color: var(--color-text-secondary);
+		margin-bottom: -1px;
+	}
+	nav button.active { border-bottom-color: var(--color-accent); color: var(--color-accent); }
+	.danger { background: var(--color-danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 1rem; }
 </style>

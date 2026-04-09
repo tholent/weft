@@ -15,8 +15,9 @@
 import type { Update } from '$lib/types/update';
 import { request } from './client';
 
-export function getFeed(topicId: string): Promise<Update[]> {
-	return request(`/topics/${topicId}/updates`);
+export async function getFeed(topicId: string): Promise<Update[]> {
+	const data = await request<{ items: Update[] }>(`/topics/${topicId}/updates`);
+	return data.items;
 }
 
 export function createUpdate(topicId: string, body: string, circle_ids: string[]): Promise<Update> {

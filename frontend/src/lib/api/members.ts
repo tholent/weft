@@ -22,8 +22,9 @@ export function inviteMember(topicId: string, email: string, circle_id: string, 
 	});
 }
 
-export function listMembers(topicId: string): Promise<Member[]> {
-	return request(`/topics/${topicId}/members`);
+export async function listMembers(topicId: string): Promise<Member[]> {
+	const data = await request<{ items: Member[] }>(`/topics/${topicId}/members`);
+	return data.items;
 }
 
 export function moveMember(topicId: string, memberId: string, new_circle_id: string, retroactive_revoke = false): Promise<void> {
@@ -37,6 +38,13 @@ export function promoteMember(topicId: string, memberId: string, new_role: Membe
 	return request(`/topics/${topicId}/members/${memberId}/role`, {
 		method: 'PATCH',
 		body: JSON.stringify({ new_role })
+	});
+}
+
+export function renameMember(topicId: string, memberId: string, display_handle: string): Promise<void> {
+	return request(`/topics/${topicId}/members/${memberId}/handle`, {
+		method: 'PATCH',
+		body: JSON.stringify({ display_handle })
 	});
 }
 

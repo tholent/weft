@@ -1,12 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
 from app.deps import require_topic_creator, require_topic_member
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
+from app.rate_limit import limiter
 from app.schemas.topic import TopicCreate, TopicCreateResponse, TopicResponse
 from app.services.email import send_invite_email
 from app.services.topic import close_topic, create_topic, get_topic
@@ -15,7 +16,9 @@ router = APIRouter(prefix="/topics", tags=["topics"])
 
 
 @router.post("", response_model=TopicCreateResponse)
+@limiter.limit("10/hour")
 async def create_topic_endpoint(
+    request: Request,
     payload: TopicCreate,
     session: AsyncSession = Depends(get_session),
 ):

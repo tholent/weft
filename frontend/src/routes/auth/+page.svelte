@@ -57,6 +57,6 @@
 </main>
 
 <style>
-	main { max-width: 480px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
-	.error { color: #c00; }
+	main { max-width: var(--content-width); margin: 2rem auto; padding: 0 1rem; }
+	.error { color: var(--color-danger); }
 </style>

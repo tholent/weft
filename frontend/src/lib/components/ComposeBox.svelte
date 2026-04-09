@@ -73,9 +73,10 @@
 
 <style>
 	.compose { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.5rem 0; }
-	textarea { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; resize: vertical; }
+	textarea { padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; resize: vertical; }
 	.circle-select { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-	.circle-check, .share-check { display: flex; align-items: center; gap: 0.25rem; font-size: 0.9rem; }
-	select { padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
-	button { align-self: flex-start; padding: 0.4rem 1rem; background: #111; color: white; border: none; border-radius: 4px; cursor: pointer; }
+	.circle-check, .share-check { display: flex; align-items: center; gap: 0.25rem; font-size: var(--text-sm); }
+	select { padding: 0.4rem; border: 1px solid var(--color-border); border-radius: 4px; }
+	button { align-self: flex-start; padding: 0.4rem 1rem; background: var(--color-text); color: white; border: none; border-radius: 4px; cursor: pointer; transition: background 0.15s; }
+	button:hover { background: var(--color-accent); }
 </style>

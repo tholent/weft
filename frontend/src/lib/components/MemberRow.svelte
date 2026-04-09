@@ -17,7 +17,7 @@
 <script lang="ts">
 	import type { Member, MemberRole } from '$lib/types/member';
 	import type { Circle } from '$lib/types/circle';
-	import { moveMember, promoteMember, resendInvite } from '$lib/api/members';
+	import { moveMember, promoteMember, renameMember, resendInvite } from '$lib/api/members';
 	import { session } from '$lib/stores/session';
 
 	export let member: Member;
@@ -26,9 +26,19 @@
 
 	let selectedCircle = member.circle_id || '';
 	let retroactive = false;
+	let editingHandle = false;
+	let handleInput = member.display_handle || '';
 
 	$: canManage = viewerRole === 'creator' || viewerRole === 'admin';
 	$: canPromoteToAdmin = viewerRole === 'creator';
+
+	const roleBadgeStyle: Record<string, string> = {
+		creator: 'background: var(--color-accent-light); color: var(--color-accent);',
+		admin: 'background: #fef3e2; color: #9a4f08;',
+		moderator: 'background: #eff6ff; color: #1d4ed8;',
+		recipient: 'background: #f3f4f6; color: #4b5563;'
+	};
+	$: badgeStyle = roleBadgeStyle[member.role] ?? roleBadgeStyle['recipient'];
 
 	async function handleMove() {
 		if (!selectedCircle || !$session.topicId) return;
@@ -40,6 +50,13 @@
 		await promoteMember($session.topicId, member.id, role);
 	}
 
+	async function handleRename() {
+		if (!$session.topicId || !handleInput.trim()) return;
+		await renameMember($session.topicId, member.id, handleInput.trim());
+		member = { ...member, display_handle: handleInput.trim() };
+		editingHandle = false;
+	}
+
 	async function handleResend() {
 		if (!$session.topicId) return;
 		await resendInvite($session.topicId, member.id);
@@ -48,8 +65,17 @@
 
 <div class="member-row">
 	<div class="info">
-		<span class="handle">{member.display_handle || 'Anonymous'}</span>
-		<span class="role-badge">{member.role}</span>
+		{#if editingHandle}
+			<input bind:value={handleInput} on:keydown={(e) => e.key === 'Enter' && handleRename()} />
+			<button on:click={handleRename}>Save</button>
+			<button on:click={() => (editingHandle = false)}>Cancel</button>
+		{:else}
+			<span class="handle">{member.display_handle || 'Anonymous'}</span>
+			{#if viewerRole === 'creator'}
+				<button class="rename-btn" on:click={() => (editingHandle = true)}>✎</button>
+			{/if}
+		{/if}
+		<span class="role-badge" style={badgeStyle}>{member.role}</span>
 	</div>
 
 	{#if canManage && member.role !== 'creator'}
@@ -75,12 +101,13 @@
 </div>
 
 <style>
-	.member-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 0.5rem; }
+	.member-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border); flex-wrap: wrap; gap: 0.5rem; }
 	.info { display: flex; align-items: center; gap: 0.5rem; }
 	.handle { font-weight: 500; }
-	.role-badge { background: #e5e7eb; padding: 0.1rem 0.5rem; border-radius: 3px; font-size: 0.8rem; text-transform: capitalize; }
+	.role-badge { padding: 0.1rem 0.5rem; border-radius: 3px; font-size: var(--text-xs); text-transform: capitalize; }
 	.actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-	select, button { padding: 0.25rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
-	button { cursor: pointer; background: white; }
-	.retro { font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem; }
+	select, button, input { padding: 0.25rem 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--text-sm); }
+	.rename-btn { background: none; border: none; cursor: pointer; padding: 0 0.25rem; color: var(--color-text-secondary); }
+	button { cursor: pointer; background: var(--color-surface); }
+	.retro { font-size: var(--text-xs); display: flex; align-items: center; gap: 0.2rem; }
 </style>

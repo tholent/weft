@@ -83,10 +83,11 @@
 </section>
 
 <style>
-	.circle-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
-	.scoped { color: #666; font-size: 0.9rem; }
+	.circle-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border); }
+	.scoped { color: var(--color-text-secondary); font-size: var(--text-sm); }
 	.create-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
-	input { padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
-	button { padding: 0.3rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: white; }
-	.danger { color: #c00; border-color: #c00; }
+	input { padding: 0.4rem; border: 1px solid var(--color-border); border-radius: 4px; }
+	button { padding: 0.3rem 0.75rem; border: 1px solid var(--color-border); border-radius: 4px; cursor: pointer; background: var(--color-surface); }
+	button:hover { background: var(--color-surface-hover); }
+	.danger { color: var(--color-danger); border-color: var(--color-danger); }
 </style>

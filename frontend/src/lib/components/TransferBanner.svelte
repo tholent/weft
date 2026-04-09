@@ -75,7 +75,7 @@
 
 <style>
 	.transfer-banner { margin: 1rem 0; }
-	.pending { background: #fef3c7; border: 1px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+	.pending { background: var(--color-accent-light); border: 1px solid var(--color-accent); padding: 0.75rem 1rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
 	.pending p { margin: 0; }
-	button { padding: 0.4rem 0.8rem; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: white; }
+	button { padding: 0.4rem 0.8rem; border: 1px solid var(--color-border); border-radius: 4px; cursor: pointer; background: var(--color-surface); }
 </style>

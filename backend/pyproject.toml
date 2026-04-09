@@ -1,0 +1,44 @@
+[project]
+name = "weft-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlmodel",
+    "alembic",
+    "apscheduler",
+    "itsdangerous",
+    "pydantic-settings",
+    "resend",
+    "python-multipart",
+    "httpx",
+    "aiosqlite",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "anyio",
+    "ruff>=0.15.9",
+]
+
+[tool.ruff]
+line-length = 99
+target-version = "py312"
+exclude = ["app/db/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.uv]
+environments = ["python_version >= '3.12'"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

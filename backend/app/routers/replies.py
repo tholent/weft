@@ -1,0 +1,145 @@
+import uuid
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
+
+from app.db.session import get_session
+from app.deps import get_current_member, require_moderator
+from app.models.member import Member
+from app.schemas.reply import (
+    ModResponseCreate,
+    ModResponseResponse,
+    RelayAction,
+    ReplyCreate,
+    ReplyResponse,
+)
+from app.services.reply import (
+    create_mod_response,
+    create_reply,
+    dismiss_reply,
+    get_mod_responses_for_reply,
+    get_replies_for_update,
+    relay_reply,
+)
+
+router = APIRouter(
+    prefix="/topics/{topic_id}/updates/{update_id}/replies", tags=["replies"]
+)
+
+
+@router.post("", response_model=ReplyResponse)
+async def create_reply_endpoint(
+    topic_id: uuid.UUID,
+    update_id: uuid.UUID,
+    payload: ReplyCreate,
+    member: Member = Depends(get_current_member),
+    session: AsyncSession = Depends(get_session),
+):
+    """Create a reply to an update. Any authenticated member."""
+    reply = await create_reply(
+        session, update_id, member.id, payload.body, payload.wants_to_share
+    )
+    return ReplyResponse(
+        id=reply.id,
+        body=reply.body,
+        author_member_id=reply.author_member_id,
+        author_handle=member.display_handle,
+        wants_to_share=reply.wants_to_share,
+        relay_status=reply.relay_status,
+        created_at=reply.created_at,
+    )
+
+
+@router.get("", response_model=list[ReplyResponse])
+async def list_replies_endpoint(
+    topic_id: uuid.UUID,
+    update_id: uuid.UUID,
+    member: Member = Depends(get_current_member),
+    session: AsyncSession = Depends(get_session),
+):
+    """List replies for an update. Scoped by role."""
+    replies = await get_replies_for_update(session, update_id, member)
+
+    responses = []
+    for reply in replies:
+        # Get author handle
+        result = await session.execute(
+            select(Member).where(Member.id == reply.author_member_id)
+        )
+        author = result.scalar_one_or_none()
+
+        mod_responses = await get_mod_responses_for_reply(session, reply.id, member)
+
+        responses.append(
+            ReplyResponse(
+                id=reply.id,
+                body=reply.body,
+                author_member_id=reply.author_member_id,
+                author_handle=author.display_handle if author else None,
+                wants_to_share=reply.wants_to_share,
+                relay_status=reply.relay_status,
+                created_at=reply.created_at,
+                mod_responses=[
+                    ModResponseResponse(
+                        id=mr.id,
+                        body=mr.body,
+                        author_handle=None,
+                        scope=mr.scope,
+                        created_at=mr.created_at,
+                    )
+                    for mr in mod_responses
+                ],
+            )
+        )
+
+    return responses
+
+
+@router.post("/{reply_id}/relay")
+async def relay_reply_endpoint(
+    topic_id: uuid.UUID,
+    update_id: uuid.UUID,
+    reply_id: uuid.UUID,
+    payload: RelayAction,
+    member: Member = Depends(require_moderator),
+    session: AsyncSession = Depends(get_session),
+):
+    """Relay a reply to circles. Moderator+ only."""
+    await relay_reply(session, reply_id, member.id, payload.circle_ids)
+    return {"detail": "Reply relayed"}
+
+
+@router.post("/{reply_id}/dismiss")
+async def dismiss_reply_endpoint(
+    topic_id: uuid.UUID,
+    update_id: uuid.UUID,
+    reply_id: uuid.UUID,
+    member: Member = Depends(require_moderator),
+    session: AsyncSession = Depends(get_session),
+):
+    """Dismiss a reply. Moderator+ only."""
+    await dismiss_reply(session, reply_id)
+    return {"detail": "Reply dismissed"}
+
+
+@router.post("/{reply_id}/respond", response_model=ModResponseResponse)
+async def create_mod_response_endpoint(
+    topic_id: uuid.UUID,
+    update_id: uuid.UUID,
+    reply_id: uuid.UUID,
+    payload: ModResponseCreate,
+    member: Member = Depends(require_moderator),
+    session: AsyncSession = Depends(get_session),
+):
+    """Create a mod response to a reply. Moderator+ only."""
+    mod_resp = await create_mod_response(
+        session, reply_id, member.id, payload.body, payload.scope
+    )
+    return ModResponseResponse(
+        id=mod_resp.id,
+        body=mod_resp.body,
+        author_handle=member.display_handle,
+        scope=mod_resp.scope,
+        created_at=mod_resp.created_at,
+    )

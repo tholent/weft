@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -24,6 +25,7 @@ async def rename_circle(
     circle_id: uuid.UUID,
     name: str | None = None,
     scoped_title: str | None = None,
+    clear_scoped_title: bool = False,
 ) -> Circle:
     result = await session.execute(select(Circle).where(Circle.id == circle_id))
     circle = result.scalar_one_or_none()
@@ -31,7 +33,9 @@ async def rename_circle(
         raise ValueError("Circle not found")
     if name is not None:
         circle.name = name
-    if scoped_title is not None:
+    if clear_scoped_title:
+        circle.scoped_title = None
+    elif scoped_title is not None:
         circle.scoped_title = scoped_title
     session.add(circle)
     await session.flush()
@@ -53,9 +57,16 @@ async def delete_circle(session: AsyncSession, circle_id: uuid.UUID) -> None:
     circle = result.scalar_one_or_none()
     if circle is None:
         raise ValueError("Circle not found")
-    await session.delete(circle)
+    # Soft-delete to preserve update_circle and member_circle_history references
+    circle.deleted_at = datetime.now(UTC)
+    session.add(circle)
 
 
 async def list_circles(session: AsyncSession, topic_id: uuid.UUID) -> list[Circle]:
-    result = await session.execute(select(Circle).where(Circle.topic_id == topic_id))
+    result = await session.execute(
+        select(Circle).where(
+            Circle.topic_id == topic_id,
+            Circle.deleted_at.is_(None),  # type: ignore[union-attr]
+        )
+    )
     return list(result.scalars().all())

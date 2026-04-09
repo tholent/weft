@@ -12,3 +12,4 @@ class Circle(SQLModel, table=True):
     name: str
     scoped_title: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    deleted_at: datetime | None = Field(default=None)

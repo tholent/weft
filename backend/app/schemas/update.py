@@ -1,16 +1,16 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UpdateCreate(BaseModel):
-    body: str
-    circle_ids: list[uuid.UUID]
+    body: str = Field(min_length=1, max_length=10000)
+    circle_ids: list[uuid.UUID] = Field(min_length=1)
 
 
 class UpdateEdit(BaseModel):
-    body: str
+    body: str = Field(min_length=1, max_length=10000)
 
 
 class UpdateResponse(BaseModel):

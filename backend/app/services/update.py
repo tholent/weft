@@ -111,8 +111,10 @@ async def list_updates_for_topic(
         Update.deleted_at.is_(None),  # type: ignore[union-attr]
     )
     if circle_ids:
-        stmt = stmt.join(UpdateCircle, Update.id == UpdateCircle.update_id).where(
-            UpdateCircle.circle_id.in_(circle_ids)  # type: ignore[union-attr]
+        stmt = (
+            stmt.join(UpdateCircle, Update.id == UpdateCircle.update_id)
+            .where(UpdateCircle.circle_id.in_(circle_ids))  # type: ignore[union-attr]
+            .distinct()
         )
     stmt = stmt.order_by(Update.created_at.desc())  # type: ignore[union-attr]
     result = await session.execute(stmt)

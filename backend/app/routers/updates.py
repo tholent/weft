@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -11,6 +11,7 @@ from app.models.enums import MemberRole, RelayStatus
 from app.models.member import Member
 from app.models.reply import Reply
 from app.models.update import UpdateCircle
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.update import UpdateCreate, UpdateEdit, UpdateResponse
 from app.services.update import (
     create_update,
@@ -80,19 +81,25 @@ async def create_update_endpoint(
     return await _build_update_response(session, update, member)
 
 
-@router.get("", response_model=list[UpdateResponse])
+@router.get("", response_model=PaginatedResponse[UpdateResponse])
 async def get_feed_endpoint(
     topic_id: uuid.UUID,
     member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
 ):
     """Get feed. Uses member's circle history for visibility."""
     if member.role in (MemberRole.creator, MemberRole.admin, MemberRole.moderator):
-        updates = await list_updates_for_topic(session, topic_id)
+        all_updates = await list_updates_for_topic(session, topic_id)
     else:
-        updates = await get_feed(session, member.id)
+        all_updates = await get_feed(session, member.id)
 
-    return [await _build_update_response(session, u, member) for u in updates]
+    total = len(all_updates)
+    page = all_updates[offset : offset + limit]
+    items = [await _build_update_response(session, u, member) for u in page]
+
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.patch("/{update_id}", response_model=UpdateResponse)

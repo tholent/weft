@@ -1,13 +1,15 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from app.db.session import get_session
 from app.deps import require_topic_admin, require_topic_member
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
 from app.schemas.member import MemberInvite, MemberMove, MemberPromote, MemberResponse
+from app.schemas.pagination import PaginatedResponse
 from app.services.auth import create_magic_link
 from app.services.email import send_invite_email
 from app.services.member import invite_member, list_members, move_member, promote_member
@@ -46,22 +48,22 @@ async def invite_member_endpoint(
     )
 
 
-@router.get("", response_model=list[MemberResponse])
+@router.get("", response_model=PaginatedResponse[MemberResponse])
 async def list_members_endpoint(
     topic_id: uuid.UUID,
     member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
 ):
     """List members. Admin+ sees all; moderators see their circles; recipients see nothing."""
     if member.role == MemberRole.recipient:
-        return []
+        return PaginatedResponse(items=[], total=0, limit=limit, offset=offset)
 
     if member.role in (MemberRole.creator, MemberRole.admin):
-        members = await list_members(session, topic_id)
+        all_members = await list_members(session, topic_id)
     else:
         # Moderator: members in their circles only
-        from sqlmodel import select
-
         result = await session.execute(
             select(MemberCircleHistory.circle_id).where(
                 MemberCircleHistory.member_id == member.id,
@@ -69,23 +71,20 @@ async def list_members_endpoint(
             )
         )
         circle_ids = list(result.scalars().all())
-        members = []
+        all_members = []
+        seen: set[uuid.UUID] = set()
         for cid in circle_ids:
-            members.extend(await list_members(session, topic_id, cid))
-        # Deduplicate
-        seen = set()
-        unique = []
-        for m in members:
-            if m.id not in seen:
-                seen.add(m.id)
-                unique.append(m)
-        members = unique
+            for m in await list_members(session, topic_id, cid):
+                if m.id not in seen:
+                    seen.add(m.id)
+                    all_members.append(m)
 
-    # Get active circle for each member
+    total = len(all_members)
+    page = all_members[offset : offset + limit]
+
+    # Get active circle for each member in the page
     responses = []
-    for m in members:
-        from sqlmodel import select
-
+    for m in page:
         result = await session.execute(
             select(MemberCircleHistory).where(
                 MemberCircleHistory.member_id == m.id,
@@ -103,7 +102,7 @@ async def list_members_endpoint(
             )
         )
 
-    return responses
+    return PaginatedResponse(items=responses, total=total, limit=limit, offset=offset)
 
 
 @router.patch("/{member_id}/circle")
@@ -143,8 +142,6 @@ async def resend_invite_endpoint(
     session: AsyncSession = Depends(get_session),
 ):
     """Re-send invite link. Admin+ only."""
-    from sqlmodel import select
-
     result = await session.execute(select(Member).where(Member.id == member_id))
     target = result.scalar_one_or_none()
     if target is None or target.email is None:

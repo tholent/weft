@@ -1,12 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
 from app.deps import require_topic_member, require_topic_moderator
 from app.models.member import Member
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.reply import (
     ModResponseCreate,
     ModResponseResponse,
@@ -51,19 +52,23 @@ async def create_reply_endpoint(
     )
 
 
-@router.get("", response_model=list[ReplyResponse])
+@router.get("", response_model=PaginatedResponse[ReplyResponse])
 async def list_replies_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
 ):
     """List replies for an update. Scoped by role."""
-    replies = await get_replies_for_update(session, update_id, member)
+    all_replies = await get_replies_for_update(session, update_id, member)
+
+    total = len(all_replies)
+    page = all_replies[offset : offset + limit]
 
     responses = []
-    for reply in replies:
-        # Get author handle
+    for reply in page:
         result = await session.execute(
             select(Member).where(Member.id == reply.author_member_id)
         )
@@ -93,7 +98,7 @@ async def list_replies_endpoint(
             )
         )
 
-    return responses
+    return PaginatedResponse(items=responses, total=total, limit=limit, offset=offset)
 
 
 @router.post("/{reply_id}/relay")

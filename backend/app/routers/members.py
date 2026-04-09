@@ -19,10 +19,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_member
+from app.deps import require_topic_admin, require_topic_creator, require_topic_member
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
-from app.schemas.member import MemberInvite, MemberMove, MemberPromote, MemberResponse
+from app.schemas.member import MemberInvite, MemberMove, MemberPromote, MemberRename, MemberResponse
 from app.schemas.pagination import PaginatedResponse
 from app.services.auth import create_magic_link
 from app.services.email import send_invite_email
@@ -146,6 +146,24 @@ async def promote_member_endpoint(
     except ValueError as e:
         raise HTTPException(status_code=403, detail=str(e))
     return {"detail": f"Member promoted to {updated.role.value}"}
+
+
+@router.patch("/{member_id}/handle")
+async def rename_member_endpoint(
+    topic_id: uuid.UUID,
+    member_id: uuid.UUID,
+    payload: MemberRename,
+    member: Member = Depends(require_topic_creator),
+    session: AsyncSession = Depends(get_session),
+):
+    """Set a member's display handle. Creator only."""
+    result = await session.execute(select(Member).where(Member.id == member_id))
+    target = result.scalar_one_or_none()
+    if target is None or target.topic_id != topic_id:
+        raise HTTPException(status_code=404, detail="Member not found")
+    target.display_handle = payload.display_handle
+    session.add(target)
+    return {"detail": "Handle updated"}
 
 
 @router.post("/{member_id}/resend-invite")

@@ -42,6 +42,10 @@ class MemberPromote(BaseModel):
     new_role: MemberRole
 
 
+class MemberRename(BaseModel):
+    display_handle: str
+
+
 class MemberResponse(BaseModel):
     id: uuid.UUID
     role: MemberRole

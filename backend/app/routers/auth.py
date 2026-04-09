@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -36,7 +38,7 @@ async def verify_magic_link_endpoint(
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-    member_id = data["member_id"]
+    member_id = uuid.UUID(data["member_id"])
 
     result = await session.execute(select(Member).where(Member.id == member_id))
     member = result.scalar_one_or_none()

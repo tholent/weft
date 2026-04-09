@@ -13,9 +13,13 @@
 # limitations under the License.
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
+
+# Resolve .env from the project root (two levels above this file: app/ -> backend/ -> project root)
+_ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
@@ -27,7 +31,7 @@ class Settings(BaseSettings):
     auto_archive_days: int = 30
     topic_creation_rate_limit: str = "10/hour"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": str(_ENV_FILE), "env_file_encoding": "utf-8"}
 
     @model_validator(mode="after")
     def validate_secret_key(self) -> "Settings":

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
-from app.deps import get_current_member, require_moderator
+from app.deps import require_topic_member, require_topic_moderator
 from app.models.member import Member
 from app.schemas.reply import (
     ModResponseCreate,
@@ -33,7 +33,7 @@ async def create_reply_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     payload: ReplyCreate,
-    member: Member = Depends(get_current_member),
+    member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a reply to an update. Any authenticated member."""
@@ -55,7 +55,7 @@ async def create_reply_endpoint(
 async def list_replies_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
 ):
     """List replies for an update. Scoped by role."""
@@ -102,7 +102,7 @@ async def relay_reply_endpoint(
     update_id: uuid.UUID,
     reply_id: uuid.UUID,
     payload: RelayAction,
-    member: Member = Depends(require_moderator),
+    member: Member = Depends(require_topic_moderator),
     session: AsyncSession = Depends(get_session),
 ):
     """Relay a reply to circles. Moderator+ only."""
@@ -115,7 +115,7 @@ async def dismiss_reply_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     reply_id: uuid.UUID,
-    member: Member = Depends(require_moderator),
+    member: Member = Depends(require_topic_moderator),
     session: AsyncSession = Depends(get_session),
 ):
     """Dismiss a reply. Moderator+ only."""
@@ -129,7 +129,7 @@ async def create_mod_response_endpoint(
     update_id: uuid.UUID,
     reply_id: uuid.UUID,
     payload: ModResponseCreate,
-    member: Member = Depends(require_moderator),
+    member: Member = Depends(require_topic_moderator),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a mod response to a reply. Moderator+ only."""

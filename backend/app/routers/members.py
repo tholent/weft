@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
-from app.deps import get_current_member, require_admin
+from app.deps import require_topic_admin, require_topic_member
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
 from app.schemas.member import MemberInvite, MemberMove, MemberPromote, MemberResponse
-from app.services.auth import create_magic_link, generate_token
+from app.services.auth import create_magic_link
 from app.services.email import send_invite_email
 from app.services.member import invite_member, list_members, move_member, promote_member
 
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/topics/{topic_id}/members", tags=["members"])
 async def invite_member_endpoint(
     topic_id: uuid.UUID,
     payload: MemberInvite,
-    member: Member = Depends(require_admin),
+    member: Member = Depends(require_topic_admin),
     session: AsyncSession = Depends(get_session),
 ):
     """Invite a member. Admin+ only. Sends invite email with magic link."""
@@ -30,7 +30,7 @@ async def invite_member_endpoint(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    magic_link = create_magic_link(str(new_member.id), raw_token)
+    magic_link = create_magic_link(str(new_member.id))
 
     from app.services.topic import get_topic
 
@@ -49,7 +49,7 @@ async def invite_member_endpoint(
 @router.get("", response_model=list[MemberResponse])
 async def list_members_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
 ):
     """List members. Admin+ sees all; moderators see their circles; recipients see nothing."""
@@ -111,7 +111,7 @@ async def move_member_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: MemberMove,
-    member: Member = Depends(require_admin),
+    member: Member = Depends(require_topic_admin),
     session: AsyncSession = Depends(get_session),
 ):
     """Move a member to a different circle. Admin+ only."""
@@ -124,7 +124,7 @@ async def promote_member_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: MemberPromote,
-    member: Member = Depends(get_current_member),
+    member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
 ):
     """Promote a member. Admin+ for moderator; creator only for admin."""
@@ -139,7 +139,7 @@ async def promote_member_endpoint(
 async def resend_invite_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
-    member: Member = Depends(require_admin),
+    member: Member = Depends(require_topic_admin),
     session: AsyncSession = Depends(get_session),
 ):
     """Re-send invite link. Admin+ only."""
@@ -150,8 +150,7 @@ async def resend_invite_endpoint(
     if target is None or target.email is None:
         raise HTTPException(status_code=400, detail="Member not found or has no email")
 
-    raw_token = await generate_token(session, target.id)
-    magic_link = create_magic_link(str(target.id), raw_token)
+    magic_link = create_magic_link(str(target.id))
 
     from app.services.topic import get_topic
 

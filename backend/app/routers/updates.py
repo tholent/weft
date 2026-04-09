@@ -1,12 +1,13 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
-from app.deps import get_current_member, require_moderator
-from app.models.enums import MemberRole
+from app.deps import require_topic_member, require_topic_moderator
+from app.models.enums import MemberRole, RelayStatus
 from app.models.member import Member
 from app.models.reply import Reply
 from app.models.update import UpdateCircle
@@ -31,10 +32,18 @@ async def _build_update_response(
     )
     circle_ids = list(result.scalars().all())
 
-    # Get reply count
-    result = await session.execute(
-        select(Reply).where(Reply.update_id == update.id)
-    )
+    # Get reply count (scoped by role)
+    if member and member.role == MemberRole.recipient:
+        reply_query = select(Reply).where(
+            Reply.update_id == update.id,
+            or_(
+                Reply.author_member_id == member.id,
+                Reply.relay_status == RelayStatus.relayed,
+            ),
+        )
+    else:
+        reply_query = select(Reply).where(Reply.update_id == update.id)
+    result = await session.execute(reply_query)
     reply_count = len(result.scalars().all())
 
     # Get author handle
@@ -58,7 +67,7 @@ async def _build_update_response(
 async def create_update_endpoint(
     topic_id: uuid.UUID,
     payload: UpdateCreate,
-    member: Member = Depends(require_moderator),
+    member: Member = Depends(require_topic_moderator),
     session: AsyncSession = Depends(get_session),
 ):
     """Create an update addressed to specified circles. Moderator+ only."""
@@ -74,7 +83,7 @@ async def create_update_endpoint(
 @router.get("", response_model=list[UpdateResponse])
 async def get_feed_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
 ):
     """Get feed. Uses member's circle history for visibility."""
@@ -91,7 +100,7 @@ async def edit_update_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     payload: UpdateEdit,
-    member: Member = Depends(get_current_member),
+    member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
 ):
     """Edit an update. Author only."""
@@ -112,7 +121,7 @@ async def edit_update_endpoint(
 async def delete_update_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Member = Depends(require_topic_member),
     session: AsyncSession = Depends(get_session),
 ):
     """Soft delete an update. Author or admin+ only."""

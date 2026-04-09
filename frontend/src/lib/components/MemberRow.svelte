@@ -29,8 +29,8 @@
 	let editingHandle = false;
 	let handleInput = member.display_handle || '';
 
-	$: canManage = viewerRole === 'creator' || viewerRole === 'admin';
-	$: canPromoteToAdmin = viewerRole === 'creator';
+	$: canManage = viewerRole === 'owner' || viewerRole === 'admin';
+	$: canPromoteToAdmin = viewerRole === 'owner';
 
 	const roleBadgeStyle: Record<string, string> = {
 		creator: 'background: var(--color-accent-light); color: var(--color-accent);',
@@ -71,14 +71,14 @@
 			<button on:click={() => (editingHandle = false)}>Cancel</button>
 		{:else}
 			<span class="handle">{member.display_handle || 'Anonymous'}</span>
-			{#if viewerRole === 'creator'}
+			{#if viewerRole === 'owner'}
 				<button class="rename-btn" on:click={() => (editingHandle = true)}>✎</button>
 			{/if}
 		{/if}
 		<span class="role-badge" style={badgeStyle}>{member.role}</span>
 	</div>
 
-	{#if canManage && member.role !== 'creator'}
+	{#if canManage && member.role !== 'owner'}
 		<div class="actions">
 			<select bind:value={selectedCircle} on:change={handleMove}>
 				<option value="" disabled>Move to...</option>
@@ -89,13 +89,13 @@
 			<label class="retro"><input type="checkbox" bind:checked={retroactive} /> Retroactive</label>
 
 			{#if member.role === 'recipient'}
-				<button on:click={() => handlePromote('moderator')}>Make Mod</button>
+				<button class="promote-btn" on:click={() => handlePromote('moderator')}>Make Mod</button>
 			{/if}
 			{#if canPromoteToAdmin && member.role !== 'admin'}
-				<button on:click={() => handlePromote('admin')}>Make Admin</button>
+				<button class="promote-btn" on:click={() => handlePromote('admin')}>Make Admin</button>
 			{/if}
 
-			<button on:click={handleResend}>Resend</button>
+			<button class="secondary-btn" on:click={handleResend}>Resend</button>
 		</div>
 	{/if}
 </div>
@@ -106,8 +106,12 @@
 	.handle { font-weight: 500; }
 	.role-badge { padding: 0.1rem 0.5rem; border-radius: 3px; font-size: var(--text-xs); text-transform: capitalize; }
 	.actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-	select, button, input { padding: 0.25rem 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--text-sm); }
+	select, input { padding: 0.25rem 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--text-sm); }
+	button { padding: 0.25rem 0.6rem; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--text-sm); cursor: pointer; background: var(--color-surface); color: var(--color-text-secondary); transition: background 0.1s, border-color 0.1s; }
+	button:hover { background: var(--color-surface-hover); border-color: var(--color-border-strong); }
 	.rename-btn { background: none; border: none; cursor: pointer; padding: 0 0.25rem; color: var(--color-text-secondary); }
-	button { cursor: pointer; background: var(--color-surface); }
+	.promote-btn { background: var(--color-accent-light); border-color: #f0d0b0; color: var(--color-accent); font-weight: 500; }
+	.promote-btn:hover { background: var(--color-accent); color: white; border-color: var(--color-accent); }
+	.secondary-btn { color: var(--color-text-muted); font-size: var(--text-xs); }
 	.retro { font-size: var(--text-xs); display: flex; align-items: center; gap: 0.2rem; }
 </style>

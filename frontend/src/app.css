@@ -58,3 +58,9 @@ h1, h2, h3 {
 }
 
 input, textarea, select, button { font-family: inherit; }
+
+textarea:focus, input:focus, select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
+}

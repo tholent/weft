@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: weft
+      POSTGRES_PASSWORD: weft
+      POSTGRES_DB: weft
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://weft:weft@db:5432/weft
+      SECRET_KEY: dev-secret-key
+      BASE_URL: http://localhost:5173
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

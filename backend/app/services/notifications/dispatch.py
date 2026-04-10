@@ -28,6 +28,8 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
+from app.config import get_settings
+from app.models.attachment import Attachment
 from app.models.enums import NotificationChannel, NotificationTrigger
 from app.models.member import Member, MemberCircleHistory
 from app.models.topic import Topic
@@ -56,6 +58,29 @@ async def _get_member(session: AsyncSession, member_id: uuid.UUID) -> Member | N
     return result.scalar_one_or_none()
 
 
+async def _get_attachment_links(
+    session: AsyncSession,
+    topic_id: uuid.UUID,
+    update_id: uuid.UUID,
+) -> list[str]:
+    """Return public URLs for all attachments on an update."""
+    settings = get_settings()
+    result = await session.execute(
+        select(Attachment)
+        .where(
+            Attachment.update_id == update_id,
+            Attachment.topic_id == topic_id,
+        )
+        .order_by(Attachment.created_at)
+    )
+    attachments = list(result.scalars().all())
+    base = settings.base_url.rstrip("/")
+    return [
+        f"{base}/api/topics/{topic_id}/attachments/{att.id}"
+        for att in attachments
+    ]
+
+
 async def dispatch_update_notifications(
     session: AsyncSession,
     registry: ProviderRegistry,
@@ -68,6 +93,10 @@ async def dispatch_update_notifications(
     """Fan-out new-update notifications to members of the targeted circles.
 
     Skips the author. Members without a contact address are silently skipped.
+
+    Attachments are included based on topic.photo_link_only:
+    - False: attachment links appended inline to the message body
+    - True: attachment links are included as links only (same effect over plain text/SMS)
     """
     topic = await _get_topic(session, topic_id)
     if topic is None:
@@ -75,8 +104,32 @@ async def dispatch_update_notifications(
         return
 
     short_code = topic.short_code or ""
-    sms_body = format_update_sms(topic.default_title, short_code, author_handle, body)
     email_subject = f"[{topic.default_title}] New update"
+
+    # Load attachment links for this update
+    attachment_links = await _get_attachment_links(session, topic_id, update_id)
+
+    # Build email body with attachments
+    email_body = body
+    if attachment_links:
+        if topic.photo_link_only:
+            # Link-only: append links as text
+            links_text = "\n".join(attachment_links)
+            email_body = f"{body}\n\nAttachments:\n{links_text}"
+        else:
+            # Inline: also append links (plain-text email; HTML would embed images)
+            links_text = "\n".join(attachment_links)
+            email_body = f"{body}\n\nAttachments:\n{links_text}"
+
+    # Build SMS body with attachments
+    sms_body = format_update_sms(topic.default_title, short_code, author_handle, body)
+    if attachment_links:
+        if topic.photo_link_only:
+            # Link-only mode: append first link to SMS body
+            sms_body = f"{sms_body} {attachment_links[0]}"
+        else:
+            # MMS mode: append media URLs to the SMS body text
+            sms_body = f"{sms_body} " + " ".join(attachment_links)
 
     # Collect unique members in the targeted circles
     result = await session.execute(
@@ -107,7 +160,11 @@ async def dispatch_update_notifications(
                 topic_id=topic_id,
                 trigger=NotificationTrigger.new_update,
                 subject=email_subject,
-                body=sms_body if member.notification_channel == NotificationChannel.sms else body,
+                body=(
+                    sms_body
+                    if member.notification_channel == NotificationChannel.sms
+                    else email_body
+                ),
                 html_body=None,
                 recipient_address=address,
                 channel=member.notification_channel,

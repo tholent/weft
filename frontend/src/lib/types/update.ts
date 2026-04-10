@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { Attachment } from './attachment';
+
 export interface Update {
 	id: string;
 	body: string;
@@ -24,4 +26,5 @@ export interface Update {
 	deleted_at: string | null;
 	reply_count: number;
 	pending_reply_count: number;
+	attachments: Attachment[];
 }

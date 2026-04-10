@@ -17,8 +17,10 @@
 <script lang="ts">
 	import type { Update } from '$lib/types/update';
 	import type { Circle } from '$lib/types/circle';
+	import { getAttachmentUrl } from '$lib/api/attachments';
 
 	export let update: Update;
+	export let topicId: string = '';
 	export let circles: Circle[] = [];
 	export let onClick: (() => void) | undefined = undefined;
 	export let canReply: boolean = false;
@@ -30,11 +32,38 @@
 	$: circleEntries = update.circle_ids
 		.map((id) => ({ name: circles.find((c) => c.id === id)?.name, hasVariant: id in update.body_variants }))
 		.filter((e): e is { name: string; hasVariant: boolean } => e.name !== undefined);
+
+	$: attachments = update.attachments ?? [];
+
+	let lightboxSrc: string | null = null;
+
+	function openLightbox(src: string, e: MouseEvent) {
+		e.stopPropagation();
+		lightboxSrc = src;
+	}
+
+	function closeLightbox() {
+		lightboxSrc = null;
+	}
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 <div class="update-row" class:deleted={!!update.deleted_at} on:click={onClick ?? (() => {})}>
 	<p class="preview">{preview}</p>
+
+	{#if attachments.length > 0 && !update.deleted_at}
+		<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+		<div class="attachment-grid" on:click|stopPropagation>
+			{#each attachments as attachment (attachment.id)}
+				{@const src = getAttachmentUrl(topicId, attachment.id)}
+				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+				<button type="button" class="thumb-btn" on:click={(e) => openLightbox(src, e)}>
+					<img class="thumb" {src} alt={attachment.filename} loading="lazy" />
+				</button>
+			{/each}
+		</div>
+	{/if}
+
 	<div class="row-footer">
 		<div class="meta">
 			<span>{update.author_handle || 'Anonymous'}</span>
@@ -57,6 +86,13 @@
 	</div>
 </div>
 
+{#if lightboxSrc}
+	<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+	<div class="lightbox-overlay" on:click={closeLightbox}>
+		<img class="lightbox-img" src={lightboxSrc} alt="Full size" />
+	</div>
+{/if}
+
 <style>
 	.update-row {
 		border: 1px solid var(--color-border); border-left: 3px solid var(--color-border);
@@ -77,6 +113,32 @@
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
+
+	.attachment-grid {
+		display: flex; flex-wrap: wrap; gap: 0.4rem;
+		margin-bottom: 0.5rem;
+	}
+	.thumb-btn {
+		padding: 0; border: none; background: none; cursor: pointer;
+		border-radius: 4px; overflow: hidden;
+		border: 1px solid var(--color-border);
+	}
+	.thumb {
+		display: block; width: 80px; height: 80px; object-fit: cover;
+		transition: opacity 0.15s;
+	}
+	.thumb-btn:hover .thumb { opacity: 0.85; }
+
+	.lightbox-overlay {
+		position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+		display: flex; align-items: center; justify-content: center;
+		z-index: 1000; cursor: zoom-out;
+	}
+	.lightbox-img {
+		max-width: 90vw; max-height: 90vh;
+		object-fit: contain; border-radius: 4px;
+	}
+
 	.row-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 	.meta { font-size: var(--text-sm); color: var(--color-text-secondary); display: flex; gap: 0.5rem; flex-wrap: wrap; }
 	.edited { font-style: italic; }

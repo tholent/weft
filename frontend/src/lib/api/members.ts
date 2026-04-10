@@ -12,13 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Member, MemberRole } from '$lib/types/member';
+import type { Member, MemberRole, NotificationChannel } from '$lib/types/member';
 import { request } from './client';
 
-export function inviteMember(topicId: string, email: string, circle_id: string, role: MemberRole = 'recipient', display_handle?: string): Promise<Member> {
+export function inviteMember(
+	topicId: string,
+	circle_id: string,
+	role: MemberRole = 'recipient',
+	display_handle?: string,
+	email?: string,
+	phone?: string,
+	notification_channel?: NotificationChannel
+): Promise<Member> {
 	return request(`/topics/${topicId}/members`, {
 		method: 'POST',
-		body: JSON.stringify({ email, circle_id, role, display_handle: display_handle || undefined })
+		body: JSON.stringify({
+			email: email || undefined,
+			phone: phone || undefined,
+			circle_id,
+			role,
+			display_handle: display_handle || undefined,
+			notification_channel: notification_channel || undefined
+		})
 	});
 }
 

@@ -16,7 +16,7 @@
 
 <script lang="ts">
 	import type { Circle } from '$lib/types/circle';
-	import type { Member, MemberRole } from '$lib/types/member';
+	import type { Member, MemberRole, NotificationChannel } from '$lib/types/member';
 	import { inviteMember } from '$lib/api/members';
 	import { session, isOwner } from '$lib/stores/session';
 
@@ -24,22 +24,39 @@
 	export let onInvited: (member: Member) => void;
 
 	let email = '';
+	let phone = '';
 	let displayHandle = '';
 	let circleId = '';
 	let role: MemberRole = 'recipient';
+	let notificationChannel: NotificationChannel = 'email';
 	let submitting = false;
 	let error = '';
 	let success = '';
 
+	$: emailRequired = notificationChannel === 'email';
+	$: phoneRequired = notificationChannel === 'sms';
+	$: canSubmit = !submitting && !!circleId &&
+		(emailRequired ? !!email.trim() : !!phone.trim());
+
 	async function handleSubmit() {
-		if (!email.trim() || !circleId || !$session.topicId) return;
+		if (!canSubmit || !$session.topicId) return;
 		submitting = true;
 		error = '';
 		success = '';
 		try {
-			const member = await inviteMember($session.topicId, email.trim(), circleId, role, displayHandle.trim() || undefined);
-			success = `Invite sent to ${email.trim()}`;
+			const member = await inviteMember(
+				$session.topicId,
+				circleId,
+				role,
+				displayHandle.trim() || undefined,
+				emailRequired ? email.trim() : undefined,
+				phoneRequired ? phone.trim() : undefined,
+				notificationChannel
+			);
+			const label = emailRequired ? email.trim() : phone.trim();
+			success = `Invite sent to ${label}`;
 			email = '';
+			phone = '';
 			displayHandle = '';
 			onInvited(member);
 		} catch (e: unknown) {
@@ -52,12 +69,26 @@
 
 <form class="invite-form" on:submit|preventDefault={handleSubmit}>
 	<div class="fields">
-		<input
-			type="email"
-			bind:value={email}
-			placeholder="Email address"
-			required
-		/>
+		<select bind:value={notificationChannel} class="channel-select">
+			<option value="email">Email</option>
+			<option value="sms">SMS</option>
+		</select>
+		{#if notificationChannel === 'email'}
+			<input
+				type="email"
+				bind:value={email}
+				placeholder="Email address"
+				required
+			/>
+		{/if}
+		{#if notificationChannel === 'sms'}
+			<input
+				type="tel"
+				bind:value={phone}
+				placeholder="Phone number"
+				required
+			/>
+		{/if}
 		<input
 			type="text"
 			bind:value={displayHandle}
@@ -74,7 +105,7 @@
 			<option value="moderator">Moderator</option>
 			{#if $isOwner}<option value="admin">Admin</option>{/if}
 		</select>
-		<button type="submit" disabled={submitting || !email.trim() || !circleId}>
+		<button type="submit" disabled={!canSubmit}>
 			{submitting ? 'Sending…' : 'Invite'}
 		</button>
 	</div>
@@ -85,12 +116,12 @@
 <style>
 	.invite-form { margin-bottom: 1.25rem; }
 	.fields { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-	input[type="email"], input[type="text"] {
+	input[type="email"], input[type="tel"], input[type="text"] {
 		flex: 1; min-width: 180px;
 		padding: 0.35rem 0.6rem; border: 1px solid var(--color-border);
 		border-radius: 4px; font-size: var(--text-sm);
 	}
-	select {
+	.channel-select, select {
 		padding: 0.35rem 0.5rem; border: 1px solid var(--color-border);
 		border-radius: 4px; font-size: var(--text-sm);
 		background: var(--color-surface); color: var(--color-text);

@@ -30,6 +30,8 @@
 	import InviteForm from '$lib/components/InviteForm.svelte';
 	import TransferBanner from '$lib/components/TransferBanner.svelte';
 	import PassTheTorch from '$lib/components/PassTheTorch.svelte';
+	import NotificationSettings from '$lib/components/NotificationSettings.svelte';
+	import ExportButton from '$lib/components/ExportButton.svelte';
 	import type { Update } from '$lib/types/update';
 	import type { Member } from '$lib/types/member';
 
@@ -82,15 +84,16 @@
 		}
 	});
 
-	async function handleNewUpdate(data: Record<string, unknown>) {
-		if (!$session.topicId) return;
-		await createUpdate(
+	async function handleNewUpdate(data: Record<string, unknown>): Promise<{ id: string }> {
+		if (!$session.topicId) return { id: '' };
+		const update = await createUpdate(
 			$session.topicId,
 			data.body as string,
 			data.circle_ids as string[],
 			(data.circle_bodies as Record<string, string>) ?? {}
 		);
 		updates.set(await getFeed($session.topicId));
+		return update;
 	}
 
 	async function handleClose() {
@@ -169,7 +172,7 @@
 				</div>
 			</div>
 			{#each filteredUpdates as update (update.id)}
-				<UpdateCard {update} circles={$circles} onClick={() => (selectedUpdate = update)} />
+				<UpdateCard {update} topicId={$session.topicId ?? ''} circles={$circles} onClick={() => (selectedUpdate = update)} />
 			{/each}
 			{#if filteredUpdates.length === 0}
 				<p class="empty-list">No updates match the current filter.</p>
@@ -192,6 +195,17 @@
 		{:else if activeTab === 'settings'}
 			<h2>Settings</h2>
 			<TransferBanner />
+
+			<p class="section-label">Notification Settings</p>
+			<NotificationSettings />
+			<hr />
+
+			{#if $isAdmin && $session.topicId}
+				<p class="section-label">Export</p>
+				<ExportButton topicId={$session.topicId} />
+				<hr />
+			{/if}
+
 			{#if $isOwner}
 				<p class="section-label">Pass the Torch</p>
 				<PassTheTorch

@@ -106,13 +106,14 @@
 		uploadError = '';
 
 		if (mode === 'update') {
+			const circle_ids = selectedCircles.length > 0 ? selectedCircles : targetCircles.map((c) => c.id);
 			const circle_bodies: Record<string, string> = {};
 			for (const id of selectedCircles) {
 				if (customEnabled[id] && customBody[id]?.trim()) {
 					circle_bodies[id] = customBody[id].trim();
 				}
 			}
-			const result = await onSubmit({ body: body.trim(), circle_ids: selectedCircles, circle_bodies });
+			const result = await onSubmit({ body: body.trim(), circle_ids, circle_bodies });
 
 			// Upload attachments if we have the update ID
 			if (result && photos.length > 0 && $session.topicId) {

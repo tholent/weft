@@ -13,13 +13,12 @@
 # limitations under the License.
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
 
-from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_member, require_topic_owner
+from app.deps import SessionDep, TopicAdminDep, TopicMemberDep, TopicOwnerDep
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
 from app.schemas.member import (
@@ -41,8 +40,8 @@ router = APIRouter(prefix="/topics/{topic_id}/members", tags=["members"])
 async def invite_member_endpoint(
     topic_id: uuid.UUID,
     payload: MemberInvite,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     """Invite a member. Admin+ only. Sends invite email with magic link."""
     try:
@@ -82,10 +81,10 @@ async def invite_member_endpoint(
 @router.get("", response_model=PaginatedResponse[MemberResponse])
 async def list_members_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    member: TopicMemberDep,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """List members. Admin+ sees all; moderators see their circles; recipients see nothing."""
     if member.role == MemberRole.recipient:
@@ -144,8 +143,8 @@ async def move_member_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: MemberMove,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     """Move a member to a different circle. Admin+ only."""
     try:
@@ -162,8 +161,8 @@ async def promote_member_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: MemberPromote,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     """Promote a member. Admin+ for moderator; creator only for admin."""
     try:
@@ -178,8 +177,8 @@ async def rename_member_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: MemberRename,
-    member: Member = Depends(require_topic_owner),
-    session: AsyncSession = Depends(get_session),
+    member: TopicOwnerDep,
+    session: SessionDep,
 ):
     """Set a member's display handle. Creator only."""
     result = await session.execute(select(Member).where(Member.id == member_id))
@@ -195,8 +194,8 @@ async def rename_member_endpoint(
 async def resend_invite_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     """Re-send invite link. Admin+ only."""
     result = await session.execute(select(Member).where(Member.id == member_id))

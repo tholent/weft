@@ -14,12 +14,10 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, Request
 from sqlmodel import select
 
-from app.db.session import get_session
-from app.deps import get_current_member
+from app.deps import CurrentMemberDep, SessionDep
 from app.models.member import Member
 from app.schemas.auth import AuthResponse, MagicLinkVerify
 from app.services.auth import generate_token, hash_token, revoke_token, verify_magic_link
@@ -30,7 +28,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/verify", response_model=AuthResponse)
 async def verify_magic_link_endpoint(
     payload: MagicLinkVerify,
-    session: AsyncSession = Depends(get_session),
+    session: SessionDep,
 ):
     """Verify a magic link and issue a fresh bearer token."""
     try:
@@ -59,8 +57,8 @@ async def verify_magic_link_endpoint(
 @router.post("/revoke")
 async def revoke_current_token(
     request: Request,
-    member: Member = Depends(get_current_member),
-    session: AsyncSession = Depends(get_session),
+    member: CurrentMemberDep,
+    session: SessionDep,
 ):
     """Revoke the current bearer token."""
     auth_header = request.headers.get("Authorization", "")

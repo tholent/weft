@@ -16,13 +16,10 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_member
-from app.models.member import Member
+from app.deps import SessionDep, TopicAdminDep, TopicMemberDep
 from app.schemas.attachment import AttachmentResponse
 from app.services.attachment import (
     get_attachment,
@@ -36,15 +33,14 @@ router = APIRouter(prefix="/topics/{topic_id}", tags=["attachments"])
 
 @router.post(
     "/updates/{update_id}/attachments",
-    response_model=AttachmentResponse,
     status_code=201,
 )
 async def upload_attachment(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     file: UploadFile,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ) -> AttachmentResponse:
     """Upload a photo attachment for an update.  Admin+ only.
 
@@ -78,12 +74,12 @@ async def upload_attachment(
     )
 
 
-@router.get("/updates/{update_id}/attachments", response_model=list[AttachmentResponse])
+@router.get("/updates/{update_id}/attachments")
 async def list_attachments(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    member: TopicMemberDep,
+    session: SessionDep,
 ) -> list[AttachmentResponse]:
     """List all attachments for an update."""
     attachments = await get_attachments(session, update_id)
@@ -105,8 +101,8 @@ async def list_attachments(
 async def serve_attachment(
     topic_id: uuid.UUID,
     attachment_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    member: TopicMemberDep,
+    session: SessionDep,
 ) -> FileResponse:
     """Serve the raw file for an attachment.
 

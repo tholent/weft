@@ -14,14 +14,11 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
-from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_owner
+from app.deps import SessionDep, TopicAdminDep, TopicOwnerDep
 from app.models.enums import TransferStatus
-from app.models.member import Member
 from app.models.transfer import CreatorTransfer
 from app.schemas.transfer import DirectTransferRequest, TransferResponse
 from app.services.transfer import cancel_transfer, execute_direct_transfer, request_transfer
@@ -32,8 +29,8 @@ router = APIRouter(prefix="/topics/{topic_id}/transfer", tags=["transfer"])
 @router.post("", response_model=TransferResponse)
 async def request_transfer_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     """Request a dead-man's-switch transfer. Admin only."""
     try:
@@ -51,8 +48,8 @@ async def request_transfer_endpoint(
 @router.get("", response_model=TransferResponse | None)
 async def get_transfer_status_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     """Get current pending transfer status. Admin+ only."""
     result = await session.execute(
@@ -75,8 +72,8 @@ async def get_transfer_status_endpoint(
 @router.post("/cancel")
 async def cancel_transfer_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_owner),
-    session: AsyncSession = Depends(get_session),
+    member: TopicOwnerDep,
+    session: SessionDep,
 ):
     """Cancel a pending transfer. Owner only."""
     await cancel_transfer(session, topic_id)
@@ -87,8 +84,8 @@ async def cancel_transfer_endpoint(
 async def direct_transfer_endpoint(
     topic_id: uuid.UUID,
     payload: DirectTransferRequest,
-    member: Member = Depends(require_topic_owner),
-    session: AsyncSession = Depends(get_session),
+    member: TopicOwnerDep,
+    session: SessionDep,
 ):
     """Immediately pass ownership to any member. Owner only."""
     try:

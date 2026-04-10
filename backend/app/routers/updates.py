@@ -13,14 +13,14 @@
 # limitations under the License.
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.db.session import get_session
-from app.deps import require_topic_member, require_topic_moderator
+from app.deps import SessionDep, TopicMemberDep, TopicModeratorDep
 from app.models.enums import MemberRole, RelayStatus
 from app.models.member import Member, MemberCircleHistory
 from app.models.reply import Reply
@@ -135,8 +135,8 @@ async def _build_update_response(
 async def create_update_endpoint(
     topic_id: uuid.UUID,
     payload: UpdateCreate,
-    member: Member = Depends(require_topic_moderator),
-    session: AsyncSession = Depends(get_session),
+    member: TopicModeratorDep,
+    session: SessionDep,
 ):
     """Create an update addressed to specified circles. Moderator+ only."""
     try:
@@ -151,10 +151,10 @@ async def create_update_endpoint(
 @router.get("", response_model=PaginatedResponse[UpdateResponse])
 async def get_feed_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    member: TopicMemberDep,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """Get feed. Uses member's circle history for visibility."""
     if member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
@@ -174,8 +174,8 @@ async def edit_update_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     payload: UpdateEdit,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    member: TopicMemberDep,
+    session: SessionDep,
 ):
     """Edit an update. Author only."""
     from app.models.update import Update
@@ -195,8 +195,8 @@ async def edit_update_endpoint(
 async def delete_update_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    member: TopicMemberDep,
+    session: SessionDep,
 ):
     """Soft delete an update. Author or admin+ only."""
     from app.models.update import Update

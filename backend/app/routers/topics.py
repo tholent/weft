@@ -14,14 +14,12 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Request
 
 from app.config import get_settings
-from app.db.session import get_session
-from app.deps import require_topic_member, require_topic_owner
+from app.deps import SessionDep, TopicMemberDep, TopicOwnerDep
 from app.models.enums import MemberRole
-from app.models.member import Member, MemberCircleHistory
+from app.models.member import MemberCircleHistory
 from app.rate_limit import limiter
 from app.schemas.topic import TopicCreate, TopicCreateResponse, TopicResponse
 from app.services.email import send_invite_email
@@ -39,7 +37,7 @@ def _topic_creation_rate_limit() -> str:
 async def create_topic_endpoint(
     request: Request,
     payload: TopicCreate,
-    session: AsyncSession = Depends(get_session),
+    session: SessionDep,
 ):
     """Create a new topic. No auth required."""
     topic, member, magic_link = await create_topic(
@@ -63,8 +61,8 @@ async def create_topic_endpoint(
 @router.get("/{topic_id}", response_model=TopicResponse)
 async def get_topic_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    member: TopicMemberDep,
+    session: SessionDep,
 ):
     """Get topic info. Returns scoped title based on viewer's circle."""
     topic = await get_topic(session, topic_id)
@@ -104,8 +102,8 @@ async def get_topic_endpoint(
 @router.post("/{topic_id}/close", response_model=TopicResponse)
 async def close_topic_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_owner),
-    session: AsyncSession = Depends(get_session),
+    member: TopicOwnerDep,
+    session: SessionDep,
 ):
     """Close a topic. Creator only. Purges all emails."""
     topic = await close_topic(session, topic_id)

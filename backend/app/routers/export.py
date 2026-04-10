@@ -21,13 +21,10 @@ may trigger an export.
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_session
-from app.deps import require_topic_owner
-from app.models.member import Member
+from app.deps import SessionDep, TopicOwnerDep
 from app.services.export import export_topic
 
 router = APIRouter(prefix="/topics", tags=["export"])
@@ -36,8 +33,8 @@ router = APIRouter(prefix="/topics", tags=["export"])
 @router.get("/{topic_id}/export")
 async def export_topic_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_owner),
-    session: AsyncSession = Depends(get_session),
+    member: TopicOwnerDep,
+    session: SessionDep,
 ) -> JSONResponse:
     """Export the full topic as a privacy-safe JSON document.
 

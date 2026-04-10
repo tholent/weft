@@ -14,13 +14,11 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException
 
-from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_member
+from app.deps import SessionDep, TopicAdminDep, TopicMemberDep
 from app.models.enums import MemberRole
-from app.models.member import Member, MemberCircleHistory
+from app.models.member import MemberCircleHistory
 from app.schemas.circle import CircleCreate, CircleResponse, CircleUpdate
 from app.services.circle import create_circle, delete_circle, list_circles, rename_circle
 
@@ -31,8 +29,8 @@ router = APIRouter(prefix="/topics/{topic_id}/circles", tags=["circles"])
 async def create_circle_endpoint(
     topic_id: uuid.UUID,
     payload: CircleCreate,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     circle = await create_circle(session, topic_id, payload.name, payload.scoped_title)
     return CircleResponse(
@@ -46,8 +44,8 @@ async def create_circle_endpoint(
 @router.get("", response_model=list[CircleResponse])
 async def list_circles_endpoint(
     topic_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    member: TopicMemberDep,
+    session: SessionDep,
 ):
     """List circles. Admin+ sees all; recipients see only their own circle."""
     if member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
@@ -88,8 +86,8 @@ async def rename_circle_endpoint(
     topic_id: uuid.UUID,
     circle_id: uuid.UUID,
     payload: CircleUpdate,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     try:
         circle = await rename_circle(
@@ -114,8 +112,8 @@ async def rename_circle_endpoint(
 async def delete_circle_endpoint(
     topic_id: uuid.UUID,
     circle_id: uuid.UUID,
-    member: Member = Depends(require_topic_admin),
-    session: AsyncSession = Depends(get_session),
+    member: TopicAdminDep,
+    session: SessionDep,
 ):
     try:
         await delete_circle(session, circle_id, topic_id)

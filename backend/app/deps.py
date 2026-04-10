@@ -15,6 +15,7 @@
 import hashlib
 import uuid
 from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,7 @@ from app.models.transfer import CreatorTransfer
 
 async def get_current_member(
     request: Request,
-    session: AsyncSession = Depends(get_session),
+    session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Member:
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -86,7 +87,7 @@ def _verify_topic_access(member: Member, topic_id: uuid.UUID) -> None:
 
 async def require_topic_member(
     topic_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)],
 ) -> Member:
     _verify_topic_access(member, topic_id)
     return member
@@ -94,7 +95,7 @@ async def require_topic_member(
 
 async def require_topic_moderator(
     topic_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)],
 ) -> Member:
     _verify_topic_access(member, topic_id)
     if member.role not in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
@@ -104,7 +105,7 @@ async def require_topic_moderator(
 
 async def require_topic_admin(
     topic_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)],
 ) -> Member:
     _verify_topic_access(member, topic_id)
     if member.role not in (MemberRole.owner, MemberRole.admin):
@@ -114,7 +115,7 @@ async def require_topic_admin(
 
 async def require_topic_owner(
     topic_id: uuid.UUID,
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)],
 ) -> Member:
     _verify_topic_access(member, topic_id)
     if member.role != MemberRole.owner:
@@ -124,7 +125,7 @@ async def require_topic_owner(
 
 # Keep bare versions for non-topic-scoped endpoints (e.g., /auth/revoke)
 async def require_moderator(
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)],
 ) -> Member:
     if member.role not in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         raise HTTPException(status_code=403, detail="Moderator or above required")
@@ -132,7 +133,7 @@ async def require_moderator(
 
 
 async def require_admin(
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)],
 ) -> Member:
     if member.role not in (MemberRole.owner, MemberRole.admin):
         raise HTTPException(status_code=403, detail="Admin or above required")
@@ -140,8 +141,24 @@ async def require_admin(
 
 
 async def require_owner(
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)],
 ) -> Member:
     if member.role != MemberRole.owner:
         raise HTTPException(status_code=403, detail="Owner required")
     return member
+
+
+# ---------------------------------------------------------------------------
+# Public Annotated type aliases — import these in routers instead of
+# using Depends() as a default-value parameter (S8410 / PEP-593 style).
+# ---------------------------------------------------------------------------
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+CurrentMemberDep = Annotated[Member, Depends(get_current_member)]
+TopicMemberDep = Annotated[Member, Depends(require_topic_member)]
+TopicModeratorDep = Annotated[Member, Depends(require_topic_moderator)]
+TopicAdminDep = Annotated[Member, Depends(require_topic_admin)]
+TopicOwnerDep = Annotated[Member, Depends(require_topic_owner)]
+ModeratorDep = Annotated[Member, Depends(require_moderator)]
+AdminDep = Annotated[Member, Depends(require_admin)]
+OwnerDep = Annotated[Member, Depends(require_owner)]

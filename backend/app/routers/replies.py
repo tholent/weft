@@ -13,13 +13,12 @@
 # limitations under the License.
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Query
 from sqlmodel import select
 
-from app.db.session import get_session
-from app.deps import require_topic_member, require_topic_moderator
+from app.deps import SessionDep, TopicMemberDep, TopicModeratorDep
 from app.models.member import Member
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.reply import (
@@ -46,8 +45,8 @@ async def create_reply_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     payload: ReplyCreate,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    member: TopicMemberDep,
+    session: SessionDep,
 ):
     """Create a reply to an update. Any authenticated member."""
     reply = await create_reply(
@@ -68,10 +67,10 @@ async def create_reply_endpoint(
 async def list_replies_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
-    member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    member: TopicMemberDep,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """List replies for an update. Scoped by role."""
     all_replies = await get_replies_for_update(session, update_id, member)
@@ -117,8 +116,8 @@ async def relay_reply_endpoint(
     update_id: uuid.UUID,
     reply_id: uuid.UUID,
     payload: RelayAction,
-    member: Member = Depends(require_topic_moderator),
-    session: AsyncSession = Depends(get_session),
+    member: TopicModeratorDep,
+    session: SessionDep,
 ):
     """Relay a reply to circles. Moderator+ only."""
     await relay_reply(session, reply_id, member.id, payload.circle_ids)
@@ -130,8 +129,8 @@ async def dismiss_reply_endpoint(
     topic_id: uuid.UUID,
     update_id: uuid.UUID,
     reply_id: uuid.UUID,
-    member: Member = Depends(require_topic_moderator),
-    session: AsyncSession = Depends(get_session),
+    member: TopicModeratorDep,
+    session: SessionDep,
 ):
     """Dismiss a reply. Moderator+ only."""
     await dismiss_reply(session, reply_id)
@@ -144,8 +143,8 @@ async def create_mod_response_endpoint(
     update_id: uuid.UUID,
     reply_id: uuid.UUID,
     payload: ModResponseCreate,
-    member: Member = Depends(require_topic_moderator),
-    session: AsyncSession = Depends(get_session),
+    member: TopicModeratorDep,
+    session: SessionDep,
 ):
     """Create a mod response to a reply. Moderator+ only."""
     mod_resp = await create_mod_response(session, reply_id, member.id, payload.body, payload.scope)

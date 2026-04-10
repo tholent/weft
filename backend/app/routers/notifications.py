@@ -16,14 +16,11 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
-from app.db.session import get_session
-from app.deps import require_topic_member
+from app.deps import SessionDep, TopicMemberDep
 from app.models.enums import MemberRole
-from app.models.member import Member
 from app.models.member import Member as MemberModel
 from app.schemas.notification import (
     NotificationPreferenceResponse,
@@ -40,12 +37,12 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[NotificationPreferenceResponse])
+@router.get("")
 async def list_preferences(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
-    current_member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    current_member: TopicMemberDep,
+    session: SessionDep,
 ) -> list[NotificationPreferenceResponse]:
     """List notification preferences for a member.
 
@@ -79,13 +76,13 @@ async def list_preferences(
     ]
 
 
-@router.put("", response_model=NotificationPreferenceResponse)
+@router.put("")
 async def set_preference(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: NotificationPreferenceUpdate,
-    current_member: Member = Depends(require_topic_member),
-    session: AsyncSession = Depends(get_session),
+    current_member: TopicMemberDep,
+    session: SessionDep,
 ) -> NotificationPreferenceResponse:
     """Create or update a single notification preference.
 

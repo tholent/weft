@@ -29,6 +29,7 @@ import base64
 import hashlib
 import hmac
 import logging
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 
@@ -48,7 +49,7 @@ def _compute_twilio_signature(auth_token: str, url: str, form_params: dict[str, 
 
 async def verify_twilio_signature(
     request: Request,
-    settings: Settings = Depends(get_settings),
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
     """Dependency that validates the Twilio webhook signature.
 

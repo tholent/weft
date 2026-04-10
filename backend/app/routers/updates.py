@@ -187,7 +187,7 @@ async def edit_update_endpoint(
     if update.author_member_id != member.id:
         raise HTTPException(status_code=403, detail="Only the author can edit")
 
-    updated = await edit_update(session, update_id, payload.body, payload.circle_bodies)
+    updated = await edit_update(session, update_id, payload.body)
     return await _build_update_response(session, updated, member)
 
 

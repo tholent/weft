@@ -169,7 +169,7 @@ async def test_circle_soft_delete(session, topic_with_creator):
 
     from app.services.circle import delete_circle, list_circles
 
-    await delete_circle(session, circle_id)
+    await delete_circle(session, circle_id, topic_id)
     await session.commit()
 
     # Verify deleted_at is set by re-fetching
@@ -198,7 +198,7 @@ async def test_clear_scoped_title(session, topic_with_creator):
 
     from app.services.circle import rename_circle
 
-    updated = await rename_circle(session, circle.id, clear_scoped_title=True)
+    updated = await rename_circle(session, circle.id, topic.id, clear_scoped_title=True)
     assert updated.scoped_title is None
 
 

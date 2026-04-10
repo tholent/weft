@@ -63,8 +63,8 @@ async def edit_update(
     session: AsyncSession,
     update_id: uuid.UUID,
     body: str,
-    circle_bodies: dict[str, str] | None = None,
 ) -> Update:
+    """Edit the body of an update. update_circle rows are immutable and never changed."""
     result = await session.execute(select(Update).where(Update.id == update_id))
     update = result.scalar_one_or_none()
     if update is None:
@@ -73,23 +73,6 @@ async def edit_update(
     update.body = body
     update.edited_at = datetime.now(UTC)
     session.add(update)
-
-    if circle_bodies:
-        for circle_id_str, variant_body in circle_bodies.items():
-            try:
-                circle_id = uuid.UUID(circle_id_str)
-            except ValueError:
-                continue
-            result = await session.execute(
-                select(UpdateCircle).where(
-                    UpdateCircle.update_id == update_id,
-                    UpdateCircle.circle_id == circle_id,
-                )
-            )
-            uc = result.scalar_one_or_none()
-            if uc is not None:
-                uc.body = variant_body or None
-                session.add(uc)
 
     await session.flush()
     return update

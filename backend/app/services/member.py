@@ -36,8 +36,8 @@ async def invite_member(
     notification_channel: NotificationChannel = NotificationChannel.email,
 ) -> tuple[Member, str]:
     """Invite a member to a topic. Returns (member, raw_token)."""
-    if role == MemberRole.owner:
-        raise ValueError("Cannot invite members as creator")
+    if role not in (MemberRole.recipient, MemberRole.moderator):
+        raise ValueError("Invited members may only be recipient or moderator")
     if email is None and phone is None:
         raise ValueError("At least one of email or phone must be provided")
     if notification_channel == NotificationChannel.email and email is None:
@@ -76,10 +76,26 @@ async def move_member(
     session: AsyncSession,
     member_id: uuid.UUID,
     new_circle_id: uuid.UUID,
+    topic_id: uuid.UUID,
     retroactive_revoke: bool = False,
 ) -> None:
-    """Move a member to a different circle."""
+    """Move a member to a different circle.
+
+    Both the member and target circle must belong to topic_id.
+    """
     now = datetime.now(UTC)
+
+    # Verify the target member belongs to this topic
+    member_result = await session.execute(select(Member).where(Member.id == member_id))
+    target_member = member_result.scalar_one_or_none()
+    if target_member is None or target_member.topic_id != topic_id:
+        raise ValueError("Member not found")
+
+    # Verify the target circle belongs to this topic
+    circle_result = await session.execute(select(Circle).where(Circle.id == new_circle_id))
+    target_circle = circle_result.scalar_one_or_none()
+    if target_circle is None or target_circle.topic_id != topic_id:
+        raise ValueError("Circle not found")
 
     # Revoke current active circle history rows
     result = await session.execute(

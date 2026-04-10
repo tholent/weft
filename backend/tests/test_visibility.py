@@ -71,7 +71,7 @@ async def test_moved_member_does_not_see_new_updates_from_old_circle(session, to
     await session.commit()
 
     # Move member to circle B
-    await move_member(session, member.id, circle_b.id)
+    await move_member(session, member.id, circle_b.id, topic.id)
     await session.commit()
 
     # Post to circle A after member moved out
@@ -106,7 +106,7 @@ async def test_moved_member_still_sees_old_updates_falls_forward(session, topic_
     await session.commit()
 
     # Move member - falls forward, so old updates remain visible
-    await move_member(session, member.id, circle_b.id)
+    await move_member(session, member.id, circle_b.id, topic.id)
     await session.commit()
 
     feed = await get_feed(session, member.id)
@@ -135,7 +135,7 @@ async def test_retroactive_revocation_hides_old_updates(session, topic_with_crea
     await session.commit()
 
     # Move member with retroactive revocation
-    await move_member(session, member.id, circle_b.id, retroactive_revoke=True)
+    await move_member(session, member.id, circle_b.id, topic.id, retroactive_revoke=True)
     await session.commit()
 
     feed = await get_feed(session, member.id)
@@ -166,7 +166,7 @@ async def test_moved_up_does_not_retroactively_see_old_posts(session, topic_with
     await session.commit()
 
     # Move member to circle_b
-    await move_member(session, member.id, circle_b.id)
+    await move_member(session, member.id, circle_b.id, topic.id)
     await session.commit()
 
     feed = await get_feed(session, member.id)

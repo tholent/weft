@@ -91,9 +91,17 @@ async def rename_circle_endpoint(
     member: Member = Depends(require_topic_admin),
     session: AsyncSession = Depends(get_session),
 ):
-    circle = await rename_circle(
-        session, circle_id, payload.name, payload.scoped_title, payload.clear_scoped_title
-    )
+    try:
+        circle = await rename_circle(
+            session,
+            circle_id,
+            topic_id,
+            payload.name,
+            payload.scoped_title,
+            payload.clear_scoped_title,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     return CircleResponse(
         id=circle.id,
         name=circle.name,
@@ -110,7 +118,10 @@ async def delete_circle_endpoint(
     session: AsyncSession = Depends(get_session),
 ):
     try:
-        await delete_circle(session, circle_id)
+        await delete_circle(session, circle_id, topic_id)
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        err = str(e)
+        if err == "Circle not found":
+            raise HTTPException(status_code=404, detail=err)
+        raise HTTPException(status_code=409, detail=err)
     return {"detail": "Circle deleted"}

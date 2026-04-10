@@ -37,13 +37,14 @@ async def create_circle(
 async def rename_circle(
     session: AsyncSession,
     circle_id: uuid.UUID,
+    topic_id: uuid.UUID,
     name: str | None = None,
     scoped_title: str | None = None,
     clear_scoped_title: bool = False,
 ) -> Circle:
     result = await session.execute(select(Circle).where(Circle.id == circle_id))
     circle = result.scalar_one_or_none()
-    if circle is None:
+    if circle is None or circle.topic_id != topic_id:
         raise ValueError("Circle not found")
     if name is not None:
         circle.name = name
@@ -56,7 +57,14 @@ async def rename_circle(
     return circle
 
 
-async def delete_circle(session: AsyncSession, circle_id: uuid.UUID) -> None:
+async def delete_circle(
+    session: AsyncSession, circle_id: uuid.UUID, topic_id: uuid.UUID
+) -> None:
+    result = await session.execute(select(Circle).where(Circle.id == circle_id))
+    circle = result.scalar_one_or_none()
+    if circle is None or circle.topic_id != topic_id:
+        raise ValueError("Circle not found")
+
     # Check for active members
     result = await session.execute(
         select(MemberCircleHistory).where(
@@ -67,10 +75,6 @@ async def delete_circle(session: AsyncSession, circle_id: uuid.UUID) -> None:
     if result.scalars().first() is not None:
         raise ValueError("Cannot delete circle with active members")
 
-    result = await session.execute(select(Circle).where(Circle.id == circle_id))
-    circle = result.scalar_one_or_none()
-    if circle is None:
-        raise ValueError("Circle not found")
     # Soft-delete to preserve update_circle and member_circle_history references
     circle.deleted_at = datetime.now(UTC)
     session.add(circle)

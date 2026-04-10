@@ -45,8 +45,6 @@ async def invite_member_endpoint(
     session: AsyncSession = Depends(get_session),
 ):
     """Invite a member. Admin+ only. Sends invite email with magic link."""
-    if payload.role == MemberRole.admin and member.role != MemberRole.owner:
-        raise HTTPException(status_code=403, detail="Only the owner can invite members as admin")
     try:
         new_member, raw_token = await invite_member(
             session,
@@ -150,7 +148,12 @@ async def move_member_endpoint(
     session: AsyncSession = Depends(get_session),
 ):
     """Move a member to a different circle. Admin+ only."""
-    await move_member(session, member_id, payload.new_circle_id, payload.retroactive_revoke)
+    try:
+        await move_member(
+            session, member_id, payload.new_circle_id, topic_id, payload.retroactive_revoke
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     return {"detail": "Member moved"}
 
 
@@ -159,7 +162,7 @@ async def promote_member_endpoint(
     topic_id: uuid.UUID,
     member_id: uuid.UUID,
     payload: MemberPromote,
-    member: Member = Depends(require_topic_member),
+    member: Member = Depends(require_topic_admin),
     session: AsyncSession = Depends(get_session),
 ):
     """Promote a member. Admin+ for moderator; creator only for admin."""

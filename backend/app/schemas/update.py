@@ -28,9 +28,6 @@ class UpdateCreate(BaseModel):
 
 class UpdateEdit(BaseModel):
     body: str = Field(min_length=1, max_length=10000)
-    circle_bodies: dict[str, str] = Field(
-        default_factory=dict
-    )  # str(circle_id) → updated variant body
 
 
 class UpdateResponse(BaseModel):

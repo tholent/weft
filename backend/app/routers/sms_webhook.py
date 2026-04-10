@@ -29,6 +29,7 @@ from fastapi import APIRouter, Depends, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
+from app.deps_sms import verify_twilio_signature
 from app.services.notifications.sms_commands import SmsCommand, parse_sms_command
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks/sms", tags=["sms"])
 
 
-@router.post("/inbound")
+@router.post("/inbound", dependencies=[Depends(verify_twilio_signature)])
 async def sms_inbound(
     From: str = Form(...),
     Body: str = Form(...),

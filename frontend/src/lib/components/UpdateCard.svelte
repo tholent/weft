@@ -20,7 +20,10 @@
 
 	export let update: Update;
 	export let circles: Circle[] = [];
-	export let onClick: () => void;
+	export let onClick: (() => void) | undefined = undefined;
+	export let canReply: boolean = false;
+	export let canEdit: boolean = false;
+	export let canDelete: boolean = false;
 
 	$: preview = update.deleted_at ? '[removed]' : update.body;
 
@@ -30,7 +33,7 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-<div class="update-row" class:deleted={!!update.deleted_at} on:click={onClick}>
+<div class="update-row" class:deleted={!!update.deleted_at} on:click={onClick ?? (() => {})}>
 	<p class="preview">{preview}</p>
 	<div class="row-footer">
 		<div class="meta">

@@ -12,17 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type MemberRole = 'owner' | 'admin' | 'moderator' | 'recipient';
-
-export type NotificationChannel = 'email' | 'sms';
-
-export interface Member {
+export interface Attachment {
 	id: string;
-	role: MemberRole;
-	display_handle: string | null;
-	joined_at: string;
-	circle_id: string | null;
-	notification_channel: NotificationChannel;
-	has_email: boolean;
-	has_phone: boolean;
+	update_id: string;
+	topic_id: string;
+	filename: string;
+	content_type: string;
+	size_bytes: number;
+	created_at: string;
 }

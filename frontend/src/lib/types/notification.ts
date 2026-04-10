@@ -12,17 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type MemberRole = 'owner' | 'admin' | 'moderator' | 'recipient';
-
 export type NotificationChannel = 'email' | 'sms';
 
-export interface Member {
+export type DeliveryMode = 'immediate' | 'digest' | 'muted';
+
+export type NotificationTrigger =
+	| 'new_update'
+	| 'new_reply'
+	| 'mod_response'
+	| 'invite'
+	| 'relay'
+	| 'digest';
+
+export interface NotificationPreference {
 	id: string;
-	role: MemberRole;
-	display_handle: string | null;
-	joined_at: string;
-	circle_id: string | null;
-	notification_channel: NotificationChannel;
-	has_email: boolean;
-	has_phone: boolean;
+	member_id: string;
+	channel: NotificationChannel;
+	trigger: NotificationTrigger;
+	delivery_mode: DeliveryMode;
+}
+
+export interface NotificationPreferenceUpdate {
+	channel: NotificationChannel;
+	trigger: NotificationTrigger;
+	delivery_mode: DeliveryMode;
 }

@@ -14,7 +14,6 @@
 
 """Tests for audit remediation fixes (Tasks 1-19)."""
 
-
 import pytest
 from sqlmodel import select
 
@@ -61,7 +60,7 @@ async def test_cross_topic_access_rejected(client, session):
     session.add(topic_b)
     await session.flush()
 
-    member_a = Member(topic_id=topic_a.id, role=MemberRole.creator)
+    member_a = Member(topic_id=topic_a.id, role=MemberRole.owner)
     session.add(member_a)
     await session.flush()
 
@@ -127,7 +126,7 @@ async def test_promote_to_creator_rejected(session, topic_with_creator):
     await session.commit()
 
     with pytest.raises(ValueError, match="Cannot promote to creator"):
-        await promote_member(session, admin.id, MemberRole.creator, creator)
+        await promote_member(session, admin.id, MemberRole.owner, creator)
 
 
 # --- Task 10: Input length validation ---

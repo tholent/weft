@@ -115,5 +115,5 @@ async def test_execute_transfer_swaps_roles(session, topic_with_creator):
     await session.refresh(admin)
 
     assert creator.role == MemberRole.admin
-    assert admin.role == MemberRole.creator
+    assert admin.role == MemberRole.owner
     assert transfer.status == TransferStatus.expired

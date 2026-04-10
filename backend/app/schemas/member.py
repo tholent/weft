@@ -17,21 +17,25 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, field_validator
 
-from app.models.enums import MemberRole
+from app.models.enums import MemberRole, NotificationChannel
 
 
 class MemberInvite(BaseModel):
-    email: EmailStr
+    email: EmailStr | None = None
+    phone: str | None = None
     circle_id: uuid.UUID
     role: MemberRole = MemberRole.recipient
     display_handle: str | None = None
+    notification_channel: NotificationChannel = NotificationChannel.email
 
     @field_validator("role")
     @classmethod
     def validate_invite_role(cls, v: MemberRole) -> MemberRole:
-        if v not in (MemberRole.recipient, MemberRole.moderator, MemberRole.admin):
-            raise ValueError("Invited members can only be assigned recipient, moderator, or admin roles")
-        # owner role is assigned only via direct transfer, never via invite
+        if v not in (MemberRole.recipient, MemberRole.moderator):
+            raise ValueError(
+                "Invited members can only be assigned recipient or moderator roles"
+            )
+        # admin and owner roles are only reachable through promotion or transfer
         return v
 
 
@@ -54,3 +58,6 @@ class MemberResponse(BaseModel):
     display_handle: str | None = None
     joined_at: datetime
     circle_id: uuid.UUID | None = None
+    notification_channel: NotificationChannel = NotificationChannel.email
+    has_email: bool = False
+    has_phone: bool = False

@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 
 from sqlmodel import Field, SQLModel
 
-from app.models.enums import MemberRole
+from app.models.enums import MemberRole, NotificationChannel
 
 
 class Member(SQLModel, table=True):
@@ -30,6 +30,9 @@ class Member(SQLModel, table=True):
     display_handle: str | None = Field(default=None)
     joined_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     email_purged_at: datetime | None = Field(default=None)
+    phone: str | None = Field(default=None)
+    phone_purged_at: datetime | None = Field(default=None)
+    notification_channel: NotificationChannel = Field(default=NotificationChannel.email)
 
 
 class MemberCircleHistory(SQLModel, table=True):

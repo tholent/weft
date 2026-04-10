@@ -22,12 +22,22 @@ from app.models.member import Member
 
 
 async def purge_emails(session: AsyncSession, topic_id: uuid.UUID) -> None:
-    """Set email=None and email_purged_at=now for all members in a topic."""
+    """Purge all contact info for members in a topic.
+
+    Sets email=None, email_purged_at=now, phone=None, phone_purged_at=now.
+    """
     now = datetime.now(UTC)
     result = await session.execute(select(Member).where(Member.topic_id == topic_id))
     members = result.scalars().all()
     for member in members:
+        changed = False
         if member.email is not None:
             member.email = None
             member.email_purged_at = now
+            changed = True
+        if member.phone is not None:
+            member.phone = None
+            member.phone_purged_at = now
+            changed = True
+        if changed:
             session.add(member)

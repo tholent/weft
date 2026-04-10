@@ -45,3 +45,30 @@ class TransferStatus(enum.StrEnum):
     confirmed = "confirmed"
     denied = "denied"
     expired = "expired"
+
+
+class NotificationChannel(enum.StrEnum):
+    email = "email"
+    sms = "sms"
+
+
+class DeliveryMode(enum.StrEnum):
+    immediate = "immediate"
+    digest = "digest"
+    muted = "muted"
+
+
+class NotificationTrigger(enum.StrEnum):
+    new_update = "new_update"
+    new_reply = "new_reply"
+    mod_response = "mod_response"
+    invite = "invite"
+    relay = "relay"
+    digest = "digest"
+
+
+class NotificationStatus(enum.StrEnum):
+    pending = "pending"
+    sent = "sent"
+    failed = "failed"
+    skipped = "skipped"

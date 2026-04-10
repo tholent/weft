@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.models.circle import Circle
-from app.models.enums import MemberRole
+from app.models.enums import MemberRole, NotificationChannel
 from app.models.member import Member, MemberCircleHistory
 from app.services.auth import generate_token
 
@@ -27,21 +27,36 @@ from app.services.auth import generate_token
 async def invite_member(
     session: AsyncSession,
     topic_id: uuid.UUID,
-    email: str,
     circle_id: uuid.UUID,
     role: MemberRole = MemberRole.recipient,
+    email: str | None = None,
+    phone: str | None = None,
     display_handle: str | None = None,
+    notification_channel: NotificationChannel = NotificationChannel.email,
 ) -> tuple[Member, str]:
     """Invite a member to a topic. Returns (member, raw_token)."""
     if role == MemberRole.owner:
         raise ValueError("Cannot invite members as creator")
+    if email is None and phone is None:
+        raise ValueError("At least one of email or phone must be provided")
+    if notification_channel == NotificationChannel.email and email is None:
+        raise ValueError("Email is required when notification_channel is email")
+    if notification_channel == NotificationChannel.sms and phone is None:
+        raise ValueError("Phone is required when notification_channel is sms")
     # Validate circle belongs to topic
     result = await session.execute(select(Circle).where(Circle.id == circle_id))
     circle = result.scalar_one_or_none()
     if circle is None or circle.topic_id != topic_id:
         raise ValueError("Circle does not belong to this topic")
 
-    member = Member(topic_id=topic_id, role=role, email=email, display_handle=display_handle or None)
+    member = Member(
+        topic_id=topic_id,
+        role=role,
+        email=email,
+        phone=phone,
+        display_handle=display_handle or None,
+        notification_channel=notification_channel,
+    )
     session.add(member)
     await session.flush()
 

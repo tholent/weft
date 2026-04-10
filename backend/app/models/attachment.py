@@ -17,17 +17,15 @@ from datetime import UTC, datetime
 
 from sqlmodel import Field, SQLModel
 
-from app.models.enums import TopicStatus
 
-
-class Topic(SQLModel, table=True):
-    __tablename__ = "topic"
+class Attachment(SQLModel, table=True):
+    __tablename__ = "attachment"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    default_title: str
-    status: TopicStatus = Field(default=TopicStatus.active)
-    transfer_deadline: datetime | None = Field(default=None)
+    update_id: uuid.UUID = Field(foreign_key="update.id", index=True)
+    topic_id: uuid.UUID = Field(foreign_key="topic.id", index=True)
+    filename: str
+    content_type: str
+    storage_key: str
+    size_bytes: int
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    closed_at: datetime | None = Field(default=None)
-    short_code: str | None = Field(default=None, index=True)
-    photo_link_only: bool = Field(default=False)

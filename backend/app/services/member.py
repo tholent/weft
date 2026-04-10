@@ -22,6 +22,7 @@ from app.models.circle import Circle
 from app.models.enums import MemberRole, NotificationChannel
 from app.models.member import Member, MemberCircleHistory
 from app.services.auth import generate_token
+from app.services.notifications.preferences import create_defaults
 
 
 async def invite_member(
@@ -63,6 +64,9 @@ async def invite_member(
     # Create circle history
     history = MemberCircleHistory(member_id=member.id, circle_id=circle_id)
     session.add(history)
+
+    # Create default notification preferences for the new member
+    await create_defaults(session, member.id, notification_channel)
 
     raw_token = await generate_token(session, member.id)
     return member, raw_token

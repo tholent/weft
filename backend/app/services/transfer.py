@@ -30,9 +30,7 @@ async def request_transfer(
     requesting_member_id: uuid.UUID,
 ) -> CreatorTransfer:
     """Request a dead-man's-switch transfer. Only admins can request."""
-    result = await session.execute(
-        select(Member).where(Member.id == requesting_member_id)
-    )
+    result = await session.execute(select(Member).where(Member.id == requesting_member_id))
     member = result.scalar_one_or_none()
     if member is None or member.role != MemberRole.admin:
         raise ValueError("Only admins can request an ownership transfer")
@@ -76,7 +74,10 @@ async def cancel_transfer(session: AsyncSession, topic_id: uuid.UUID) -> None:
 
 
 async def execute_transfer(session: AsyncSession, transfer_id: uuid.UUID) -> None:
-    """Execute a dead-man's-switch transfer: promote requesting admin to owner, demote current owner."""
+    """Execute a dead-man's-switch transfer.
+
+    Promotes the requesting admin to owner and demotes the current owner.
+    """
     result = await session.execute(
         select(CreatorTransfer).where(CreatorTransfer.id == transfer_id)
     )

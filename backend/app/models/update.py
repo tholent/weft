@@ -37,5 +37,7 @@ class UpdateCircle(SQLModel, table=True):
 
     update_id: uuid.UUID = Field(foreign_key="update.id", primary_key=True)
     circle_id: uuid.UUID = Field(foreign_key="circle.id", primary_key=True)
-    body: str | None = Field(default=None)  # variant body for this circle; None = use parent update body
+    body: str | None = Field(
+        default=None
+    )  # variant body for this circle; None = use parent update body
     stamped_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

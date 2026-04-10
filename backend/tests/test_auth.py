@@ -39,9 +39,7 @@ async def test_revoked_token_returns_401(client, session, topic_with_creator):
     topic, creator, raw_token = topic_with_creator
 
     # Revoke the token
-    result = await session.execute(
-        select(Token).where(Token.token_hash == hash_token(raw_token))
-    )
+    result = await session.execute(select(Token).where(Token.token_hash == hash_token(raw_token)))
     token_row = result.scalar_one()
     token_row.revoked_at = datetime.now(UTC)
     session.add(token_row)
@@ -69,6 +67,7 @@ async def test_creator_auth_cancels_pending_transfer(client, session, topic_with
 
     # Create an admin member
     from app.models.member import Member
+
     admin = Member(topic_id=topic.id, role=MemberRole.admin, email="admin@test.com")
     session.add(admin)
     await session.flush()
@@ -104,8 +103,6 @@ async def test_token_last_used_at_updated(client, session, topic_with_creator):
     )
     assert resp.status_code == 200
 
-    result = await session.execute(
-        select(Token).where(Token.token_hash == hash_token(raw_token))
-    )
+    result = await session.execute(select(Token).where(Token.token_hash == hash_token(raw_token)))
     token_row = result.scalar_one()
     assert token_row.last_used_at is not None

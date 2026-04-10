@@ -38,9 +38,7 @@ from app.services.reply import (
     relay_reply,
 )
 
-router = APIRouter(
-    prefix="/topics/{topic_id}/updates/{update_id}/replies", tags=["replies"]
-)
+router = APIRouter(prefix="/topics/{topic_id}/updates/{update_id}/replies", tags=["replies"])
 
 
 @router.post("", response_model=ReplyResponse)
@@ -83,9 +81,7 @@ async def list_replies_endpoint(
 
     responses = []
     for reply in page:
-        result = await session.execute(
-            select(Member).where(Member.id == reply.author_member_id)
-        )
+        result = await session.execute(select(Member).where(Member.id == reply.author_member_id))
         author = result.scalar_one_or_none()
 
         mod_responses = await get_mod_responses_for_reply(session, reply.id, member)
@@ -152,9 +148,7 @@ async def create_mod_response_endpoint(
     session: AsyncSession = Depends(get_session),
 ):
     """Create a mod response to a reply. Moderator+ only."""
-    mod_resp = await create_mod_response(
-        session, reply_id, member.id, payload.body, payload.scope
-    )
+    mod_resp = await create_mod_response(session, reply_id, member.id, payload.body, payload.scope)
     return ModResponseResponse(
         id=mod_resp.id,
         body=mod_resp.body,

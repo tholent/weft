@@ -185,9 +185,7 @@ async def test_update_circle_is_immutable_after_insert(session, topic_with_creat
     await session.commit()
 
     # Verify update_circle row exists
-    result = await session.execute(
-        select(UpdateCircle).where(UpdateCircle.update_id == update.id)
-    )
+    result = await session.execute(select(UpdateCircle).where(UpdateCircle.update_id == update.id))
     rows = result.scalars().all()
     assert len(rows) == 1
     assert rows[0].circle_id == circle.id

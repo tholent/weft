@@ -42,9 +42,7 @@ async def _build_update_response(
     session: AsyncSession, update, member: Member | None = None
 ) -> UpdateResponse:
     # Get UpdateCircle rows (id + variant body)
-    result = await session.execute(
-        select(UpdateCircle).where(UpdateCircle.update_id == update.id)
-    )
+    result = await session.execute(select(UpdateCircle).where(UpdateCircle.update_id == update.id))
     uc_rows = list(result.scalars().all())
     circle_ids = [uc.circle_id for uc in uc_rows]
 
@@ -98,11 +96,7 @@ async def _build_update_response(
     # For mods, expose variants that differ from the default body
     body_variants: dict[str, str] = {}
     if not is_recipient:
-        body_variants = {
-            str(uc.circle_id): uc.body
-            for uc in uc_rows
-            if uc.body is not None
-        }
+        body_variants = {str(uc.circle_id): uc.body for uc in uc_rows if uc.body is not None}
 
     return UpdateResponse(
         id=update.id,

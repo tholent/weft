@@ -121,9 +121,7 @@ async def get_replies_for_update(
     """
     if viewer_member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         result = await session.execute(
-            select(Reply)
-            .where(Reply.update_id == update_id)
-            .order_by(Reply.created_at)  # type: ignore[union-attr]
+            select(Reply).where(Reply.update_id == update_id).order_by(Reply.created_at)  # type: ignore[union-attr]
         )
         return list(result.scalars().all())
 

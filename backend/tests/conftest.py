@@ -101,7 +101,7 @@ async def topic_with_creator(session):
     session.add(topic)
     await session.flush()
 
-    creator = Member(topic_id=topic.id, role=MemberRole.creator, email="creator@test.com")
+    creator = Member(topic_id=topic.id, role=MemberRole.owner, email="creator@test.com")
     session.add(creator)
     await session.flush()
 

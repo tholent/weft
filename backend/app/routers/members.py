@@ -19,10 +19,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
-from app.deps import require_topic_admin, require_topic_owner, require_topic_member
+from app.deps import require_topic_admin, require_topic_member, require_topic_owner
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
-from app.schemas.member import MemberInvite, MemberMove, MemberPromote, MemberRename, MemberResponse
+from app.schemas.member import (
+    MemberInvite,
+    MemberMove,
+    MemberPromote,
+    MemberRename,
+    MemberResponse,
+)
 from app.schemas.pagination import PaginatedResponse
 from app.services.auth import create_magic_link
 from app.services.email import send_invite_email
@@ -43,7 +49,14 @@ async def invite_member_endpoint(
         raise HTTPException(status_code=403, detail="Only the owner can invite members as admin")
     try:
         new_member, raw_token = await invite_member(
-            session, topic_id, payload.email, payload.circle_id, payload.role, payload.display_handle
+            session,
+            topic_id,
+            payload.circle_id,
+            payload.role,
+            email=payload.email,
+            phone=payload.phone,
+            display_handle=payload.display_handle,
+            notification_channel=payload.notification_channel,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -53,7 +66,8 @@ async def invite_member_endpoint(
     from app.services.topic import get_topic
 
     topic = await get_topic(session, topic_id)
-    await send_invite_email(payload.email, topic.default_title, magic_link)
+    if new_member.email:
+        await send_invite_email(new_member.email, topic.default_title, magic_link)
 
     return MemberResponse(
         id=new_member.id,
@@ -61,6 +75,9 @@ async def invite_member_endpoint(
         display_handle=new_member.display_handle,
         joined_at=new_member.joined_at,
         circle_id=payload.circle_id,
+        notification_channel=new_member.notification_channel,
+        has_email=new_member.email is not None,
+        has_phone=new_member.phone is not None,
     )
 
 
@@ -115,6 +132,9 @@ async def list_members_endpoint(
                 display_handle=m.display_handle,
                 joined_at=m.joined_at,
                 circle_id=active.circle_id if active else None,
+                notification_channel=m.notification_channel,
+                has_email=m.email is not None,
+                has_phone=m.phone is not None,
             )
         )
 
@@ -178,14 +198,17 @@ async def resend_invite_endpoint(
     """Re-send invite link. Admin+ only."""
     result = await session.execute(select(Member).where(Member.id == member_id))
     target = result.scalar_one_or_none()
-    if target is None or target.email is None:
-        raise HTTPException(status_code=400, detail="Member not found or has no email")
+    if target is None or target.topic_id != topic_id:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if target.email is None and target.phone is None:
+        raise HTTPException(status_code=400, detail="Member has no contact information")
 
     magic_link = create_magic_link(str(target.id))
 
     from app.services.topic import get_topic
 
     topic = await get_topic(session, topic_id)
-    await send_invite_email(target.email, topic.default_title, magic_link)
+    if target.email:
+        await send_invite_email(target.email, topic.default_title, magic_link)
 
     return {"detail": "Invite re-sent"}

@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Deprecated: direct email helpers.
+
+These functions are kept for backward compatibility while the codebase
+migrates to the provider-based notification system. New code should use
+ResendEmailProvider directly.
+"""
+
 import asyncio
 import logging
 
@@ -37,7 +44,7 @@ async def send_invite_email(to_email: str, topic_title: str, magic_link: str) ->
     await asyncio.to_thread(
         resend.Emails.send,
         {
-            "from": "Weft <noreply@weft.app>",
+            "from": settings.email_from_address,
             "to": [to_email],
             "subject": f"You've been invited to follow: {topic_title}",
             "html": f'<p>You\'ve been invited to follow updates on "{topic_title}".</p>'
@@ -46,9 +53,7 @@ async def send_invite_email(to_email: str, topic_title: str, magic_link: str) ->
     )
 
 
-async def send_transfer_notification(
-    to_email: str, topic_title: str, deadline: str
-) -> None:
+async def send_transfer_notification(to_email: str, topic_title: str, deadline: str) -> None:
     settings = get_settings()
     if not settings.resend_api_key:
         logger.info(
@@ -65,19 +70,17 @@ async def send_transfer_notification(
     await asyncio.to_thread(
         resend.Emails.send,
         {
-            "from": "Weft <noreply@weft.app>",
+            "from": settings.email_from_address,
             "to": [to_email],
             "subject": f"Creator transfer requested for: {topic_title}",
-            "html": f"<p>A creator transfer has been requested for \"{topic_title}\".</p>"
+            "html": f'<p>A creator transfer has been requested for "{topic_title}".</p>'
             f"<p>If you do not visit the topic before {deadline}, "
             f"your creator role will be transferred.</p>",
         },
     )
 
 
-async def send_transfer_complete_notification(
-    to_emails: list[str], topic_title: str
-) -> None:
+async def send_transfer_complete_notification(to_emails: list[str], topic_title: str) -> None:
     settings = get_settings()
     if not settings.resend_api_key:
         logger.info(
@@ -91,11 +94,11 @@ async def send_transfer_complete_notification(
 
     resend.api_key = settings.resend_api_key
 
-    def _send_all():
+    def _send_all() -> None:
         for email in to_emails:
             resend.Emails.send(
                 {
-                    "from": "Weft <noreply@weft.app>",
+                    "from": settings.email_from_address,
                     "to": [email],
                     "subject": f"Creator transfer completed for: {topic_title}",
                     "html": f'<p>The creator role for "{topic_title}" has been transferred.</p>',

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import random
+import string
 import uuid
 from datetime import UTC, datetime
 
@@ -24,6 +26,34 @@ from app.models.topic import Topic
 from app.services.auth import create_magic_link
 from app.services.purge import purge_emails
 
+_SHORT_CODE_CHARS = string.ascii_uppercase + string.digits
+_SHORT_CODE_LEN = 3
+_SHORT_CODE_MAX_ATTEMPTS = 10
+
+
+async def generate_short_code(session: AsyncSession) -> str:
+    """Generate a unique 3-character alphanumeric short code for a topic.
+
+    Generates a random uppercase alphanumeric code and retries up to
+    _SHORT_CODE_MAX_ATTEMPTS times to avoid collisions with active topics.
+
+    Raises:
+        RuntimeError: If a unique code cannot be generated within the retry limit.
+    """
+    for _ in range(_SHORT_CODE_MAX_ATTEMPTS):
+        code = "".join(random.choices(_SHORT_CODE_CHARS, k=_SHORT_CODE_LEN))
+        result = await session.execute(
+            select(Topic).where(
+                Topic.short_code == code,
+                Topic.status == TopicStatus.active,
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            return code
+    raise RuntimeError(
+        f"Failed to generate a unique short code after {_SHORT_CODE_MAX_ATTEMPTS} attempts"
+    )
+
 
 async def create_topic(
     session: AsyncSession,
@@ -31,7 +61,8 @@ async def create_topic(
     creator_email: str | None = None,
 ) -> tuple[Topic, Member, str]:
     """Create a topic with a creator member. Returns (topic, member, magic_link)."""
-    topic = Topic(default_title=default_title)
+    short_code = await generate_short_code(session)
+    topic = Topic(default_title=default_title, short_code=short_code)
     session.add(topic)
     await session.flush()
 

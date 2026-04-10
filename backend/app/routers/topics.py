@@ -17,11 +17,11 @@ import uuid
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.db.session import get_session
-from app.deps import require_topic_owner, require_topic_member
+from app.deps import require_topic_member, require_topic_owner
 from app.models.enums import MemberRole
 from app.models.member import Member, MemberCircleHistory
-from app.config import get_settings
 from app.rate_limit import limiter
 from app.schemas.topic import TopicCreate, TopicCreateResponse, TopicResponse
 from app.services.email import send_invite_email

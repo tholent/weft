@@ -46,7 +46,9 @@ async def auto_archive_task() -> None:
         for topic in topics:
             # Check if any token has been used recently
             result = await session.execute(
-                select(Token).join(Member, Token.member_id == Member.id).where(
+                select(Token)
+                .join(Member, Token.member_id == Member.id)
+                .where(
                     Member.topic_id == topic.id,
                     Token.last_used_at.is_not(None),  # type: ignore[union-attr]
                     Token.last_used_at > cutoff,

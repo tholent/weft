@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Weft is a private, ephemeral announcement system for personal networks. It allows users to create time-limited topics (around real-world events) and distribute scoped updates to named audience circles. The system is account-free: email is a delivery mechanism only, and all contact information is purged when a topic closes. Core concepts include topics, circles, members, updates, replies, and mod responses, with a permission model based on roles (creator, admin, moderator, recipient) and circle membership history rather than current state.
+Weft is a private, ephemeral announcement system for personal networks. It allows users to create time-limited topics (around real-world events) and distribute scoped updates to named audience circles. The system is account-free: email is a delivery mechanism only, and all contact information is purged when a topic closes. Core concepts include topics, circles, members, updates, replies, and mod responses, with a permission model based on roles (owner, admin, moderator, recipient) and circle membership history rather than current state.
 
 ## Tech Stack Summary
 
@@ -96,7 +96,7 @@ These constraints must be enforced at the service layer and are never to be viol
 
 ### Permission Rules
 
-3. **Only the creator role may promote members to admin.** This prevents privilege escalation — an admin cannot grant admin-level access to others.
+3. **Only the owner role may promote members to admin.** This prevents privilege escalation — an admin cannot grant admin-level access to others.
 
 4. **Only one pending `creator_transfer` per topic.** Only one `creator_transfer` row with `status = pending` may exist per topic at a time. Attempting to initiate a second request should fail.
 
@@ -181,13 +181,13 @@ SELECT updates WHERE:
 
 Members can always see updates that were posted while they had access to a circle. Moving a member to a different circle stops their access to future updates from the old circle but does not remove access to updates they already could see.
 
-## Dead Man's Switch (Creator Transfer)
+## Dead Man's Switch (Owner Transfer)
 
 The flow:
 1. Admin initiates a transfer request. A `creator_transfer` row is created with a deadline (default 24 hours).
-2. Current creator receives an email notification.
-3. Any authenticated request from the creator (even just opening their magic link) updates `token.last_used_at` and automatically cancels the pending transfer.
-4. If the deadline passes, an APScheduler job fires: the requesting admin is promoted to creator, the original creator is demoted to admin, and the `creator_transfer` row is marked expired.
+2. Current owner receives an email notification.
+3. Any authenticated request from the owner (even just opening their magic link) updates `token.last_used_at` and automatically cancels the pending transfer.
+4. If the deadline passes, an APScheduler job fires: the requesting admin is promoted to owner, the original owner is demoted to admin, and the `creator_transfer` row is marked expired.
 
 ## Environment Variables
 

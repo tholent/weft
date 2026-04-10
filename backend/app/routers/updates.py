@@ -25,8 +25,10 @@ from app.models.enums import MemberRole, RelayStatus
 from app.models.member import Member, MemberCircleHistory
 from app.models.reply import Reply
 from app.models.update import UpdateCircle
+from app.schemas.attachment import AttachmentResponse
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.update import UpdateCreate, UpdateEdit, UpdateResponse
+from app.services.attachment import get_attachments
 from app.services.update import (
     create_update,
     edit_update,
@@ -98,6 +100,21 @@ async def _build_update_response(
     if not is_recipient:
         body_variants = {str(uc.circle_id): uc.body for uc in uc_rows if uc.body is not None}
 
+    # Fetch attachments
+    raw_attachments = await get_attachments(session, update.id)
+    attachments = [
+        AttachmentResponse(
+            id=a.id,
+            update_id=a.update_id,
+            topic_id=a.topic_id,
+            filename=a.filename,
+            content_type=a.content_type,
+            size_bytes=a.size_bytes,
+            created_at=a.created_at,
+        )
+        for a in raw_attachments
+    ]
+
     return UpdateResponse(
         id=update.id,
         body=resolved_body,
@@ -110,6 +127,7 @@ async def _build_update_response(
         deleted_at=update.deleted_at,
         reply_count=reply_count,
         pending_reply_count=pending_reply_count,
+        attachments=attachments,
     )
 
 

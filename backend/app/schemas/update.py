@@ -17,6 +17,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.attachment import AttachmentResponse
+
 
 class UpdateCreate(BaseModel):
     body: str = Field(min_length=1, max_length=10000)
@@ -43,3 +45,4 @@ class UpdateResponse(BaseModel):
     deleted_at: datetime | None = None
     reply_count: int = 0
     pending_reply_count: int = 0
+    attachments: list[AttachmentResponse] = []

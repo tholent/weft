@@ -21,12 +21,27 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
 from app.rate_limit import limiter
-from app.routers import auth, circles, members, replies, topics, transfer, updates
+from app.routers import (
+    attachments,
+    auth,
+    circles,
+    export,
+    members,
+    notifications,
+    replies,
+    sms_webhook,
+    topics,
+    transfer,
+    updates,
+)
 from app.scheduler.jobs import shutdown_scheduler, start_scheduler
+from app.services.notifications.registry import create_registry
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings = get_settings()
+    app.state.notification_registry = create_registry(settings)
     scheduler = await start_scheduler()
     yield
     await shutdown_scheduler(scheduler)
@@ -53,6 +68,10 @@ app.include_router(members.router)
 app.include_router(updates.router)
 app.include_router(replies.router)
 app.include_router(transfer.router)
+app.include_router(notifications.router)
+app.include_router(attachments.router)
+app.include_router(export.router)
+app.include_router(sms_webhook.router)
 
 
 @app.get("/health")

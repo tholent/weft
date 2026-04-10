@@ -4,7 +4,7 @@ A private, ephemeral announcement system for personal networks. No accounts. Top
 
 ## What is Weft?
 
-Weft is designed for sharing time-limited updates within trusted groups. Create a topic around a real-world event (a family medical situation, a trip, a major announcement) and distribute scoped updates to named audience circles. All contact information is automatically purged when the topic closes, keeping your network's data minimal and ephemeral. v0.2.0 adds multi-channel notification support (email and SMS), photo and file attachments, notification preferences, and member data export capabilities.
+Weft is designed for sharing time-limited updates within trusted groups. Create a topic around a real-world event (a family medical situation, a trip, a major announcement) and distribute scoped updates to named audience circles. All contact information is automatically purged when the topic closes, keeping your network's data minimal and ephemeral. Weft v0.1.0 supports multi-channel notifications (email and SMS), photo and file attachments, notification preferences, and member data export.
 
 Key principles:
 - **No user accounts** — email is a delivery mechanism only, never stored as a profile
@@ -40,7 +40,7 @@ Key principles:
 | **Package Manager** | uv |
 | **Testing** | pytest with anyio |
 | **Email Providers** | Resend, Mailgun, AWS SES |
-| **SMS Providers** | Twilio, AWS SNS |
+| **SMS Providers** | Twilio, AWS SNS, Vonage |
 | **Scheduling** | APScheduler (embedded, async) |
 | **Magic Links** | itsdangerous |
 | **File Storage** | Local filesystem or AWS S3 |
@@ -126,72 +126,78 @@ See `.env.example` for all available options. Key variables:
 | `RESEND_API_KEY` | (empty) | Resend email API key |
 | `MAILGUN_API_KEY` | (empty) | Mailgun API key |
 | `MAILGUN_DOMAIN` | (empty) | Mailgun domain |
-| `SES_REGION` | (empty) | AWS region for SES (e.g., `us-east-1`) |
-| `SMS_PROVIDER` | `twilio` | SMS provider: `twilio` or `sns` |
+| `AWS_REGION` | `us-east-1` | AWS region for SES email or SNS SMS |
+| `AWS_ACCESS_KEY_ID` | (empty) | AWS credentials for SES/SNS |
+| `AWS_SECRET_ACCESS_KEY` | (empty) | AWS credentials for SES/SNS |
+| `EMAIL_FROM_ADDRESS` | `Weft <noreply@weft.app>` | Sender email address |
+| `SMS_PROVIDER` | `twilio` | SMS provider: `twilio`, `sns`, or `vonage` |
 | `TWILIO_ACCOUNT_SID` | (empty) | Twilio account SID |
 | `TWILIO_AUTH_TOKEN` | (empty) | Twilio auth token |
 | `TWILIO_FROM_NUMBER` | (empty) | Twilio phone number for sending SMS |
-| `SNS_REGION` | (empty) | AWS region for SNS (e.g., `us-east-1`) |
+| `VONAGE_API_KEY` | (empty) | Vonage API key |
+| `VONAGE_API_SECRET` | (empty) | Vonage API secret |
+| `VONAGE_FROM_SENDER` | (empty) | Vonage sender ID or phone number |
+| `SNS_SENDER_ID` | `Weft` | AWS SNS sender ID (displayed as sender name) |
 | `ATTACHMENT_STORAGE` | `local` | Attachment storage: `local` or `s3` |
-| `ATTACHMENT_STORAGE_PATH` | `./attachments` | Local directory for attachments (if using local storage) |
-| `ATTACHMENT_MAX_SIZE_BYTES` | `10485760` | Max attachment size (10 MB default) |
-| `NOTIFICATION_FROM_EMAIL` | (empty) | Sender email address for notification emails |
-| `DIGEST_INTERVAL_HOURS` | `24` | Interval for digest notifications |
+| `ATTACHMENT_LOCAL_PATH` | `./attachments` | Local directory for attachments |
+| `ATTACHMENT_S3_BUCKET` | (empty) | S3 bucket for attachments (if using S3) |
+| `ATTACHMENT_S3_PREFIX` | `attachments/` | S3 key prefix for attachments |
+| `ATTACHMENT_MAX_SIZE_BYTES` | `10485760` | Max attachment size in bytes (10 MB default) |
 
 ## Project Structure
 
 ```
 /
 ├── backend/                          # FastAPI application
-│   ├── pyproject.toml               # uv, pytest, ruff, mypy config
+│   ├── pyproject.toml               # uv, pytest, ruff, mypy, coverage config
+│   ├── tox.ini
 │   ├── .python-version
 │   ├── alembic.ini
-│   └── app/
-│       ├── main.py                  # FastAPI app with lifespan hooks
-│       ├── config.py                # Settings via pydantic-settings
-│       ├── deps.py                  # FastAPI dependencies (auth, role checks)
-│       ├── routers/                 # Request handlers
-│       │   ├── topics.py
-│       │   ├── circles.py
-│       │   ├── members.py
-│       │   ├── updates.py
-│       │   ├── replies.py
-│       │   ├── auth.py              # Magic link + token endpoints
-│       │   └── transfer.py          # Dead man's switch endpoints
-│       ├── models/                  # SQLModel table definitions
-│       │   ├── topic.py
-│       │   ├── circle.py
-│       │   ├── member.py
-│       │   ├── update.py
-│       │   ├── reply.py
-│       │   ├── token.py
-│       │   ├── transfer.py
-│       │   └── enums.py
-│       ├── schemas/                 # Pydantic request/response shapes
-│       │   ├── topic.py
-│       │   ├── circle.py
-│       │   ├── member.py
-│       │   ├── update.py
-│       │   └── reply.py
-│       ├── services/                # Business logic (testable without HTTP)
-│       │   ├── topic.py
-│       │   ├── auth.py              # Token generation, magic links
-│       │   ├── email.py             # Resend integration
-│       │   ├── transfer.py          # Dead man's switch logic
-│       │   └── purge.py             # Contact info purge on close/archive
-│       ├── scheduler/
-│       │   ├── jobs.py              # APScheduler job definitions
-│       │   └── tasks.py             # auto-archive, transfer deadline tasks
-│       └── db/
-│           ├── session.py           # Async engine, session factory
-│           └── migrations/          # Alembic migration versions
-│
-├── tests/                           # Backend integration tests
-│   ├── conftest.py                 # pytest fixtures
-│   ├── test_topics.py
-│   ├── test_auth.py
-│   ├── test_transfer.py
-│   └── test_purge.py
+│   ├── app/
+│   │   ├── main.py                  # FastAPI app with lifespan hooks
+│   │   ├── config.py                # Settings via pydantic-settings
+│   │   ├── deps.py                  # FastAPI dependencies (auth, role checks)
+│   │   ├── routers/                 # Request handlers
+│   │   │   ├── auth.py              # Magic link + token endpoints
+│   │   │   ├── topics.py
+│   │   │   ├── circles.py
+│   │   │   ├── members.py
+│   │   │   ├── updates.py
+│   │   │   ├── replies.py
+│   │   │   ├── transfer.py          # Dead man's switch endpoints
+│   │   │   ├── attachments.py
+│   │   │   ├── export.py
+│   │   │   ├── notifications.py
+│   │   │   └── sms_webhook.py
+│   │   ├── models/                  # SQLModel table definitions
+│   │   │   ├── enums.py
+│   │   │   ├── topic.py
+│   │   │   ├── circle.py
+│   │   │   ├── member.py
+│   │   │   ├── update.py
+│   │   │   ├── reply.py
+│   │   │   ├── token.py
+│   │   │   ├── transfer.py
+│   │   │   ├── notification.py
+│   │   │   └── attachment.py
+│   │   ├── schemas/                 # Pydantic request/response shapes
+│   │   ├── services/                # Business logic (testable without HTTP)
+│   │   │   ├── topic.py, circle.py, member.py, update.py, reply.py
+│   │   │   ├── auth.py              # Token generation, magic links
+│   │   │   ├── email.py             # Email provider abstraction
+│   │   │   ├── transfer.py          # Dead man's switch logic
+│   │   │   ├── purge.py             # Contact info purge on close/archive
+│   │   │   ├── attachment.py, export.py
+│   │   │   └── notifications/       # Modular multi-channel notification pipeline
+│   │   ├── scheduler/
+│   │   │   ├── jobs.py              # APScheduler job definitions
+│   │   │   └── tasks.py             # auto-archive, transfer deadline, digest tasks
+│   │   └── db/
+│   │       ├── session.py           # Async engine, session factory
+│   │       └── migrations/          # Alembic migration versions
+│   └── tests/                       # Backend integration tests
+│       ├── conftest.py              # pytest fixtures
+│       └── test_*.py
 │
 ├── frontend/                        # SvelteKit SPA
 │   ├── package.json
@@ -199,41 +205,21 @@ See `.env.example` for all available options. Key variables:
 │   ├── svelte.config.js
 │   ├── tsconfig.json
 │   ├── playwright.config.ts
-│   ├── .eslintrc.cjs
-│   ├── .prettierrc
 │   └── src/
-│       ├── app.html
-│       ├── app.d.ts
 │       ├── routes/
 │       │   ├── +page.svelte         # Landing / create topic
-│       │   ├── topic/[token]/
-│       │   │   └── +page.svelte     # Recipient view
-│       │   ├── manage/[token]/
-│       │   │   └── +page.svelte     # Admin / moderator view
-│       │   └── auth/
-│       │       └── +page.svelte     # Magic link landing
+│       │   ├── topic/[token]/       # Recipient view
+│       │   ├── manage/[token]/      # Admin / moderator view
+│       │   └── auth/                # Magic link landing
 │       └── lib/
-│           ├── components/          # Reusable Svelte components
-│           │   ├── UpdateCard.svelte
-│           │   ├── ReplyThread.svelte
-│           │   ├── ComposeBox.svelte
-│           │   ├── CircleManager.svelte
-│           │   ├── MemberRow.svelte
-│           │   └── TransferBanner.svelte
-│           ├── api/                 # Typed fetch wrappers
-│           │   ├── topics.ts
-│           │   ├── updates.ts
-│           │   ├── replies.ts
-│           │   └── members.ts
-│           ├── stores/              # Svelte stores
-│           │   ├── session.ts       # Token, role, topic state
-│           │   └── topic.ts         # Live topic data
+│           ├── components/          # Svelte components (UpdateCard, ReplyThread,
+│           │                        # ComposeBox, CircleManager, NotificationSettings,
+│           │                        # ExportButton, TransferBanner, …)
+│           ├── api/                 # Typed fetch wrappers per endpoint group
+│           ├── stores/              # Svelte stores (session, topic)
 │           └── types/               # Shared TypeScript interfaces
-│               ├── topic.ts
-│               ├── member.ts
-│               ├── update.ts
-│               └── reply.ts
 │
+├── .github/workflows/               # GitHub Actions (backend + frontend CI)
 ├── docker-compose.yml               # PostgreSQL + API container definitions
 ├── .env.example
 ├── Makefile
@@ -253,6 +239,10 @@ The backend exposes the following endpoint groups:
 | `/updates` | Post updates, read feed, edit, delete, relay |
 | `/replies` | Post replies to updates, mod responses, relay |
 | `/transfer` | Initiate creator transfer, confirm/deny, check status |
+| `/attachments` | Upload, download, and delete update attachments |
+| `/notifications` | Read and update per-member notification preferences |
+| `/webhooks/sms` | Inbound SMS webhook (reply and command handling) |
+| `/topics/{id}/export` | Topic export as JSON (admins/owner) |
 | `/health` | Service healthcheck |
 
 Full API documentation is available via `/docs` (Swagger UI) after starting the backend.
@@ -289,4 +279,4 @@ All commands are in the `Makefile`:
 
 ## License
 
-(License to be determined)
+Licensed under the Apache License, Version 2.0. See individual source files for the full header.

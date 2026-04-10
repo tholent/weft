@@ -12,18 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/svelte';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { server } from './mocks/msw-server';
+import { setupServer } from 'msw/node';
+import { handlers } from './msw-handlers';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => server.close());
-
-beforeEach(() => localStorage.clear());
+export const server = setupServer(...handlers);

@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/svelte';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { server } from './mocks/msw-server';
+import type { NotificationPreference } from '$lib/types/notification';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => server.close());
-
-beforeEach(() => localStorage.clear());
+export function makeNotificationPreference(
+	overrides: DeepPartial<NotificationPreference> = {}
+): NotificationPreference {
+	return {
+		id: 'notif-pref-1',
+		member_id: 'member-1',
+		channel: 'email',
+		trigger: 'new_update',
+		delivery_mode: 'immediate',
+		...overrides
+	} as NotificationPreference;
+}

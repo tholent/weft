@@ -12,18 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/svelte';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { server } from './mocks/msw-server';
+import type { AuthResponse } from '$lib/api/auth';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => server.close());
-
-beforeEach(() => localStorage.clear());
+export function makeAuthResponse(overrides: DeepPartial<AuthResponse> = {}): AuthResponse {
+	return {
+		token: 'test-token-abc123',
+		member_id: 'member-1',
+		role: 'recipient',
+		topic_id: 'topic-1',
+		...overrides
+	} as AuthResponse;
+}

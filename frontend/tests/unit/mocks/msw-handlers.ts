@@ -12,18 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/svelte';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { server } from './mocks/msw-server';
+import type { RequestHandler } from 'msw';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => server.close());
-
-beforeEach(() => localStorage.clear());
+// Default handlers array is empty. Individual tests register their own handlers
+// using server.use(...) within the test file.
+export const handlers: RequestHandler[] = [];

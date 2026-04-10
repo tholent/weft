@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/svelte';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { server } from './mocks/msw-server';
+import type { Topic } from '$lib/types/topic';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => server.close());
-
-beforeEach(() => localStorage.clear());
+export function makeTopic(overrides: DeepPartial<Topic> = {}): Topic {
+	return {
+		id: 'topic-1',
+		default_title: 'Test Topic',
+		status: 'active',
+		created_at: '2026-01-01T00:00:00Z',
+		closed_at: null,
+		scoped_title: null,
+		...overrides
+	} as Topic;
+}

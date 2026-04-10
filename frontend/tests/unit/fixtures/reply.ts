@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/svelte';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { server } from './mocks/msw-server';
+import type { Reply } from '$lib/types/reply';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => server.close());
-
-beforeEach(() => localStorage.clear());
+export function makeReply(overrides: DeepPartial<Reply> = {}): Reply {
+	return {
+		id: 'reply-1',
+		body: 'Test reply body',
+		author_member_id: 'member-1',
+		author_handle: null,
+		wants_to_share: false,
+		relay_status: 'pending',
+		created_at: '2026-01-01T00:00:00Z',
+		mod_responses: [],
+		...overrides
+	} as Reply;
+}

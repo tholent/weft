@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/svelte';
-import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { server } from './mocks/msw-server';
+import type { Attachment } from '$lib/types/attachment';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
-afterEach(() => {
-	cleanup();
-	server.resetHandlers();
-});
-
-afterAll(() => server.close());
-
-beforeEach(() => localStorage.clear());
+export function makeAttachment(overrides: DeepPartial<Attachment> = {}): Attachment {
+	return {
+		id: 'attachment-1',
+		update_id: 'update-1',
+		topic_id: 'topic-1',
+		filename: 'sample.png',
+		content_type: 'image/png',
+		size_bytes: 1024,
+		created_at: '2026-01-01T00:00:00Z',
+		...overrides
+	} as Attachment;
+}

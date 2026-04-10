@@ -15,6 +15,10 @@
 
 set -euo pipefail
 
+# Suppress core dumps from any child (uvicorn workers, chromium, vite, etc.)
+# so a crash does not leave multi-GB core files in the working directory.
+ulimit -c 0
+
 # --- Backend setup ---
 
 # Export shared backend env vars so both alembic and uvicorn see them

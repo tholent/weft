@@ -149,7 +149,7 @@ UV_PROJECT_ENVIRONMENT=/workspace/backend/.venv uv run alembic revision --autoge
 - `/workspace/backend/app/schemas/` — Pydantic request/response shapes (topic, circle, member, update, reply, notification, attachment, export)
 - `/workspace/backend/app/services/` — Business logic (testable without HTTP, raises ValueError)
   - Core services: topic, auth, email, transfer, purge, attachment, export
-  - Notifications subpackage: provider, registry, service, dispatch, preferences, sms_commands, sms_format, resend_provider, mailgun_provider, ses_provider, twilio_provider, sns_provider
+  - Notifications subpackage: provider, registry, service, dispatch, preferences, sms_commands, sms_format, resend_provider, mailgun_provider, ses_provider, twilio_provider, sns_provider, vonage_provider
 - `/workspace/backend/app/routers/` — Request handlers (topics, circles, members, updates, replies, auth, transfer, attachments, export, notifications, sms_webhook)
 - `/workspace/backend/app/db/` — Database session, migrations
 - `/workspace/backend/app/scheduler/` — APScheduler job definitions and tasks (includes digest_notification_task)
@@ -202,18 +202,25 @@ See `/workspace/.env.example` for all options. Key variables:
 - `AUTO_ARCHIVE_DAYS` — Default 30
 - `EMAIL_PROVIDER` — Email provider: `resend`, `mailgun`, or `ses`
 - `RESEND_API_KEY` — Resend email API key
-- `SMS_PROVIDER` — SMS provider: `twilio` or `sns`
+- `MAILGUN_API_KEY` — Mailgun API key
+- `MAILGUN_DOMAIN` — Mailgun domain
+- `SMS_PROVIDER` — SMS provider: `twilio`, `sns`, or `vonage`
 - `TWILIO_ACCOUNT_SID` — Twilio account SID
 - `TWILIO_AUTH_TOKEN` — Twilio auth token
 - `TWILIO_FROM_NUMBER` — Twilio phone number for sending SMS
-- `MAILGUN_API_KEY` — Mailgun API key
-- `MAILGUN_DOMAIN` — Mailgun domain
-- `SES_REGION` — AWS region for SES (e.g., `us-east-1`)
-- `SNS_REGION` — AWS region for SNS (e.g., `us-east-1`)
-- `ATTACHMENT_STORAGE_PATH` — Local directory for attachments (if using local storage)
-- `MAX_ATTACHMENT_SIZE_MB` — Maximum attachment size in MB
-- `NOTIFICATION_FROM_EMAIL` — Sender email address for notification emails
-- `DIGEST_INTERVAL_HOURS` — Interval for digest notifications
+- `VONAGE_API_KEY` — Vonage API key
+- `VONAGE_API_SECRET` — Vonage API secret
+- `VONAGE_FROM_SENDER` — Vonage sender ID or phone number
+- `AWS_REGION` — AWS region for SES email or SNS SMS (e.g., `us-east-1`)
+- `AWS_ACCESS_KEY_ID` — AWS credentials for SES/SNS
+- `AWS_SECRET_ACCESS_KEY` — AWS credentials for SES/SNS
+- `SNS_SENDER_ID` — AWS SNS sender ID (default `Weft`)
+- `ATTACHMENT_STORAGE` — Attachment storage: `local` or `s3`
+- `ATTACHMENT_LOCAL_PATH` — Local directory for attachments (default `./attachments`)
+- `ATTACHMENT_S3_BUCKET` — S3 bucket name (if using S3 storage)
+- `ATTACHMENT_S3_PREFIX` — S3 key prefix for attachments (default `attachments/`)
+- `ATTACHMENT_MAX_SIZE_BYTES` — Maximum attachment size in bytes (default 10 MB)
+- `EMAIL_FROM_ADDRESS` — Sender email address for notifications (default `Weft <noreply@weft.app>`)
 
 ## Testing Patterns
 

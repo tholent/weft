@@ -73,6 +73,11 @@ app.include_router(attachments.router)
 app.include_router(export.router)
 app.include_router(sms_webhook.router)
 
+if settings.env == "test":
+    from app.routers import test_seed
+
+    app.include_router(test_seed.router)
+
 
 @app.get("/health")
 async def health():

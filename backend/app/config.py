@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./weft.db"
     secret_key: str = ""
     base_url: str = "http://localhost:5173"
+    # Environment name — "dev" | "test" | "prod".  Gates the mounting of the
+    # test-seed router.  Must be "test" for E2E seeding; production deployments
+    # MUST NOT set this to "test".
+    env: str = "dev"
     creator_transfer_deadline_hours: int = 24
     auto_archive_days: int = 30
     topic_creation_rate_limit: str = "10/hour"

@@ -88,8 +88,9 @@ class NotificationService:
             return log
 
         if delivery_mode == DeliveryMode.digest:
-            # Digest messages are batched; mark as skipped here (scheduler handles them).
-            log.status = NotificationStatus.skipped
+            # Digest messages are batched; mark as pending_digest so the
+            # scheduler's digest_notification_task can pick them up later.
+            log.status = NotificationStatus.pending_digest
             await session.flush()
             return log
 

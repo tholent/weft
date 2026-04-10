@@ -57,9 +57,7 @@ async def rename_circle(
     return circle
 
 
-async def delete_circle(
-    session: AsyncSession, circle_id: uuid.UUID, topic_id: uuid.UUID
-) -> None:
+async def delete_circle(session: AsyncSession, circle_id: uuid.UUID, topic_id: uuid.UUID) -> None:
     result = await session.execute(select(Circle).where(Circle.id == circle_id))
     circle = result.scalar_one_or_none()
     if circle is None or circle.topic_id != topic_id:

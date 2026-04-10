@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
+import secrets
 import string
 import uuid
 from datetime import UTC, datetime
@@ -41,7 +41,7 @@ async def generate_short_code(session: AsyncSession) -> str:
         RuntimeError: If a unique code cannot be generated within the retry limit.
     """
     for _ in range(_SHORT_CODE_MAX_ATTEMPTS):
-        code = "".join(random.choices(_SHORT_CODE_CHARS, k=_SHORT_CODE_LEN))
+        code = "".join(secrets.choice(_SHORT_CODE_CHARS) for _ in range(_SHORT_CODE_LEN))
         result = await session.execute(
             select(Topic).where(
                 Topic.short_code == code,

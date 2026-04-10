@@ -69,6 +69,7 @@ class NotificationTrigger(enum.StrEnum):
 
 class NotificationStatus(enum.StrEnum):
     pending = "pending"
+    pending_digest = "pending_digest"
     sent = "sent"
     failed = "failed"
     skipped = "skipped"

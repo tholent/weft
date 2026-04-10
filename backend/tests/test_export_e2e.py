@@ -321,7 +321,7 @@ async def test_export_e2e_attachment_urls_in_export(client, session, topic_with_
     )
     await session.flush()
 
-    att = await _create_attachment(session, update.id, topic.id)
+    await _create_attachment(session, update.id, topic.id)
     await session.commit()
 
     resp = await client.get(
@@ -339,8 +339,8 @@ async def test_export_e2e_attachment_urls_in_export(client, session, topic_with_
     att_export = update_export["attachments"][0]
     assert att_export["filename"] == "test_photo.jpg"
     assert att_export["content_type"] == "image/jpeg"
-    assert att_export["storage_key"] == att.storage_key
-    assert "attachments/" in att_export["storage_key"]
+    # storage_key must not appear in the export (internal implementation detail)
+    assert "storage_key" not in att_export
 
 
 @pytest.mark.anyio

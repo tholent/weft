@@ -102,7 +102,9 @@ async def export_topic(session: AsyncSession, topic_id: uuid.UUID) -> dict[str, 
             {
                 "filename": att.filename,
                 "content_type": att.content_type,
-                "storage_key": att.storage_key,
+                "size_bytes": att.size_bytes,
+                # storage_key is intentionally excluded — it is an internal
+                # infrastructure detail and must never appear in exports.
             }
         )
 

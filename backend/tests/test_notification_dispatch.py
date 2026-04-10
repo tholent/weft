@@ -196,8 +196,8 @@ async def test_dispatch_digest_mode_queues_not_sends(session, topic_with_creator
     )
     await session.commit()
 
-    # Digest mode marks as skipped (scheduler handles batch delivery)
-    assert log.status == NotificationStatus.skipped
+    # Digest mode marks as pending_digest so the scheduler can aggregate and send
+    assert log.status == NotificationStatus.pending_digest
     assert len(email_provider.sent) == 0
 
 

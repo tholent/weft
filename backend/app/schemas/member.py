@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.models.enums import MemberRole, NotificationChannel
+
+_E164_RE = re.compile(r"^\+[1-9]\d{1,14}$")
 
 
 class MemberInvite(BaseModel):
@@ -27,6 +30,18 @@ class MemberInvite(BaseModel):
     role: MemberRole = MemberRole.recipient
     display_handle: str | None = None
     notification_channel: NotificationChannel = NotificationChannel.email
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone_e164(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        if not _E164_RE.match(v):
+            raise ValueError(
+                "Phone number must be in E.164 format: '+' followed by 2–15 digits, "
+                "country code digit must be 1–9 (e.g. +14155552671)"
+            )
+        return v
 
     @field_validator("role")
     @classmethod

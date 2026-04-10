@@ -145,11 +145,11 @@ async def digest_notification_task() -> None:
             return
 
         for member_id in member_ids:
-            # Load pending log entries for this member
+            # Load pending_digest log entries for this member
             log_result = await session.execute(
                 select(NotificationLog).where(
                     NotificationLog.member_id == member_id,
-                    NotificationLog.status == NotificationStatus.pending,
+                    NotificationLog.status == NotificationStatus.pending_digest,
                 )
             )
             pending_logs = list(log_result.scalars().all())

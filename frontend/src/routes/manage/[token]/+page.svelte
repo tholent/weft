@@ -105,12 +105,39 @@
 
 <svelte:window on:click={handleWindowClick} />
 
-<main>
-	{#if loading}
-		<p>Loading...</p>
-	{:else if $topic}
-		<h1>{$topic.default_title}</h1>
+{#if loading}
+	<div class="topic-header topic-header--skeleton">
+		<div class="header-inner">
+			<div class="skeleton-line" style="width: 50%; height: 2.4rem; border-radius: 3px;"></div>
+			<div class="skeleton-line" style="width: 20%; height: 0.7rem; margin-top: 0.75rem; border-radius: 3px;"></div>
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div class="skeleton-nav">
+			{#each Array(4) as _}
+				<div class="skeleton-line" style="width: 4.5rem; height: 1rem; border-radius: 3px;"></div>
+			{/each}
+		</div>
+		{#each Array(4) as _}
+			<div class="skeleton-card">
+				<div class="skeleton-line" style="width: 88%"></div>
+				<div class="skeleton-line" style="width: 72%"></div>
+				<div class="skeleton-line" style="width: 55%"></div>
+				<div class="skeleton-meta"></div>
+			</div>
+		{/each}
+	</div>
+{:else if $topic}
+	<div class="topic-header">
+		<div class="header-inner">
+			<h1>{$topic.default_title}</h1>
+			<p class="header-meta">
+				<span class="role-badge">{$session.role}</span>
+			</p>
+		</div>
+	</div>
 
+	<div class="content-wrapper">
 		<nav>
 			<button class:active={activeTab === 'updates'} on:click={() => (activeTab = 'updates')}>Updates</button>
 			<button class:active={activeTab === 'members'} on:click={() => (activeTab = 'members')}>Members</button>
@@ -130,7 +157,6 @@
 				<div class="controls-left">
 					{#if $circles.length > 0}
 						<div class="circle-filter-wrap">
-							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 							<button
 								class="circle-filter-btn"
 								class:active={filterCircleIds.length > 0}
@@ -175,8 +201,20 @@
 				<UpdateCard {update} topicId={$session.topicId ?? ''} circles={$circles} onClick={() => (selectedUpdate = update)} />
 			{/each}
 			{#if filteredUpdates.length === 0}
-				<p class="empty-list">No updates match the current filter.</p>
+				<div class="empty-state">
+					<p class="empty-headline">
+						{filterCircleIds.length > 0 ? 'No updates in this circle.' : 'Nothing posted yet.'}
+					</p>
+					<p class="empty-body">
+						{filterCircleIds.length > 0
+							? 'Try removing the circle filter to see all updates.'
+							: $isModerator
+							? 'Use the form above to post your first update.'
+							: 'Updates will appear here once they are posted.'}
+					</p>
+				</div>
 			{/if}
+
 		{:else if activeTab === 'members'}
 			<h2>Members</h2>
 			{#if $isAdmin}
@@ -190,8 +228,16 @@
 			{#each $members as member (member.id)}
 				<MemberRow {member} circles={$circles} viewerRole={$session.role || 'recipient'} />
 			{/each}
+			{#if $members.length === 0}
+				<div class="empty-state">
+					<p class="empty-headline">No members yet.</p>
+					<p class="empty-body">Invite people above to get started.</p>
+				</div>
+			{/if}
+
 		{:else if activeTab === 'circles'}
 			<CircleManager />
+
 		{:else if activeTab === 'settings'}
 			<h2>Settings</h2>
 			<TransferBanner />
@@ -219,8 +265,8 @@
 				<button class="danger" on:click={handleClose}>Close Topic</button>
 			{/if}
 		{/if}
-	{/if}
-</main>
+	</div>
+{/if}
 
 {#if selectedUpdate && $session.topicId}
 	<UpdateModal
@@ -235,71 +281,261 @@
 {/if}
 
 <style>
-	main { max-width: var(--content-width); margin: 2rem auto; padding: 0 1rem; }
-	h1 { padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1.5rem; }
-	nav { display: flex; gap: 0.5rem; margin: 1rem 0; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; }
-	nav button {
-		background: none; border: none; border-bottom: 2px solid transparent;
-		padding: 0.5rem 1rem; cursor: pointer; border-radius: 0;
-		letter-spacing: 0.03em; text-transform: uppercase; font-size: var(--text-xs);
-		color: var(--color-text-secondary);
-		margin-bottom: -1px;
+	/* ── Full-bleed header ── */
+	.topic-header {
+		background: var(--color-text);
+		padding: 2.25rem 0 1.75rem;
 	}
-	nav button.active { border-bottom-color: var(--color-accent); color: var(--color-accent); }
+
+	.topic-header--skeleton {
+		background: var(--color-surface-hover);
+	}
+
+	.header-inner {
+		max-width: var(--content-width);
+		margin: 0 auto;
+		padding: 0 1.5rem;
+	}
+
+	h1 {
+		font-family: var(--font-display);
+		font-size: var(--text-3xl);
+		font-weight: 400;
+		color: white;
+		margin: 0 0 0.4rem;
+		line-height: 1.1;
+	}
+
+	.header-meta {
+		margin: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.role-badge {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: rgba(255, 255, 255, 0.45);
+		padding: 0.15rem 0.5rem;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 2px;
+	}
+
+	/* ── Content area ── */
+	.content-wrapper {
+		max-width: var(--content-width);
+		margin: 0 auto;
+		padding: 0 1.5rem 3rem;
+	}
+
+	/* ── Tab nav ── */
+	nav {
+		display: flex;
+		gap: 0;
+		margin: 0 0 1.5rem;
+		border-bottom: 1px solid var(--color-border);
+		padding-top: 0.25rem;
+	}
+
+	nav button {
+		background: none;
+		border: none;
+		border-bottom: 2px solid transparent;
+		padding: 0.65rem 1rem;
+		cursor: pointer;
+		border-radius: 0;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		font-size: var(--text-xs);
+		font-weight: 500;
+		color: var(--color-text-muted);
+		margin-bottom: -1px;
+		transition: color 0.15s, border-color 0.15s;
+	}
+
+	nav button:hover {
+		color: var(--color-text-secondary);
+	}
+
+	nav button.active {
+		border-bottom-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+
+	/* ── Section labels ── */
 	.section-label {
-		font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.08em;
-		text-transform: uppercase; color: var(--color-text-muted);
+		font-size: var(--text-xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-text-muted);
 		margin: 0 0 0.5rem;
 	}
-	hr { border: none; border-top: 1px solid var(--color-border); margin: 1.25rem 0; }
+
+	hr {
+		border: none;
+		border-top: 1px solid var(--color-border);
+		margin: 1.25rem 0;
+	}
+
+	/* ── List controls ── */
 	.list-controls {
-		display: flex; justify-content: space-between; align-items: center;
-		flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
 	}
-	.controls-left { display: flex; gap: 0.25rem; flex-wrap: wrap; align-items: center; flex: 1; }
-	.controls-right { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; }
+
+	.controls-left {
+		display: flex;
+		gap: 0.25rem;
+		flex-wrap: wrap;
+		align-items: center;
+		flex: 1;
+	}
+
+	.controls-right {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
 	.circle-filter-wrap { position: relative; }
+
 	.circle-filter-btn {
-		padding: 0.2rem 0.65rem; border-radius: 4px; font-size: var(--text-xs);
-		border: 1px solid var(--color-border-strong); background: none;
-		color: var(--color-text-secondary); cursor: pointer; transition: all 0.1s;
+		padding: 0.2rem 0.65rem;
+		border-radius: 2px;
+		font-size: var(--text-xs);
+		border: 1px solid var(--color-border-strong);
+		background: none;
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		transition: all 0.1s;
 	}
+
 	.circle-filter-btn.active {
-		background: var(--color-accent-light); border-color: var(--color-accent);
+		background: var(--color-accent-light);
+		border-color: var(--color-accent);
 		color: var(--color-accent);
 	}
+
 	.circle-popover {
-		position: absolute; top: calc(100% + 0.35rem); left: 0;
-		background: var(--color-surface); border: 1px solid var(--color-border);
-		border-radius: 6px; padding: 0.5rem; z-index: 50;
-		display: flex; flex-direction: column; gap: 0.3rem;
-		box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 150px;
+		position: absolute;
+		top: calc(100% + 0.35rem);
+		left: 0;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		padding: 0.5rem;
+		z-index: 50;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		min-width: 150px;
 	}
+
 	.popover-pill {
-		padding: 0.2rem 0.65rem; border-radius: 4px; font-size: var(--text-xs);
-		border: 1px solid var(--color-border-strong); background: none;
-		color: var(--color-text-secondary); cursor: pointer; transition: all 0.1s;
+		padding: 0.2rem 0.65rem;
+		border-radius: 2px;
+		font-size: var(--text-xs);
+		border: 1px solid var(--color-border-strong);
+		background: none;
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		transition: all 0.1s;
 		text-align: left;
 	}
+
 	.popover-pill.selected {
-		background: var(--color-accent-light); border-color: var(--color-accent);
+		background: var(--color-accent-light);
+		border-color: var(--color-accent);
 		color: var(--color-accent);
 	}
+
 	.clear-btn {
-		font-size: var(--text-xs); color: var(--color-text-muted); background: none;
-		border: none; cursor: pointer; padding: 0 0.25rem 0.25rem;
-		text-align: left; border-bottom: 1px solid var(--color-border); margin-bottom: 0.1rem;
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 0 0.25rem 0.25rem;
+		text-align: left;
+		border-bottom: 1px solid var(--color-border);
+		margin-bottom: 0.1rem;
 	}
+
 	.clear-btn:hover { color: var(--color-accent); }
+
 	.sort-select {
-		padding: 0.2rem 0.4rem; border: 1px solid var(--color-border);
-		border-radius: 4px; font-size: var(--text-xs); background: var(--color-surface);
+		padding: 0.2rem 0.4rem;
+		border: 1px solid var(--color-border);
+		border-radius: 2px;
+		font-size: var(--text-xs);
+		background: var(--color-surface);
 		color: var(--color-text-secondary);
 	}
+
 	.deleted-toggle {
-		display: flex; align-items: center; gap: 0.25rem;
-		font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+		cursor: pointer;
 	}
-	.empty-list { color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; padding: 2rem 0; }
-	.danger { background: var(--color-danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 1rem; }
+
+	/* ── Skeleton nav ── */
+	.skeleton-nav {
+		display: flex;
+		gap: 1.5rem;
+		padding: 0.65rem 0 1rem;
+		border-bottom: 1px solid var(--color-border);
+		margin-bottom: 1.5rem;
+	}
+
+	/* ── Empty states ── */
+	.empty-state {
+		text-align: center;
+		padding: 3.5rem 1rem;
+	}
+
+	.empty-headline {
+		font-family: var(--font-display);
+		font-size: var(--text-2xl);
+		font-weight: 400;
+		font-style: italic;
+		color: var(--color-text-muted);
+		margin: 0 0 0.5rem;
+	}
+
+	.empty-body {
+		font-family: var(--font-body);
+		font-size: var(--text-base);
+		color: var(--color-text-muted);
+		margin: 0;
+		font-style: italic;
+	}
+
+	/* ── Danger button ── */
+	.danger {
+		background: var(--color-danger);
+		color: white;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 2px;
+		cursor: pointer;
+		margin-top: 1rem;
+		font-size: var(--text-sm);
+		letter-spacing: 0.02em;
+		transition: opacity 0.15s;
+	}
+
+	.danger:hover { opacity: 0.88; }
 </style>

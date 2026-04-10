@@ -200,7 +200,7 @@
 	.modal {
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: 8px;
+		border-radius: 4px;
 		padding: 1.5rem; width: min(600px, 90vw);
 		max-height: 80vh; overflow-y: auto;
 		position: relative;
@@ -217,20 +217,24 @@
 		to { opacity: 1; transform: translateY(0); }
 	}
 	.close {
-		position: absolute; top: 0.75rem; right: 0.75rem;
-		background: none; border: none; font-size: 1rem;
-		cursor: pointer; color: var(--color-text-secondary); line-height: 1;
+		position: absolute; top: 0.85rem; right: 0.85rem;
+		background: none; border: 1px solid var(--color-border); border-radius: 2px;
+		font-size: 0.75rem; width: 1.75rem; height: 1.75rem;
+		display: flex; align-items: center; justify-content: center;
+		cursor: pointer; color: var(--color-text-muted); line-height: 1;
+		transition: border-color 0.15s, color 0.15s;
 	}
-	.body { margin: 0 0 0.75rem; line-height: 1.7; white-space: pre-wrap; font-family: var(--font-display); font-size: var(--text-base); }
+	.close:hover { border-color: var(--color-border-strong); color: var(--color-text); }
+	.body { margin: 0 0 0.75rem; line-height: 1.75; white-space: pre-wrap; font-family: var(--font-body); font-size: var(--text-lg); }
 	.edit-body { width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; font-size: var(--text-base); line-height: 1.6; resize: vertical; margin-bottom: 0.5rem; box-sizing: border-box; }
 	.variant-edit { font-size: var(--text-sm); margin-top: 0.35rem; margin-bottom: 0; }
 	.edit-actions { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
 	.edit-actions button { padding: 0.35rem 0.9rem; border: none; border-radius: 4px; cursor: pointer; font-size: var(--text-sm); transition: background 0.15s; }
-	.edit-actions button:not(.cancel) { background: var(--color-text); color: white; }
-	.edit-actions button:not(.cancel):hover:not(:disabled) { background: var(--color-accent); }
+	.edit-actions button:not(.cancel) { background: var(--color-accent); color: white; }
+	.edit-actions button:not(.cancel):hover:not(:disabled) { background: var(--color-accent-dark); }
 	.edit-actions button:disabled { opacity: 0.5; cursor: default; }
 	.edit-actions button.cancel { background: none; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
-	.meta { font-size: var(--text-sm); color: var(--color-text-secondary); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+	.meta { font-size: var(--text-sm); color: var(--color-text-secondary); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; font-family: var(--font-ui); }
 	.edited { font-style: italic; }
 	.edit-btn { background: none; border: none; color: var(--color-text-secondary); font-size: var(--text-xs); cursor: pointer; padding: 0; text-decoration: underline; }
 	.circles { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
@@ -244,7 +248,7 @@
 	.empty { color: var(--color-text-muted); font-size: var(--text-sm); }
 	.compose { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
 	.compose textarea { padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; font-size: var(--text-sm); resize: vertical; }
-	.compose button { align-self: flex-end; padding: 0.35rem 0.9rem; background: var(--color-text); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: var(--text-sm); transition: background 0.15s; }
-	.compose button:hover:not(:disabled) { background: var(--color-accent); }
+	.compose button { align-self: flex-end; padding: 0.35rem 0.9rem; background: var(--color-accent); color: white; border: none; border-radius: 2px; cursor: pointer; font-size: var(--text-sm); transition: background 0.15s; }
+	.compose button:hover:not(:disabled) { background: var(--color-accent-dark); }
 	.compose button:disabled { opacity: 0.5; cursor: default; }
 </style>

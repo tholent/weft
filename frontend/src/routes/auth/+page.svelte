@@ -1,5 +1,5 @@
 <!--
-  Copyright 2026 Chris Wells <chris@tholent.com>
+  Copyright 2026 Chris Wells <chris@tholern.com>
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 	onMount(async () => {
 		const token = $page.url.searchParams.get('t');
 		if (!token) {
-			error = 'No token provided';
+			error = 'No token provided.';
 			loading = false;
 			return;
 		}
@@ -40,7 +40,7 @@
 				goto(`/manage/${auth.token}`);
 			}
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Invalid or expired link';
+			error = e instanceof Error ? e.message : 'Invalid or expired link.';
 			loading = false;
 		}
 	});
@@ -48,15 +48,95 @@
 
 <main>
 	{#if loading}
-		<p>Verifying your link...</p>
+		<div class="state-wrap">
+			<div class="spinner" aria-label="Verifying"></div>
+			<p class="state-text">Verifying your link…</p>
+		</div>
 	{:else if error}
-		<h2>Link Error</h2>
-		<p class="error">{error}</p>
-		<a href="/">Go home</a>
+		<div class="state-wrap">
+			<div class="error-icon">!</div>
+			<h2>Link error</h2>
+			<p class="error-msg">{error}</p>
+			<a class="home-link" href="/">← Back to home</a>
+		</div>
 	{/if}
 </main>
 
 <style>
-	main { max-width: var(--content-width); margin: 2rem auto; padding: 0 1rem; }
-	.error { color: var(--color-danger); }
+	main {
+		max-width: var(--content-width);
+		margin: 6rem auto;
+		padding: 0 1.5rem;
+		text-align: center;
+	}
+
+	.state-wrap {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	/* ── Loading spinner ── */
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+
+	.spinner {
+		width: 2rem;
+		height: 2rem;
+		border: 2px solid var(--color-border);
+		border-top-color: var(--color-accent);
+		border-radius: 50%;
+		animation: spin 0.7s linear infinite;
+	}
+
+	.state-text {
+		font-family: var(--font-body);
+		font-size: var(--text-lg);
+		font-style: italic;
+		color: var(--color-text-muted);
+		margin: 0;
+	}
+
+	/* ── Error state ── */
+	.error-icon {
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 50%;
+		background: var(--color-danger-bg);
+		border: 1px solid var(--color-danger);
+		color: var(--color-danger);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 1rem;
+	}
+
+	h2 {
+		font-family: var(--font-display);
+		font-size: var(--text-2xl);
+		font-weight: 400;
+		margin: 0;
+	}
+
+	.error-msg {
+		color: var(--color-text-secondary);
+		font-size: var(--text-sm);
+		margin: 0;
+	}
+
+	.home-link {
+		font-size: var(--text-sm);
+		color: var(--color-accent);
+		text-decoration: none;
+		border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+		padding-bottom: 1px;
+		transition: border-color 0.15s;
+	}
+
+	.home-link:hover {
+		border-color: var(--color-accent);
+	}
 </style>

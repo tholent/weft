@@ -17,6 +17,13 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
 
+  // Tests share a single SQLite DB via the seededTopic fixture. Running workers
+  // in parallel causes race conditions where one worker's reset() wipes rows that
+  // another worker's magic-link verify call depends on. Serialise to one worker
+  // until FT-32+ introduces per-worker databases.
+  fullyParallel: false,
+  workers: 1,
+
   retries: process.env.CI ? 2 : 0,
 
   reporter: process.env.CI ? [['list'], ['html']] : 'list',

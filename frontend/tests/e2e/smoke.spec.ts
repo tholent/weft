@@ -12,9 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/fixtures';
 
 test('homepage renders', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/Weft/i);
+});
+
+test('owner magic link redirects to manage', async ({ page, seededTopic }) => {
+  await page.goto(`/auth?t=${seededTopic.ownerMagic}`);
+  await page.waitForURL(/\/manage\/[^/]+/);
+  expect(page.url()).toMatch(/\/manage\/[^/]+/);
+});
+
+test('recipient magic link redirects to topic', async ({ page, seededTopic }) => {
+  const recipientMagic = Object.values(seededTopic.recipientMagic)[0];
+
+  if (!recipientMagic) {
+    // TODO: enable once default spec includes recipients
+    test.skip();
+    return;
+  }
+
+  await page.goto(`/auth?t=${recipientMagic}`);
+  await page.waitForURL(/\/topic\/[^/]+/);
+  expect(page.url()).toMatch(/\/topic\/[^/]+/);
 });

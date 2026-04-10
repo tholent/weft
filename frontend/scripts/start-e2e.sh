@@ -17,22 +17,22 @@ set -euo pipefail
 
 # --- Backend setup ---
 
+# Export shared backend env vars so both alembic and uvicorn see them
+export ENV=test
+export DATABASE_URL="sqlite+aiosqlite:////tmp/weft_e2e.db"
+export SECRET_KEY="e2e-test-secret-key-do-not-use-in-prod"
+export BASE_URL="http://127.0.0.1:4173"
+
 # Remove stale E2E database so each run starts fresh
 rm -f /tmp/weft_e2e.db
 
 # Run Alembic migrations to create the schema
 cd /workspace/backend
 UV_PROJECT_ENVIRONMENT=/workspace/backend/.venv \
-ENV=test \
-DATABASE_URL="sqlite+aiosqlite:////tmp/weft_e2e.db" \
-SECRET_KEY="e2e-test-secret-key-do-not-use-in-prod" \
 uv run alembic upgrade head
 
 # Launch uvicorn in the background
 UV_PROJECT_ENVIRONMENT=/workspace/backend/.venv \
-ENV=test \
-DATABASE_URL="sqlite+aiosqlite:////tmp/weft_e2e.db" \
-SECRET_KEY="e2e-test-secret-key-do-not-use-in-prod" \
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8001 &
 BACKEND_PID=$!
 

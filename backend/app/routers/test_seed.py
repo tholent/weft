@@ -17,6 +17,7 @@
 # Do not remove that guard.
 
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -27,7 +28,7 @@ from app.config import Settings, get_settings
 from app.db.session import get_session
 from app.models.enums import MemberRole, NotificationChannel
 from app.models.member import Member, MemberCircleHistory
-from app.services.auth import generate_token
+from app.services.auth import create_magic_link, generate_token
 from app.services.circle import create_circle
 from app.services.member import invite_member
 from app.services.notifications.preferences import create_defaults
@@ -85,6 +86,21 @@ def _guard(settings: Settings) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
 
 
+def _extract_magic_token(member_id: str) -> str:
+    """Return just the signed token portion from a magic link URL.
+
+    create_magic_link returns a full URL like ``{base_url}/auth?t={signed}``.
+    We extract the ``t`` query parameter so callers can construct their own URLs.
+    """
+    url = create_magic_link(str(member_id))
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query)
+    tokens = params.get("t", [])
+    if not tokens:
+        raise RuntimeError(f"create_magic_link returned unexpected URL: {url!r}")
+    return tokens[0]
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -140,6 +156,7 @@ async def seed_topic(
     # Generate a raw bearer token for the owner (create_topic returns a magic link,
     # not a bearer token — E2E tests need a raw bearer token directly).
     owner_raw_token = await generate_token(session, owner_member.id)
+    owner_magic = _extract_magic_token(str(owner_member.id))
 
     # Maps for later use when creating updates/replies
     circle_map: dict[str, Any] = {}  # circle_name -> Circle object
@@ -149,6 +166,11 @@ async def seed_topic(
     admin_tokens: dict[str, str] = {}
     moderator_tokens: dict[str, str] = {}
     recipient_tokens: dict[str, str] = {}
+
+    # Magic-link signed tokens bucketed by role
+    admin_magic: dict[str, str] = {}
+    moderator_magic: dict[str, str] = {}
+    recipient_magic: dict[str, str] = {}
 
     # email -> member_id (for update/reply author resolution)
     member_id_by_email: dict[str, Any] = {spec.owner_email: owner_member.id}
@@ -186,6 +208,7 @@ async def seed_topic(
                 raw_token = await generate_token(session, admin_member.id)
                 member_id_by_email[member_spec.email] = admin_member.id
                 admin_tokens[member_spec.email] = raw_token
+                admin_magic[member_spec.email] = _extract_magic_token(str(admin_member.id))
             else:
                 member, raw_token = await invite_member(
                     session,
@@ -198,8 +221,10 @@ async def seed_topic(
 
                 if member_spec.role == MemberRole.moderator:
                     moderator_tokens[member_spec.email] = raw_token
+                    moderator_magic[member_spec.email] = _extract_magic_token(str(member.id))
                 else:
                     recipient_tokens[member_spec.email] = raw_token
+                    recipient_magic[member_spec.email] = _extract_magic_token(str(member.id))
 
     # --- Create updates ---
     created_updates = []
@@ -259,4 +284,10 @@ async def seed_topic(
         "moderator_tokens": moderator_tokens,
         "recipient_tokens": recipient_tokens,
         "circle_ids": circle_ids,
+        "magic_links": {
+            "owner": owner_magic,
+            "admins": admin_magic,
+            "moderators": moderator_magic,
+            "recipients": recipient_magic,
+        },
     }

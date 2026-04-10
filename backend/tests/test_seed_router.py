@@ -106,6 +106,8 @@ async def test_seed_topic_minimal(seed_client):
     assert "owner_token" in data
     assert data["owner_token"]  # non-empty string
     assert data["topic_id"]  # non-empty string
+    assert "magic_links" in data
+    assert data["magic_links"]["owner"]  # non-empty signed token string
 
 
 @pytest.mark.anyio

@@ -27,12 +27,24 @@ export default defineConfig({
     }
   },
   test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/unit/setup.ts'],
+    include: ['tests/unit/**/*.test.ts', 'src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['lcov', 'text'],
       reportsDirectory: 'coverage',
       include: ['src/**/*.{ts,svelte}'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts']
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.spec.ts',
+        'tests/unit/**',
+        'src/app.d.ts',
+        'src/routes/+layout.ts',
+        'src/lib/types/**',
+        '**/*.svelte.d.ts'
+      ]
     }
   }
 });

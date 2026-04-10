@@ -17,6 +17,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [sveltekit()],
+  // The 'browser' condition forces Vite (and Vitest) to resolve Svelte 5 to
+  // its client build inside jsdom. Without it, component tests load the
+  // server build and crash with `lifecycle_function_unavailable`.
+  resolve: {
+    conditions: ['browser']
+  },
   server: {
     proxy: {
       '/api': {

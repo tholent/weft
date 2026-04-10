@@ -36,6 +36,6 @@ export async function downloadTopicExport(topicId: string): Promise<void> {
 	a.download = `weft-export-${topicId}.json`;
 	document.body.appendChild(a);
 	a.click();
-	document.body.removeChild(a);
+	a.remove();
 	URL.revokeObjectURL(url);
 }

@@ -34,6 +34,186 @@ from app.models.reply import ModResponse, Relay, Reply
 from app.models.topic import Topic
 from app.models.update import Update, UpdateCircle
 
+# ---------------------------------------------------------------------------
+# Phase helpers
+# ---------------------------------------------------------------------------
+
+
+async def _load_topic(session: AsyncSession, topic_id: uuid.UUID) -> Topic:
+    result = await session.execute(select(Topic).where(Topic.id == topic_id))
+    topic = result.scalar_one_or_none()
+    if topic is None:
+        raise ValueError(f"Topic {topic_id} not found")
+    return topic
+
+
+async def _load_circles(
+    session: AsyncSession, topic_id: uuid.UUID
+) -> tuple[list[Circle], dict[uuid.UUID, Circle]]:
+    result = await session.execute(select(Circle).where(Circle.topic_id == topic_id))
+    circles = list(result.scalars().all())
+    circle_map: dict[uuid.UUID, Circle] = {c.id: c for c in circles}
+    return circles, circle_map
+
+
+async def _load_member_map(
+    session: AsyncSession, topic_id: uuid.UUID
+) -> dict[uuid.UUID, str | None]:
+    result = await session.execute(select(Member).where(Member.topic_id == topic_id))
+    return {m.id: m.display_handle for m in result.scalars().all()}
+
+
+async def _load_updates(
+    session: AsyncSession, topic_id: uuid.UUID
+) -> list[Update]:
+    result = await session.execute(
+        select(Update)
+        .where(Update.topic_id == topic_id, Update.deleted_at.is_(None))  # type: ignore[union-attr]
+        .order_by(Update.created_at)
+    )
+    return list(result.scalars().all())
+
+
+async def _load_update_circles(
+    session: AsyncSession,
+    update_ids: list[uuid.UUID],
+    circle_map: dict[uuid.UUID, Circle],
+) -> dict[uuid.UUID, list[str]]:
+    if not update_ids:
+        return {}
+    result = await session.execute(
+        select(UpdateCircle).where(UpdateCircle.update_id.in_(update_ids))  # type: ignore[union-attr]
+    )
+    mapping: dict[uuid.UUID, list[str]] = {}
+    for uc in result.scalars().all():
+        circle = circle_map.get(uc.circle_id)
+        circle_name = circle.name if circle else str(uc.circle_id)
+        mapping.setdefault(uc.update_id, []).append(circle_name)
+    return mapping
+
+
+async def _load_update_attachments(
+    session: AsyncSession, update_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, list[dict[str, Any]]]:
+    if not update_ids:
+        return {}
+    result = await session.execute(
+        select(Attachment).where(Attachment.update_id.in_(update_ids))  # type: ignore[union-attr]
+    )
+    mapping: dict[uuid.UUID, list[dict[str, Any]]] = {}
+    for att in result.scalars().all():
+        mapping.setdefault(att.update_id, []).append(
+            {
+                "filename": att.filename,
+                "content_type": att.content_type,
+                "size_bytes": att.size_bytes,
+                # storage_key is intentionally excluded — it is an internal
+                # infrastructure detail and must never appear in exports.
+            }
+        )
+    return mapping
+
+
+async def _load_replies(
+    session: AsyncSession, update_ids: list[uuid.UUID]
+) -> list[Reply]:
+    if not update_ids:
+        return []
+    result = await session.execute(
+        select(Reply)
+        .where(Reply.update_id.in_(update_ids))  # type: ignore[union-attr]
+        .order_by(Reply.created_at)
+    )
+    return list(result.scalars().all())
+
+
+async def _load_mod_responses(
+    session: AsyncSession, reply_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, list[dict[str, Any]]]:
+    if not reply_ids:
+        return {}
+    result = await session.execute(
+        select(ModResponse)
+        .where(ModResponse.reply_id.in_(reply_ids))  # type: ignore[union-attr]
+        .order_by(ModResponse.created_at)
+    )
+    mapping: dict[uuid.UUID, list[dict[str, Any]]] = {}
+    for mr in result.scalars().all():
+        mapping.setdefault(mr.reply_id, []).append(
+            {
+                "body": mr.body,
+                "author": None,  # filled in by caller with member_map
+                "_author_member_id": mr.author_member_id,
+                "scope": str(mr.scope),
+                "created_at": mr.created_at.isoformat(),
+            }
+        )
+    return mapping
+
+
+async def _load_relays(
+    session: AsyncSession,
+    reply_ids: list[uuid.UUID],
+    member_map: dict[uuid.UUID, str | None],
+    circle_map: dict[uuid.UUID, Circle],
+) -> list[dict[str, Any]]:
+    if not reply_ids:
+        return []
+    result = await session.execute(
+        select(Relay)
+        .where(Relay.reply_id.in_(reply_ids))  # type: ignore[union-attr]
+        .order_by(Relay.relayed_at)
+    )
+    return [
+        {
+            "reply_id": str(relay.reply_id),
+            "relayed_by": member_map.get(relay.relayed_by_member_id),
+            "circle": (
+                circle_map[relay.circle_id].name
+                if relay.circle_id and relay.circle_id in circle_map
+                else None
+            ),
+            "relayed_at": relay.relayed_at.isoformat(),
+        }
+        for relay in result.scalars().all()
+    ]
+
+
+def _build_update_replies(
+    replies: list[Reply],
+    member_map: dict[uuid.UUID, str | None],
+    mod_responses_raw: dict[uuid.UUID, list[dict[str, Any]]],
+) -> dict[uuid.UUID, list[dict[str, Any]]]:
+    """Group replies by update_id, resolving author handles and mod responses."""
+    # Resolve author in mod responses
+    mod_responses: dict[uuid.UUID, list[dict[str, Any]]] = {}
+    for reply_id, entries in mod_responses_raw.items():
+        resolved = []
+        for entry in entries:
+            item = dict(entry)
+            item["author"] = member_map.get(item.pop("_author_member_id"))
+            resolved.append(item)
+        mod_responses[reply_id] = resolved
+
+    update_replies: dict[uuid.UUID, list[dict[str, Any]]] = {}
+    for reply in replies:
+        update_replies.setdefault(reply.update_id, []).append(
+            {
+                "body": reply.body,
+                "author": member_map.get(reply.author_member_id),
+                "wants_to_share": reply.wants_to_share,
+                "relay_status": str(reply.relay_status),
+                "created_at": reply.created_at.isoformat(),
+                "mod_responses": mod_responses.get(reply.id, []),
+            }
+        )
+    return update_replies
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
 
 async def export_topic(session: AsyncSession, topic_id: uuid.UUID) -> dict[str, Any]:
     """Export full topic data as a structured dict (for JSON serialization).
@@ -46,140 +226,23 @@ async def export_topic(session: AsyncSession, topic_id: uuid.UUID) -> dict[str, 
     Raises:
         ValueError: If the topic is not found.
     """
-    # --- Load topic ---
-    topic_result = await session.execute(select(Topic).where(Topic.id == topic_id))
-    topic = topic_result.scalar_one_or_none()
-    if topic is None:
-        raise ValueError(f"Topic {topic_id} not found")
+    topic = await _load_topic(session, topic_id)
+    circles, circle_map = await _load_circles(session, topic_id)
+    member_map = await _load_member_map(session, topic_id)
+    updates = await _load_updates(session, topic_id)
 
-    # --- Load circles ---
-    circles_result = await session.execute(select(Circle).where(Circle.topic_id == topic_id))
-    circles = list(circles_result.scalars().all())
-    circle_map: dict[uuid.UUID, Circle] = {c.id: c for c in circles}
+    update_ids = [u.id for u in updates]
+    update_circles = await _load_update_circles(session, update_ids, circle_map)
+    update_attachments = await _load_update_attachments(session, update_ids)
 
-    # --- Load members (for handle lookup only) ---
-    members_result = await session.execute(select(Member).where(Member.topic_id == topic_id))
-    member_map: dict[uuid.UUID, str | None] = {
-        m.id: m.display_handle for m in members_result.scalars().all()
-    }
-
-    # --- Load updates ---
-    updates_result = await session.execute(
-        select(Update)
-        .where(Update.topic_id == topic_id, Update.deleted_at.is_(None))  # type: ignore[union-attr]
-        .order_by(Update.created_at)
-    )
-    updates = list(updates_result.scalars().all())
-
-    # --- Load update→circle mappings ---
-    if updates:
-        update_ids = [u.id for u in updates]
-        uc_result = await session.execute(
-            select(UpdateCircle).where(UpdateCircle.update_id.in_(update_ids))  # type: ignore[union-attr]
-        )
-        uc_rows = list(uc_result.scalars().all())
-    else:
-        uc_rows = []
-
-    update_circles: dict[uuid.UUID, list[str]] = {}
-    for uc in uc_rows:
-        circle = circle_map.get(uc.circle_id)
-        circle_name = circle.name if circle else str(uc.circle_id)
-        update_circles.setdefault(uc.update_id, []).append(circle_name)
-
-    # --- Load attachments ---
-    if updates:
-        att_result = await session.execute(
-            select(Attachment).where(Attachment.update_id.in_(update_ids))  # type: ignore[union-attr]
-        )
-        att_rows = list(att_result.scalars().all())
-    else:
-        att_rows = []
-
-    update_attachments: dict[uuid.UUID, list[dict[str, Any]]] = {}
-    for att in att_rows:
-        update_attachments.setdefault(att.update_id, []).append(
-            {
-                "filename": att.filename,
-                "content_type": att.content_type,
-                "size_bytes": att.size_bytes,
-                # storage_key is intentionally excluded — it is an internal
-                # infrastructure detail and must never appear in exports.
-            }
-        )
-
-    # --- Load replies ---
-    if updates:
-        replies_result = await session.execute(
-            select(Reply).where(Reply.update_id.in_(update_ids)).order_by(Reply.created_at)  # type: ignore[union-attr]
-        )
-        replies = list(replies_result.scalars().all())
-    else:
-        replies = []
-
+    replies = await _load_replies(session, update_ids)
     reply_ids = [r.id for r in replies]
 
-    # --- Load mod responses ---
-    if reply_ids:
-        mr_result = await session.execute(
-            select(ModResponse)
-            .where(ModResponse.reply_id.in_(reply_ids))  # type: ignore[union-attr]
-            .order_by(ModResponse.created_at)
-        )
-        mod_responses = list(mr_result.scalars().all())
-    else:
-        mod_responses = []
+    mod_responses_raw = await _load_mod_responses(session, reply_ids)
+    update_replies = _build_update_replies(replies, member_map, mod_responses_raw)
 
-    reply_mod_responses: dict[uuid.UUID, list[dict[str, Any]]] = {}
-    for mr in mod_responses:
-        reply_mod_responses.setdefault(mr.reply_id, []).append(
-            {
-                "body": mr.body,
-                "author": member_map.get(mr.author_member_id),
-                "scope": str(mr.scope),
-                "created_at": mr.created_at.isoformat(),
-            }
-        )
+    relays_export = await _load_relays(session, reply_ids, member_map, circle_map)
 
-    update_replies: dict[uuid.UUID, list[dict[str, Any]]] = {}
-    for reply in replies:
-        update_replies.setdefault(reply.update_id, []).append(
-            {
-                "body": reply.body,
-                "author": member_map.get(reply.author_member_id),
-                "wants_to_share": reply.wants_to_share,
-                "relay_status": str(reply.relay_status),
-                "created_at": reply.created_at.isoformat(),
-                "mod_responses": reply_mod_responses.get(reply.id, []),
-            }
-        )
-
-    # --- Load relays ---
-    if reply_ids:
-        relay_result = await session.execute(
-            select(Relay)
-            .where(Relay.reply_id.in_(reply_ids))  # type: ignore[union-attr]
-            .order_by(Relay.relayed_at)
-        )
-        relays = list(relay_result.scalars().all())
-    else:
-        relays = []
-
-    relays_export: list[dict[str, Any]] = [
-        {
-            "reply_id": str(relay.reply_id),
-            "relayed_by": member_map.get(relay.relayed_by_member_id),
-            "circle": (
-                circle_map[relay.circle_id].name
-                if relay.circle_id and relay.circle_id in circle_map
-                else None
-            ),
-            "relayed_at": relay.relayed_at.isoformat(),
-        }
-        for relay in relays
-    ]
-
-    # --- Assemble export ---
     exported_circles = [
         {"name": c.name, "scoped_title": c.scoped_title} for c in circles if c.deleted_at is None
     ]

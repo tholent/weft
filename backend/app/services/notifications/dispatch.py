@@ -78,6 +78,97 @@ async def _get_attachment_links(
     return [f"{base}/api/topics/{topic_id}/attachments/{att.id}" for att in attachments]
 
 
+def _member_address(member: Member) -> str | None:
+    """Return the contact address for the member based on their notification channel."""
+    return (
+        member.email if member.notification_channel == NotificationChannel.email else member.phone
+    )
+
+
+def _choose_body(member: Member, sms_body: str, email_body: str) -> str:
+    """Return the channel-appropriate message body for the member."""
+    return sms_body if member.notification_channel == NotificationChannel.sms else email_body
+
+
+async def _get_circle_members(
+    session: AsyncSession,
+    topic_id: uuid.UUID,
+    circle_ids: list[uuid.UUID] | None,
+) -> list[Member]:
+    """Return active members in the given circles, or all topic members if circle_ids is None."""
+    if circle_ids is None:
+        result = await session.execute(select(Member).where(Member.topic_id == topic_id))
+    else:
+        result = await session.execute(
+            select(Member)
+            .join(MemberCircleHistory, Member.id == MemberCircleHistory.member_id)
+            .where(
+                MemberCircleHistory.circle_id.in_(circle_ids),  # type: ignore[union-attr]
+                MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+            )
+            .distinct()
+        )
+    return list(result.scalars().all())
+
+
+async def _dispatch_email(
+    session: AsyncSession,
+    service: NotificationService,
+    member: Member,
+    topic_id: uuid.UUID,
+    trigger: NotificationTrigger,
+    subject: str,
+    sms_body: str,
+    email_body: str,
+) -> None:
+    """Dispatch a single notification to one member, choosing the right body for their channel."""
+    address = _member_address(member)
+    if not address:
+        return
+    body = _choose_body(member, sms_body, email_body)
+    try:
+        await service.dispatch(
+            session=session,
+            member_id=member.id,
+            topic_id=topic_id,
+            trigger=trigger,
+            subject=subject,
+            body=body,
+            html_body=None,
+            recipient_address=address,
+            channel=member.notification_channel,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to dispatch %s notification to member %s", trigger, member.id)
+
+
+def _build_update_email_body(body: str, attachment_links: list[str]) -> str:
+    """Build email body, appending attachment links when present.
+
+    Both photo_link_only and inline modes produce the same plain-text output:
+    a link list appended after the body.  The distinction matters for
+    HTML-capable clients (future), so the logic is kept explicit here.
+    """
+    if not attachment_links:
+        return body
+    # Plain-text fallback is identical for link-only and inline modes.
+    links_text = "\n".join(attachment_links)
+    return f"{body}\n\nAttachments:\n{links_text}"
+
+
+def _build_update_sms_body(
+    base_sms: str, attachment_links: list[str], photo_link_only: bool
+) -> str:
+    """Append attachment URLs to the SMS body based on photo_link_only setting."""
+    if not attachment_links:
+        return base_sms
+    if photo_link_only:
+        # Link-only mode: include only the first attachment URL
+        return f"{base_sms} {attachment_links[0]}"
+    # MMS mode: append all media URLs
+    return f"{base_sms} " + " ".join(attachment_links)
+
+
 async def dispatch_update_notifications(
     session: AsyncSession,
     registry: ProviderRegistry,
@@ -103,71 +194,21 @@ async def dispatch_update_notifications(
     short_code = topic.short_code or ""
     email_subject = f"[{topic.default_title}] New update"
 
-    # Load attachment links for this update
     attachment_links = await _get_attachment_links(session, topic_id, update_id)
-
-    # Build email body with attachments
-    email_body = body
-    if attachment_links:
-        if topic.photo_link_only:
-            # Link-only: append links as text
-            links_text = "\n".join(attachment_links)
-            email_body = f"{body}\n\nAttachments:\n{links_text}"
-        else:
-            # Inline: also append links (plain-text email; HTML would embed images)
-            links_text = "\n".join(attachment_links)
-            email_body = f"{body}\n\nAttachments:\n{links_text}"
-
-    # Build SMS body with attachments
-    sms_body = format_update_sms(topic.default_title, short_code, author_handle, body)
-    if attachment_links:
-        if topic.photo_link_only:
-            # Link-only mode: append first link to SMS body
-            sms_body = f"{sms_body} {attachment_links[0]}"
-        else:
-            # MMS mode: append media URLs to the SMS body text
-            sms_body = f"{sms_body} " + " ".join(attachment_links)
-
-    # Collect unique members in the targeted circles
-    result = await session.execute(
-        select(Member)
-        .join(MemberCircleHistory, Member.id == MemberCircleHistory.member_id)
-        .where(
-            MemberCircleHistory.circle_id.in_(circle_ids),  # type: ignore[union-attr]
-            MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
-        )
-        .distinct()
+    email_body = _build_update_email_body(body, attachment_links)
+    sms_body = _build_update_sms_body(
+        format_update_sms(topic.default_title, short_code, author_handle, body),
+        attachment_links,
+        topic.photo_link_only,
     )
-    members = list(result.scalars().all())
 
+    members = await _get_circle_members(session, topic_id, circle_ids)
     service = _get_service(registry)
     for member in members:
-        address = (
-            member.email
-            if member.notification_channel == NotificationChannel.email
-            else member.phone
+        await _dispatch_email(
+            session, service, member, topic_id,
+            NotificationTrigger.new_update, email_subject, sms_body, email_body,
         )
-        if not address:
-            continue
-
-        try:
-            await service.dispatch(
-                session=session,
-                member_id=member.id,
-                topic_id=topic_id,
-                trigger=NotificationTrigger.new_update,
-                subject=email_subject,
-                body=(
-                    sms_body
-                    if member.notification_channel == NotificationChannel.sms
-                    else email_body
-                ),
-                html_body=None,
-                recipient_address=address,
-                channel=member.notification_channel,
-            )
-        except Exception:  # noqa: BLE001
-            logger.exception("Failed to dispatch update notification to member %s", member.id)
 
 
 async def dispatch_relay_notifications(
@@ -192,50 +233,13 @@ async def dispatch_relay_notifications(
     sms_body = format_relay_sms(topic.default_title, short_code, author_identity, reply_body)
     email_subject = f"[{topic.default_title}] A reply was shared"
 
-    if circle_ids is None:
-        # All active members in the topic
-        result = await session.execute(select(Member).where(Member.topic_id == topic_id))
-        members = list(result.scalars().all())
-    else:
-        result = await session.execute(
-            select(Member)
-            .join(MemberCircleHistory, Member.id == MemberCircleHistory.member_id)
-            .where(
-                MemberCircleHistory.circle_id.in_(circle_ids),  # type: ignore[union-attr]
-                MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
-            )
-            .distinct()
-        )
-        members = list(result.scalars().all())
-
+    members = await _get_circle_members(session, topic_id, circle_ids)
     service = _get_service(registry)
     for member in members:
-        address = (
-            member.email
-            if member.notification_channel == NotificationChannel.email
-            else member.phone
+        await _dispatch_email(
+            session, service, member, topic_id,
+            NotificationTrigger.relay, email_subject, sms_body, reply_body,
         )
-        if not address:
-            continue
-
-        try:
-            await service.dispatch(
-                session=session,
-                member_id=member.id,
-                topic_id=topic_id,
-                trigger=NotificationTrigger.relay,
-                subject=email_subject,
-                body=(
-                    sms_body
-                    if member.notification_channel == NotificationChannel.sms
-                    else reply_body
-                ),
-                html_body=None,
-                recipient_address=address,
-                channel=member.notification_channel,
-            )
-        except Exception:  # noqa: BLE001
-            logger.exception("Failed to dispatch relay notification to member %s", member.id)
 
 
 async def dispatch_invite_notification(
@@ -256,12 +260,6 @@ async def dispatch_invite_notification(
         logger.warning("dispatch_invite_notification: member %s not found", member_id)
         return
 
-    address = (
-        member.email if member.notification_channel == NotificationChannel.email else member.phone
-    )
-    if not address:
-        return
-
     sms_body = format_invite_sms(topic.default_title, magic_link)
     email_subject = f'You\'ve been invited to follow "{topic.default_title}"'
     email_body = (
@@ -269,19 +267,7 @@ async def dispatch_invite_notification(
     )
 
     service = _get_service(registry)
-    try:
-        await service.dispatch(
-            session=session,
-            member_id=member.id,
-            topic_id=topic_id,
-            trigger=NotificationTrigger.invite,
-            subject=email_subject,
-            body=(
-                sms_body if member.notification_channel == NotificationChannel.sms else email_body
-            ),
-            html_body=None,
-            recipient_address=address,
-            channel=member.notification_channel,
-        )
-    except Exception:  # noqa: BLE001
-        logger.exception("Failed to dispatch invite notification to member %s", member_id)
+    await _dispatch_email(
+        session, service, member, topic_id,
+        NotificationTrigger.invite, email_subject, sms_body, email_body,
+    )

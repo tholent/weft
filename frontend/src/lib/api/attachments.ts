@@ -38,7 +38,7 @@ export async function uploadAttachment(
 
 	if (res.status === 401) {
 		localStorage.removeItem('weft_token');
-		window.location.href = '/';
+		globalThis.location.href = '/';
 		throw new ApiError(401, 'Unauthorized');
 	}
 

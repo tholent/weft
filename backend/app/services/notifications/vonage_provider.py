@@ -42,9 +42,9 @@ class VonageSMSProvider:
         self,
         *,
         recipient: str,
-        subject: str,
+        subject: str,  # noqa: ARG002  — SMS has no subject; required by provider protocol
         body: str,
-        html_body: str | None = None,
+        html_body: str | None = None,  # noqa: ARG002  — not used for SMS
     ) -> str:
         """Send an SMS via Vonage Messages API. Subject and html_body are ignored.
         Returns the provider message UUID."""

@@ -17,7 +17,7 @@ from datetime import UTC, datetime, timedelta
 
 from sqlmodel import select
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.db.session import async_session_factory
 from app.models.enums import (
     DeliveryMode,
@@ -32,7 +32,7 @@ from app.models.notification import NotificationLog, NotificationPreference
 from app.models.token import Token
 from app.models.topic import Topic
 from app.models.transfer import CreatorTransfer
-from app.services.notifications.registry import create_registry
+from app.services.notifications.registry import ProviderRegistry, create_registry
 from app.services.purge import purge_emails
 from app.services.transfer import execute_transfer
 
@@ -122,11 +122,151 @@ async def transfer_deadline_task() -> None:
         await session.commit()
 
 
+# ---------------------------------------------------------------------------
+# Digest notification helpers
+# ---------------------------------------------------------------------------
+
+
+def _build_digest_message(
+    member: Member,
+    topic_title: str,
+    short_code: str,
+    count: int,
+    settings: Settings,
+) -> tuple[str, str]:
+    """Return (subject, body) for a digest notification."""
+    if member.notification_channel == NotificationChannel.sms:
+        from app.services.notifications.sms_format import format_digest_sms
+
+        link = f"{settings.base_url}/topic"
+        body = format_digest_sms(topic_title, short_code, count, link)
+        subject = f"[{topic_title}] Digest"
+    else:
+        noun = "update" if count == 1 else "updates"
+        subject = f"[{topic_title}] Digest: {count} new {noun}"
+        body = (
+            f'You have {count} new {noun} in "{topic_title}".\n\n'
+            f"View updates at {settings.base_url}/topic"
+        )
+    return subject, body
+
+
+async def _mark_logs(
+    session,
+    logs: list[NotificationLog],
+    status: NotificationStatus,
+    now: datetime,
+    *,
+    message_id: str | None = None,
+    error_detail: str | None = None,
+) -> None:
+    """Update a batch of notification logs with the given status."""
+    for log in logs:
+        log.status = status
+        log.sent_at = now
+        if message_id is not None:
+            log.provider_message_id = message_id
+        if error_detail is not None:
+            log.error_detail = error_detail
+        session.add(log)
+
+
+async def _send_topic_digest(
+    session,
+    member: Member,
+    topic_logs: list[NotificationLog],
+    registry: ProviderRegistry,
+    settings: Settings,
+) -> None:
+    """Send a digest for one member/topic combination and update the log rows."""
+    from uuid import UUID
+
+    topic_id: UUID = topic_logs[0].topic_id
+    topic_result = await session.execute(select(Topic).where(Topic.id == topic_id))
+    topic = topic_result.scalar_one_or_none()
+
+    count = len(topic_logs)
+    topic_title = topic.default_title if topic else str(topic_id)
+    short_code = (topic.short_code or "") if topic else ""
+
+    subject, body = _build_digest_message(member, topic_title, short_code, count, settings)
+
+    provider = registry.get(member.notification_channel)
+    now = datetime.now(UTC)
+
+    if provider is None:
+        logger.warning(
+            "No provider for channel %s; skipping digest for member %s",
+            member.notification_channel,
+            member.id,
+        )
+        await _mark_logs(session, topic_logs, NotificationStatus.skipped, now)
+        return
+
+    try:
+        message_id = await provider.send(
+            recipient=(
+                member.email
+                if member.notification_channel == NotificationChannel.email
+                else member.phone
+            ),
+            subject=subject,
+            body=body,
+        )
+        await _mark_logs(session, topic_logs, NotificationStatus.sent, now, message_id=message_id)
+        logger.info("Sent digest to member %s (%d notifications)", member.id, count)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to send digest to member %s: %s", member.id, exc)
+        await _mark_logs(
+            session, topic_logs, NotificationStatus.failed, now, error_detail=str(exc)
+        )
+
+
+async def _process_member_digest(
+    session,
+    member_id,
+    registry: ProviderRegistry,
+    settings: Settings,
+) -> None:
+    """Process all pending digest logs for a single member."""
+    log_result = await session.execute(
+        select(NotificationLog).where(
+            NotificationLog.member_id == member_id,
+            NotificationLog.status == NotificationStatus.pending_digest,
+        )
+    )
+    pending_logs = list(log_result.scalars().all())
+    if not pending_logs:
+        return
+
+    member_result = await session.execute(select(Member).where(Member.id == member_id))
+    member = member_result.scalar_one_or_none()
+    if member is None:
+        return
+
+    address = (
+        member.email
+        if member.notification_channel == NotificationChannel.email
+        else member.phone
+    )
+    if not address:
+        # No contact address; mark logs skipped to avoid reprocessing
+        now = datetime.now(UTC)
+        await _mark_logs(session, pending_logs, NotificationStatus.skipped, now)
+        return
+
+    # Group by topic so each topic gets its own digest message
+    topic_ids = list({log.topic_id for log in pending_logs})
+    for topic_id in topic_ids:
+        topic_logs = [lg for lg in pending_logs if lg.topic_id == topic_id]
+        await _send_topic_digest(session, member, topic_logs, registry, settings)
+
+
 async def digest_notification_task() -> None:
     """Batch pending digest notifications and send them per member.
 
     Runs every hour.  For each member that has any digest-mode preference,
-    find their pending (status=pending) NotificationLog rows, aggregate
+    find their pending (status=pending_digest) NotificationLog rows, aggregate
     them into a single digest message, send it, and mark the logs sent.
     """
     settings = get_settings()
@@ -145,99 +285,6 @@ async def digest_notification_task() -> None:
             return
 
         for member_id in member_ids:
-            # Load pending_digest log entries for this member
-            log_result = await session.execute(
-                select(NotificationLog).where(
-                    NotificationLog.member_id == member_id,
-                    NotificationLog.status == NotificationStatus.pending_digest,
-                )
-            )
-            pending_logs = list(log_result.scalars().all())
-            if not pending_logs:
-                continue
-
-            # Load member contact info
-            member_result = await session.execute(select(Member).where(Member.id == member_id))
-            member = member_result.scalar_one_or_none()
-            if member is None:
-                continue
-
-            address = (
-                member.email
-                if member.notification_channel == NotificationChannel.email
-                else member.phone
-            )
-            if not address:
-                # No contact address; mark logs skipped to avoid reprocessing
-                for log in pending_logs:
-                    log.status = NotificationStatus.skipped
-                    log.sent_at = datetime.now(UTC)
-                    session.add(log)
-                continue
-
-            # Group by topic so each topic gets its own digest message
-            topic_ids = list({log.topic_id for log in pending_logs})
-            for topic_id in topic_ids:
-                topic_logs = [lg for lg in pending_logs if lg.topic_id == topic_id]
-
-                topic_result = await session.execute(select(Topic).where(Topic.id == topic_id))
-                topic = topic_result.scalar_one_or_none()
-
-                count = len(topic_logs)
-                topic_title = topic.default_title if topic else str(topic_id)
-                short_code = (topic.short_code or "") if topic else ""
-
-                if member.notification_channel == NotificationChannel.sms:
-                    from app.services.notifications.sms_format import format_digest_sms
-
-                    base_url = settings.base_url
-                    link = f"{base_url}/topic"
-                    body = format_digest_sms(topic_title, short_code, count, link)
-                    subject = f"[{topic_title}] Digest"
-                else:
-                    noun = "update" if count == 1 else "updates"
-                    subject = f"[{topic_title}] Digest: {count} new {noun}"
-                    body = (
-                        f'You have {count} new {noun} in "{topic_title}".\n\n'
-                        f"View updates at {settings.base_url}/topic"
-                    )
-
-                provider = registry.get(member.notification_channel)
-                now = datetime.now(UTC)
-
-                if provider is None:
-                    logger.warning(
-                        "No provider for channel %s; skipping digest for member %s",
-                        member.notification_channel,
-                        member_id,
-                    )
-                    for log in topic_logs:
-                        log.status = NotificationStatus.skipped
-                        log.sent_at = now
-                        session.add(log)
-                    continue
-
-                try:
-                    message_id = await provider.send(
-                        recipient=address,
-                        subject=subject,
-                        body=body,
-                    )
-                    for log in topic_logs:
-                        log.status = NotificationStatus.sent
-                        log.provider_message_id = message_id
-                        log.sent_at = now
-                        session.add(log)
-                    logger.info(
-                        "Sent digest to member %s (%d notifications)",
-                        member_id,
-                        count,
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    logger.error("Failed to send digest to member %s: %s", member_id, exc)
-                    for log in topic_logs:
-                        log.status = NotificationStatus.failed
-                        log.error_detail = str(exc)
-                        session.add(log)
+            await _process_member_digest(session, member_id, registry, settings)
 
         await session.commit()

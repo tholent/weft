@@ -23,7 +23,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 
-async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONResponse:
+def rate_limit_exceeded_handler(_request: Request, exc: Exception) -> JSONResponse:
     """Return a 429 JSON response when a slowapi rate limit is exceeded.
 
     This replaces the private ``slowapi._rate_limit_exceeded_handler`` import

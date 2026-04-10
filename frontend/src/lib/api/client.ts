@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 class ApiError extends Error {
 	constructor(

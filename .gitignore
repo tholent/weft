@@ -29,6 +29,8 @@ htmlcov/
 .pytest_cache/
 backend/coverage.xml
 frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
 .tox/
 
 # State

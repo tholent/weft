@@ -24,7 +24,11 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "anyio",
+    "pytest-cov",
     "ruff>=0.15.9",
+    "mypy>=1.10",
+    "tox>=4",
+    "tox-uv>=1",
 ]
 
 [tool.ruff]
@@ -39,9 +43,41 @@ select = ["E", "F", "I", "UP"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
+exclude = ["app/db/migrations/versions"]
 
-[tool.uv]
-environments = ["python_version >= '3.12'"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["."]
+branch = true
+relative_files = true
+omit = ["app/db/migrations/*"]
+
+[tool.coverage.report]
+omit = ["app/db/migrations/*"]
+
+[tool.tox]
+requires = ["tox-uv>=1"]
+env_list = ["py312", "lint", "format", "type"]
+
+[tool.tox.env_run_base]
+runner = "uv-venv-lock-runner"
+dependency_groups = ["dev"]
+
+[tool.tox.env.py312]
+description = "Run tests with coverage"
+commands = [["pytest", "--cov=.", "--cov-report=xml", "--cov-branch", { replace = "posargs", default = [], extend = true }]]
+
+[tool.tox.env.lint]
+description = "Lint with ruff"
+commands = [["ruff", "check", "."]]
+
+[tool.tox.env.format]
+description = "Check formatting with ruff"
+commands = [["ruff", "format", "--check", "."]]
+
+[tool.tox.env.type]
+description = "Type-check with mypy"
+commands = [["mypy", "app/"]]

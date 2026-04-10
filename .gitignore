@@ -27,7 +27,13 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+backend/coverage.xml
+frontend/coverage/
+.tox/
 
 # State
 .state/
 .analysis/
+
+# app specific
+attachments/

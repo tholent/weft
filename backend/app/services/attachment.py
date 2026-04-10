@@ -53,7 +53,7 @@ def _verify_magic_bytes(content_type: str, data: bytes) -> bool:
     if signatures is None:
         return False
     for sig in signatures:
-        if data[:len(sig)] == sig:
+        if data[: len(sig)] == sig:
             if content_type == "image/webp":
                 # Extra check: bytes 8-12 must be "WEBP"
                 return len(data) >= 12 and data[8:12] == b"WEBP"
@@ -87,8 +87,7 @@ async def save_attachment(
 
     if not _verify_magic_bytes(content_type, data):
         raise ValueError(
-            f"File content does not match declared content type '{content_type}'. "
-            "Upload rejected."
+            f"File content does not match declared content type '{content_type}'. Upload rejected."
         )
 
     if len(data) > settings.attachment_max_size_bytes:

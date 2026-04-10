@@ -14,10 +14,17 @@
 
 import asyncio
 import logging
+import threading
 
 from app.models.enums import NotificationChannel
 
 logger = logging.getLogger(__name__)
+
+# Module-level lock serialises access to the resend module-global api_key.
+# The resend library does not yet support per-call key injection, so we
+# hold the lock for the duration of each send to prevent races between
+# concurrent async tasks dispatched to the thread pool.
+_resend_lock = threading.Lock()
 
 
 class ResendEmailProvider:
@@ -38,10 +45,6 @@ class ResendEmailProvider:
         html_body: str | None = None,
     ) -> str:
         """Send an email via Resend. Returns the provider message ID."""
-        import resend
-
-        resend.api_key = self.api_key
-
         payload: dict[str, object] = {
             "from": self.from_address,
             "to": [recipient],
@@ -51,8 +54,14 @@ class ResendEmailProvider:
         if html_body is not None:
             payload["html"] = html_body
 
+        api_key = self.api_key
+
         def _send() -> object:
-            return resend.Emails.send(payload)
+            import resend
+
+            with _resend_lock:
+                resend.api_key = api_key
+                return resend.Emails.send(payload)
 
         result = await asyncio.to_thread(_send)
         # Resend returns a dict-like object with an "id" key

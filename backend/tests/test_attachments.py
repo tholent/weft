@@ -112,7 +112,7 @@ async def test_save_attachment_rejects_oversized_file(session, topic_with_creato
                     topic_id=topic.id,
                     filename="large.png",
                     content_type="image/png",
-                    data=b"\x89PNG" + b"\x00" * 200,
+                    data=b"\x89PNG\r\n\x1a\n" + b"\x00" * 200,
                 )
 
 
@@ -158,19 +158,28 @@ async def test_all_allowed_content_types_accepted(session, topic_with_creator):
     session.add(update)
     await session.flush()
 
+    # Minimal valid magic bytes for each allowed content type.
+    _SAMPLE_BYTES: dict[str, bytes] = {
+        "image/jpeg": b"\xff\xd8\xff\xe0" + b"\x00" * 50,
+        "image/png": b"\x89PNG\r\n\x1a\n" + b"\x00" * 50,
+        "image/gif": b"GIF89a" + b"\x00" * 50,
+        "image/webp": b"RIFF\x00\x00\x00\x00WEBP" + b"\x00" * 50,
+    }
+
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch("app.services.attachment.get_settings") as mock_settings:
             mock_settings.return_value.attachment_local_path = tmpdir
             mock_settings.return_value.attachment_max_size_bytes = 10 * 1024 * 1024
 
             for ct in ALLOWED_CONTENT_TYPES:
+                data = _SAMPLE_BYTES[ct]
                 attachment = await save_attachment(
                     session,
                     update_id=update.id,
                     topic_id=topic.id,
                     filename=f"file.{ct.split('/')[1]}",
                     content_type=ct,
-                    data=b"\x00" * 10,
+                    data=data,
                 )
                 assert attachment.content_type == ct
 

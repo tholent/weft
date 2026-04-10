@@ -14,6 +14,7 @@
 
 import asyncio
 import logging
+from typing import Any
 
 from app.models.enums import NotificationChannel
 
@@ -21,7 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 class SNSSMSProvider:
-    """SMS notification provider backed by Amazon SNS (via boto3)."""
+    """SMS notification provider backed by Amazon SNS (via boto3).
+
+    The boto3 SNS client is created once in ``__init__`` and reused for all
+    send calls, avoiding per-call connection setup overhead.
+    """
 
     channel: NotificationChannel = NotificationChannel.sms
 
@@ -32,10 +37,15 @@ class SNSSMSProvider:
         aws_region: str,
         sender_id: str = "Weft",
     ) -> None:
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
-        self.aws_region = aws_region
+        import boto3  # type: ignore[import-untyped]
+
         self.sender_id = sender_id
+        self._client: Any = boto3.client(
+            "sns",
+            region_name=aws_region,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
 
     async def send(
         self,
@@ -50,16 +60,7 @@ class SNSSMSProvider:
         return await asyncio.to_thread(self._send_sync, recipient, body)
 
     def _send_sync(self, recipient: str, body: str) -> str:
-        import boto3  # type: ignore[import-untyped]
-
-        client = boto3.client(
-            "sns",
-            region_name=self.aws_region,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-        )
-
-        response = client.publish(
+        response = self._client.publish(
             PhoneNumber=recipient,
             Message=body,
             MessageAttributes={

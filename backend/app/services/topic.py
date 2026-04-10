@@ -17,13 +17,15 @@ import string
 import uuid
 from datetime import UTC, datetime
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.models.enums import MemberRole, TopicStatus
+from app.models.enums import MemberRole, NotificationChannel, TopicStatus
 from app.models.member import Member
 from app.models.topic import Topic
 from app.services.auth import create_magic_link
+from app.services.notifications.preferences import create_defaults
 from app.services.purge import purge_emails
 
 _SHORT_CODE_CHARS = string.ascii_uppercase + string.digits
@@ -31,17 +33,24 @@ _SHORT_CODE_LEN = 3
 _SHORT_CODE_MAX_ATTEMPTS = 10
 
 
+def _generate_candidate() -> str:
+    """Generate a random _SHORT_CODE_LEN uppercase alphanumeric string."""
+    return "".join(secrets.choice(_SHORT_CODE_CHARS) for _ in range(_SHORT_CODE_LEN))
+
+
 async def generate_short_code(session: AsyncSession) -> str:
     """Generate a unique 3-character alphanumeric short code for a topic.
 
-    Generates a random uppercase alphanumeric code and retries up to
-    _SHORT_CODE_MAX_ATTEMPTS times to avoid collisions with active topics.
+    Uses a query-based pre-check for the common case and falls back to
+    IntegrityError retry so that concurrent inserts with the same code are
+    also handled correctly (the partial unique index on topic.short_code
+    WHERE status='active' is the database-level enforcement).
 
     Raises:
         RuntimeError: If a unique code cannot be generated within the retry limit.
     """
     for _ in range(_SHORT_CODE_MAX_ATTEMPTS):
-        code = "".join(secrets.choice(_SHORT_CODE_CHARS) for _ in range(_SHORT_CODE_LEN))
+        code = _generate_candidate()
         result = await session.execute(
             select(Topic).where(
                 Topic.short_code == code,
@@ -60,11 +69,28 @@ async def create_topic(
     default_title: str,
     creator_email: str | None = None,
 ) -> tuple[Topic, Member, str]:
-    """Create a topic with a creator member. Returns (topic, member, magic_link)."""
-    short_code = await generate_short_code(session)
-    topic = Topic(default_title=default_title, short_code=short_code)
-    session.add(topic)
-    await session.flush()
+    """Create a topic with a creator member. Returns (topic, member, magic_link).
+
+    Retries short-code generation on IntegrityError to handle the rare race
+    where two concurrent requests select the same code between check and insert.
+    The partial unique index (topic.short_code WHERE status='active') is the
+    authoritative uniqueness guarantee.
+    """
+    for attempt in range(_SHORT_CODE_MAX_ATTEMPTS):
+        short_code = await generate_short_code(session)
+        topic = Topic(default_title=default_title, short_code=short_code)
+        session.add(topic)
+        try:
+            await session.flush()
+            break
+        except IntegrityError:
+            await session.rollback()
+            if attempt == _SHORT_CODE_MAX_ATTEMPTS - 1:
+                raise RuntimeError(
+                    "Failed to create topic with a unique short code "
+                    f"after {_SHORT_CODE_MAX_ATTEMPTS} attempts"
+                )
+            continue
 
     member = Member(
         topic_id=topic.id,
@@ -73,6 +99,10 @@ async def create_topic(
     )
     session.add(member)
     await session.flush()
+
+    # Seed default notification preferences for the owner so that the
+    # preferences API returns non-empty results from the start.
+    await create_defaults(session, member_id=member.id, channel=NotificationChannel.email)
 
     magic_link = create_magic_link(str(member.id))
 

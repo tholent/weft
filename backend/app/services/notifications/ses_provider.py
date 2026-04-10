@@ -14,6 +14,7 @@
 
 import asyncio
 import logging
+from typing import Any
 
 from app.models.enums import NotificationChannel
 
@@ -21,7 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 class SESEmailProvider:
-    """Email notification provider backed by Amazon SES (via boto3)."""
+    """Email notification provider backed by Amazon SES (via boto3).
+
+    The boto3 SES client is created once in ``__init__`` and reused for all
+    send calls, avoiding per-call connection setup overhead.
+    """
 
     channel: NotificationChannel = NotificationChannel.email
 
@@ -32,10 +37,15 @@ class SESEmailProvider:
         aws_region: str,
         from_address: str = "Weft <noreply@weft.app>",
     ) -> None:
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
-        self.aws_region = aws_region
+        import boto3  # type: ignore[import-untyped]
+
         self.from_address = from_address
+        self._client: Any = boto3.client(
+            "ses",
+            region_name=aws_region,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
 
     async def send(
         self,
@@ -55,22 +65,13 @@ class SESEmailProvider:
         body: str,
         html_body: str | None,
     ) -> str:
-        import boto3  # type: ignore[import-untyped]
-
-        client = boto3.client(
-            "ses",
-            region_name=self.aws_region,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-        )
-
         body_content: dict[str, object] = {
             "Text": {"Data": body, "Charset": "UTF-8"},
         }
         if html_body is not None:
             body_content["Html"] = {"Data": html_body, "Charset": "UTF-8"}
 
-        response = client.send_email(
+        response = self._client.send_email(
             Source=self.from_address,
             Destination={"ToAddresses": [recipient]},
             Message={

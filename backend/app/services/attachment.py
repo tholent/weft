@@ -32,6 +32,34 @@ _CONTENT_TYPE_EXT: dict[str, str] = {
     "image/gif": "gif",
 }
 
+# Magic-byte signatures for supported image formats.
+# Each entry maps a declared content-type to a tuple of valid byte prefixes.
+_MAGIC_BYTES: dict[str, tuple[bytes, ...]] = {
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+    "image/gif": (b"GIF87a", b"GIF89a"),
+    # WebP: bytes 0-3 are "RIFF", bytes 8-11 are "WEBP"
+    "image/webp": (b"RIFF",),
+}
+
+
+def _verify_magic_bytes(content_type: str, data: bytes) -> bool:
+    """Return True if *data* starts with a magic byte sequence for *content_type*.
+
+    For WebP we additionally verify bytes 8-11 are ``WEBP`` because ``RIFF``
+    is shared with other formats (e.g. WAV, AVI).
+    """
+    signatures = _MAGIC_BYTES.get(content_type)
+    if signatures is None:
+        return False
+    for sig in signatures:
+        if data[:len(sig)] == sig:
+            if content_type == "image/webp":
+                # Extra check: bytes 8-12 must be "WEBP"
+                return len(data) >= 12 and data[8:12] == b"WEBP"
+            return True
+    return False
+
 
 async def save_attachment(
     session: AsyncSession,
@@ -55,6 +83,12 @@ async def save_attachment(
         raise ValueError(
             f"Unsupported content type '{content_type}'. "
             f"Allowed types: {', '.join(sorted(ALLOWED_CONTENT_TYPES))}"
+        )
+
+    if not _verify_magic_bytes(content_type, data):
+        raise ValueError(
+            f"File content does not match declared content type '{content_type}'. "
+            "Upload rejected."
         )
 
     if len(data) > settings.attachment_max_size_bytes:

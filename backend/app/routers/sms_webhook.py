@@ -25,11 +25,12 @@ and handled asynchronously by the command processor.
 
 import logging
 
-from fastapi import APIRouter, Depends, Form
+from fastapi import APIRouter, Depends, Form, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
 from app.deps_sms import verify_twilio_signature
+from app.rate_limit import limiter
 from app.services.notifications.sms_commands import SmsCommand, parse_sms_command
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,9 @@ router = APIRouter(prefix="/webhooks/sms", tags=["sms"])
 
 
 @router.post("/inbound", dependencies=[Depends(verify_twilio_signature)])
+@limiter.limit("60/minute")
 async def sms_inbound(
+    request: Request,
     From: str = Form(...),
     Body: str = Form(...),
     To: str = Form(default=""),

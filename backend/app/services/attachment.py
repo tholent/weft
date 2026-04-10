@@ -21,25 +21,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.config import get_settings
+from app.constants.mime import MIME_GIF, MIME_JPEG, MIME_PNG, MIME_WEBP
 from app.models.attachment import Attachment
 
-ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_CONTENT_TYPES = {MIME_JPEG, MIME_PNG, MIME_WEBP, MIME_GIF}
 
 _CONTENT_TYPE_EXT: dict[str, str] = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
+    MIME_JPEG: "jpg",
+    MIME_PNG: "png",
+    MIME_WEBP: "webp",
+    MIME_GIF: "gif",
 }
 
 # Magic-byte signatures for supported image formats.
 # Each entry maps a declared content-type to a tuple of valid byte prefixes.
 _MAGIC_BYTES: dict[str, tuple[bytes, ...]] = {
-    "image/jpeg": (b"\xff\xd8\xff",),
-    "image/png": (b"\x89PNG\r\n\x1a\n",),
-    "image/gif": (b"GIF87a", b"GIF89a"),
+    MIME_JPEG: (b"\xff\xd8\xff",),
+    MIME_PNG: (b"\x89PNG\r\n\x1a\n",),
+    MIME_GIF: (b"GIF87a", b"GIF89a"),
     # WebP: bytes 0-3 are "RIFF", bytes 8-11 are "WEBP"
-    "image/webp": (b"RIFF",),
+    MIME_WEBP: (b"RIFF",),
 }
 
 
@@ -54,7 +55,7 @@ def _verify_magic_bytes(content_type: str, data: bytes) -> bool:
         return False
     for sig in signatures:
         if data[: len(sig)] == sig:
-            if content_type == "image/webp":
+            if content_type == MIME_WEBP:
                 # Extra check: bytes 8-12 must be "WEBP"
                 return len(data) >= 12 and data[8:12] == b"WEBP"
             return True

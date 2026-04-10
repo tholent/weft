@@ -125,8 +125,7 @@ async def test_generate_short_code_uses_secrets(session):
     assert all(c in valid_chars for c in code)
 
 
-@pytest.mark.anyio
-async def test_generate_short_code_is_not_random_module(session):
+def test_generate_short_code_is_not_random_module():
     """generate_short_code must not use the random module (uses secrets)."""
     import importlib
 

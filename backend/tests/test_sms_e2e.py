@@ -283,6 +283,8 @@ async def test_sms_e2e_invite_notify_reply_stop_resume(client, session):
     await session.commit()
 
     # Verify RESUME was accepted (200 response confirms processing)
+    assert response.status_code == 200
+    assert response.json() == {"status": "accepted"}
     # Note: Verifying dispatch after RESUME requires a fresh session
     # since the webhook commits in its own session. The RESUME handler
     # is unit-tested separately in test_sms.py.

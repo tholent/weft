@@ -31,6 +31,11 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./tests/unit/setup.ts'],
     include: ['tests/unit/**/*.test.ts', 'src/**/*.test.ts'],
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost/',
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['lcov', 'text'],

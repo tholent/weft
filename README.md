@@ -1,16 +1,20 @@
 # Weft
 
-A private, ephemeral announcement system for personal networks. No accounts. Topic-based. Circle-scoped.
+A private, ephemeral announcement system for personal networks. No accounts. Topic-based. Circle-scoped. Multi-channel notifications (email and SMS). File attachments. Data export.
 
 ## What is Weft?
 
-Weft is designed for sharing time-limited updates within trusted groups. Create a topic around a real-world event (a family medical situation, a trip, a major announcement) and distribute scoped updates to named audience circles. All contact information is automatically purged when the topic closes, keeping your network's data minimal and ephemeral.
+Weft is designed for sharing time-limited updates within trusted groups. Create a topic around a real-world event (a family medical situation, a trip, a major announcement) and distribute scoped updates to named audience circles. All contact information is automatically purged when the topic closes, keeping your network's data minimal and ephemeral. v0.2.0 adds multi-channel notification support (email and SMS), photo and file attachments, notification preferences, and member data export capabilities.
 
 Key principles:
 - **No user accounts** — email is a delivery mechanism only, never stored as a profile
 - **Topic-based identity** — the topic, not the user, is the unit of identity
 - **Circle-scoped visibility** — different audiences see contextually appropriate titles and content
 - **Immutable audit trail** — historical decisions (who had access when) are never rewritten
+- **Multi-channel notifications** — email and SMS delivery with flexible provider selection
+- **Content attachments** — share files and images with circles, with configurable storage (local or S3)
+- **Data export** — members can export their topic data for record-keeping
+- **Notification preferences** — fine-grained control over when and how members receive updates
 
 ## Core Concepts
 
@@ -35,9 +39,11 @@ Key principles:
 | **Linting / Format** | ruff |
 | **Package Manager** | uv |
 | **Testing** | pytest with anyio |
-| **Email** | Resend |
+| **Email Providers** | Resend, Mailgun, AWS SES |
+| **SMS Providers** | Twilio, AWS SNS |
 | **Scheduling** | APScheduler (embedded, async) |
 | **Magic Links** | itsdangerous |
+| **File Storage** | Local filesystem or AWS S3 |
 | | |
 | **Frontend Framework** | SvelteKit (SPA mode) |
 | **Language** | TypeScript (strict) |
@@ -113,10 +119,24 @@ See `.env.example` for all available options. Key variables:
 |----------|---------|-------------|
 | `DATABASE_URL` | `sqlite+aiosqlite:///./weft.db` | SQLite for dev, PostgreSQL for prod |
 | `SECRET_KEY` | `change-me-to-a-random-secret` | Used to sign magic links |
-| `RESEND_API_KEY` | (empty) | Resend email API key |
 | `BASE_URL` | `http://localhost:5173` | Frontend base URL (used in CORS) |
 | `CREATOR_TRANSFER_DEADLINE_HOURS` | `24` | Dead man's switch timeout |
 | `AUTO_ARCHIVE_DAYS` | `30` | Days of inactivity before auto-archive |
+| `EMAIL_PROVIDER` | `resend` | Email provider: `resend`, `mailgun`, or `ses` |
+| `RESEND_API_KEY` | (empty) | Resend email API key |
+| `MAILGUN_API_KEY` | (empty) | Mailgun API key |
+| `MAILGUN_DOMAIN` | (empty) | Mailgun domain |
+| `SES_REGION` | (empty) | AWS region for SES (e.g., `us-east-1`) |
+| `SMS_PROVIDER` | `twilio` | SMS provider: `twilio` or `sns` |
+| `TWILIO_ACCOUNT_SID` | (empty) | Twilio account SID |
+| `TWILIO_AUTH_TOKEN` | (empty) | Twilio auth token |
+| `TWILIO_FROM_NUMBER` | (empty) | Twilio phone number for sending SMS |
+| `SNS_REGION` | (empty) | AWS region for SNS (e.g., `us-east-1`) |
+| `ATTACHMENT_STORAGE` | `local` | Attachment storage: `local` or `s3` |
+| `ATTACHMENT_STORAGE_PATH` | `./attachments` | Local directory for attachments (if using local storage) |
+| `ATTACHMENT_MAX_SIZE_BYTES` | `10485760` | Max attachment size (10 MB default) |
+| `NOTIFICATION_FROM_EMAIL` | (empty) | Sender email address for notification emails |
+| `DIGEST_INTERVAL_HOURS` | `24` | Interval for digest notifications |
 
 ## Project Structure
 

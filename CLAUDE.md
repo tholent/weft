@@ -145,19 +145,21 @@ UV_PROJECT_ENVIRONMENT=/workspace/backend/.venv uv run alembic revision --autoge
 
 ### Backend
 
-- `/workspace/backend/app/models/` — SQLModel table definitions
-- `/workspace/backend/app/schemas/` — Pydantic request/response shapes
+- `/workspace/backend/app/models/` — SQLModel table definitions (topic, circle, member, update, reply, token, transfer, notification, attachment)
+- `/workspace/backend/app/schemas/` — Pydantic request/response shapes (topic, circle, member, update, reply, notification, attachment, export)
 - `/workspace/backend/app/services/` — Business logic (testable without HTTP, raises ValueError)
-- `/workspace/backend/app/routers/` — Request handlers (convert ValueError to HTTPException)
+  - Core services: topic, auth, email, transfer, purge, attachment, export
+  - Notifications subpackage: provider, registry, service, dispatch, preferences, sms_commands, sms_format, resend_provider, mailgun_provider, ses_provider, twilio_provider, sns_provider
+- `/workspace/backend/app/routers/` — Request handlers (topics, circles, members, updates, replies, auth, transfer, attachments, export, notifications, sms_webhook)
 - `/workspace/backend/app/db/` — Database session, migrations
-- `/workspace/backend/app/scheduler/` — APScheduler job definitions and tasks
+- `/workspace/backend/app/scheduler/` — APScheduler job definitions and tasks (includes digest_notification_task)
 
 ### Frontend
 
-- `/workspace/frontend/src/lib/types/` — Shared TypeScript interfaces
-- `/workspace/frontend/src/lib/api/` — Typed fetch wrappers for API endpoints
+- `/workspace/frontend/src/lib/types/` — Shared TypeScript interfaces (topic, member, update, reply, notification, attachment, export)
+- `/workspace/frontend/src/lib/api/` — Typed fetch wrappers for API endpoints (topics, updates, replies, members, notifications, attachments, export)
 - `/workspace/frontend/src/lib/stores/` — Svelte stores (session, topic state)
-- `/workspace/frontend/src/lib/components/` — Reusable Svelte components
+- `/workspace/frontend/src/lib/components/` — Reusable Svelte components (NotificationSettings, ExportButton, UpdateCard, ReplyThread, etc.)
 - `/workspace/frontend/src/routes/` — SvelteKit page components
 
 ## Frontend-Specific Notes
@@ -195,10 +197,23 @@ See `/workspace/.env.example` for all options. Key variables:
 
 - `DATABASE_URL` — Connection string for SQLite or PostgreSQL
 - `SECRET_KEY` — Used to sign magic links (must be set in production)
-- `RESEND_API_KEY` — Resend email API key
 - `BASE_URL` — Frontend base URL (used in CORS and email links)
 - `CREATOR_TRANSFER_DEADLINE_HOURS` — Default 24
 - `AUTO_ARCHIVE_DAYS` — Default 30
+- `EMAIL_PROVIDER` — Email provider: `resend`, `mailgun`, or `ses`
+- `RESEND_API_KEY` — Resend email API key
+- `SMS_PROVIDER` — SMS provider: `twilio` or `sns`
+- `TWILIO_ACCOUNT_SID` — Twilio account SID
+- `TWILIO_AUTH_TOKEN` — Twilio auth token
+- `TWILIO_FROM_NUMBER` — Twilio phone number for sending SMS
+- `MAILGUN_API_KEY` — Mailgun API key
+- `MAILGUN_DOMAIN` — Mailgun domain
+- `SES_REGION` — AWS region for SES (e.g., `us-east-1`)
+- `SNS_REGION` — AWS region for SNS (e.g., `us-east-1`)
+- `ATTACHMENT_STORAGE_PATH` — Local directory for attachments (if using local storage)
+- `MAX_ATTACHMENT_SIZE_MB` — Maximum attachment size in MB
+- `NOTIFICATION_FROM_EMAIL` — Sender email address for notification emails
+- `DIGEST_INTERVAL_HOURS` — Interval for digest notifications
 
 ## Testing Patterns
 
@@ -210,6 +225,14 @@ Fixtures in `/workspace/backend/tests/conftest.py` provide:
 - `client` — AsyncClient with dependency overrides
 - `topic_with_creator` — Pre-created topic with creator and raw token
 - `circle_with_members` — Pre-created circle with recipient members
+
+Key test files:
+- `test_topics.py`, `test_auth.py`, `test_transfer.py`, `test_purge.py` — Core feature tests
+- `test_notification_dispatch.py`, `test_notification_preferences.py` — Notification system tests
+- `test_sms.py`, `test_sms_e2e.py` — SMS provider and workflow tests
+- `test_attachments.py`, `test_attachment_e2e.py` — File attachment tests
+- `test_export.py`, `test_export_e2e.py` — Topic export tests
+- `test_member_v2.py` — Member management tests
 
 Tests are async and use `pytest` with `anyio`. Example:
 

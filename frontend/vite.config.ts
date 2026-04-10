@@ -25,5 +25,14 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
+  },
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['lcov', 'text'],
+      reportsDirectory: 'coverage',
+      include: ['src/**/*.{ts,svelte}'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts']
+    }
   }
 });

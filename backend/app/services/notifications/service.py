@@ -66,9 +66,7 @@ class NotificationService:
 
         Returns the persisted ``NotificationLog`` row.
         """
-        pref: NotificationPreference | None = await get_preference(
-            session, member_id, trigger
-        )
+        pref: NotificationPreference | None = await get_preference(session, member_id, trigger)
 
         # Default: immediate on the member's channel if no preference recorded
         delivery_mode = pref.delivery_mode if pref else DeliveryMode.immediate

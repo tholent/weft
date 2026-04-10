@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     # Email provider selection: "resend" | "mailgun" | "ses"
     email_provider: str = "resend"
 
-    # SMS provider selection: "twilio" | "sns"
+    # SMS provider selection: "twilio" | "sns" | "vonage"
     sms_provider: str = "twilio"
 
     # Resend
@@ -56,6 +56,11 @@ class Settings(BaseSettings):
 
     # SNS
     sns_sender_id: str = "Weft"
+
+    # Vonage
+    vonage_api_key: str = ""
+    vonage_api_secret: str = ""
+    vonage_from_sender: str = ""
 
     # Shared from-address for email providers
     email_from_address: str = "Weft <noreply@weft.app>"

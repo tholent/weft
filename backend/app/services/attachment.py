@@ -93,9 +93,7 @@ async def get_attachments(
 ) -> list[Attachment]:
     """Return all attachments for a given update, ordered by creation time."""
     result = await session.execute(
-        select(Attachment)
-        .where(Attachment.update_id == update_id)
-        .order_by(Attachment.created_at)
+        select(Attachment).where(Attachment.update_id == update_id).order_by(Attachment.created_at)
     )
     return list(result.scalars().all())
 
@@ -105,9 +103,7 @@ async def get_attachment(
     attachment_id: uuid.UUID,
 ) -> Attachment | None:
     """Return a single attachment by ID, or None if not found."""
-    result = await session.execute(
-        select(Attachment).where(Attachment.id == attachment_id)
-    )
+    result = await session.execute(select(Attachment).where(Attachment.id == attachment_id))
     return result.scalar_one_or_none()
 
 

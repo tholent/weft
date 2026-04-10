@@ -92,9 +92,7 @@ async def _handle_stop(session: AsyncSession, phone_number: str) -> None:
     from app.models.member import Member
     from app.models.notification import NotificationPreference
 
-    result = await session.execute(
-        select(Member).where(Member.phone == phone_number)
-    )
+    result = await session.execute(select(Member).where(Member.phone == phone_number))
     members = list(result.scalars().all())
 
     if not members:
@@ -133,9 +131,7 @@ async def _handle_resume(session: AsyncSession, phone_number: str) -> None:
     from app.models.member import Member
     from app.models.notification import NotificationPreference
 
-    result = await session.execute(
-        select(Member).where(Member.phone == phone_number)
-    )
+    result = await session.execute(select(Member).where(Member.phone == phone_number))
     members = list(result.scalars().all())
 
     if not members:

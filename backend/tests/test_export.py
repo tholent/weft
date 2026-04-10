@@ -78,9 +78,7 @@ async def test_export_moderator_cannot_export(client, session, topic_with_creato
     """Moderator cannot export — returns 403."""
     topic, creator, _ = topic_with_creator
 
-    mod, mod_token = await _make_member(
-        session, topic.id, "mod@example.com", MemberRole.moderator
-    )
+    mod, mod_token = await _make_member(session, topic.id, "mod@example.com", MemberRole.moderator)
     await session.commit()
 
     resp = await client.get(
@@ -167,9 +165,7 @@ async def test_export_excludes_pii(client, session, topic_with_creator):
     """Export does not include email addresses or phone numbers."""
     topic, creator, creator_token = topic_with_creator
 
-    member, _ = await _make_member(
-        session, topic.id, "pii-test@example.com", MemberRole.recipient
-    )
+    member, _ = await _make_member(session, topic.id, "pii-test@example.com", MemberRole.recipient)
     await session.commit()
 
     resp = await client.get(
@@ -201,9 +197,7 @@ async def test_export_empty_topic(client, session, topic_with_creator):
 
 
 @pytest.mark.anyio
-async def test_export_response_has_content_disposition_header(
-    client, session, topic_with_creator
-):
+async def test_export_response_has_content_disposition_header(client, session, topic_with_creator):
     """Export response includes Content-Disposition header for file download."""
     topic, creator, creator_token = topic_with_creator
 

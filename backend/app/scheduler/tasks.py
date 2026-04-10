@@ -135,9 +135,9 @@ async def digest_notification_task() -> None:
     async with async_session_factory() as session:
         # Find members who have at least one digest-mode preference
         pref_result = await session.execute(
-            select(NotificationPreference.member_id).where(
-                NotificationPreference.delivery_mode == DeliveryMode.digest
-            ).distinct()
+            select(NotificationPreference.member_id)
+            .where(NotificationPreference.delivery_mode == DeliveryMode.digest)
+            .distinct()
         )
         member_ids = list(pref_result.scalars().all())
 
@@ -157,9 +157,7 @@ async def digest_notification_task() -> None:
                 continue
 
             # Load member contact info
-            member_result = await session.execute(
-                select(Member).where(Member.id == member_id)
-            )
+            member_result = await session.execute(select(Member).where(Member.id == member_id))
             member = member_result.scalar_one_or_none()
             if member is None:
                 continue
@@ -182,9 +180,7 @@ async def digest_notification_task() -> None:
             for topic_id in topic_ids:
                 topic_logs = [lg for lg in pending_logs if lg.topic_id == topic_id]
 
-                topic_result = await session.execute(
-                    select(Topic).where(Topic.id == topic_id)
-                )
+                topic_result = await session.execute(select(Topic).where(Topic.id == topic_id))
                 topic = topic_result.scalar_one_or_none()
 
                 count = len(topic_logs)
@@ -202,7 +198,7 @@ async def digest_notification_task() -> None:
                     noun = "update" if count == 1 else "updates"
                     subject = f"[{topic_title}] Digest: {count} new {noun}"
                     body = (
-                        f"You have {count} new {noun} in \"{topic_title}\".\n\n"
+                        f'You have {count} new {noun} in "{topic_title}".\n\n'
                         f"View updates at {settings.base_url}/topic"
                     )
 
@@ -238,9 +234,7 @@ async def digest_notification_task() -> None:
                         count,
                     )
                 except Exception as exc:  # noqa: BLE001
-                    logger.error(
-                        "Failed to send digest to member %s: %s", member_id, exc
-                    )
+                    logger.error("Failed to send digest to member %s: %s", member_id, exc)
                     for log in topic_logs:
                         log.status = NotificationStatus.failed
                         log.error_detail = str(exc)

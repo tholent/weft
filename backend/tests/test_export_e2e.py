@@ -239,9 +239,7 @@ async def test_export_e2e_admin_cannot_export(client, session, topic_with_creato
     """Admin role cannot export — only owner."""
     topic, creator, _ = topic_with_creator
 
-    admin, admin_token = await _make_member(
-        session, topic.id, "admin@test.com", MemberRole.admin
-    )
+    admin, admin_token = await _make_member(session, topic.id, "admin@test.com", MemberRole.admin)
     await session.commit()
 
     resp = await client.get(
@@ -256,9 +254,7 @@ async def test_export_e2e_moderator_cannot_export(client, session, topic_with_cr
     """Moderator role cannot export — returns 403."""
     topic, creator, _ = topic_with_creator
 
-    mod, mod_token = await _make_member(
-        session, topic.id, "mod@test.com", MemberRole.moderator
-    )
+    mod, mod_token = await _make_member(session, topic.id, "mod@test.com", MemberRole.moderator)
     await session.commit()
 
     resp = await client.get(
@@ -615,9 +611,7 @@ async def test_export_e2e_deleted_updates_excluded(client, session, topic_with_c
     await session.flush()
 
     # Create 2 updates, delete one
-    await _create_update_with_circles(
-        session, topic.id, creator.id, "Active update", [circle.id]
-    )
+    await _create_update_with_circles(session, topic.id, creator.id, "Active update", [circle.id])
 
     update2_deleted = Update(
         topic_id=topic.id,

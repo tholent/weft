@@ -84,8 +84,12 @@ class FailingProvider:
     channel = NotificationChannel.email
 
     async def send(
-        self, *, recipient: str, subject: str,
-        body: str, html_body: str | None = None,
+        self,
+        *,
+        recipient: str,
+        subject: str,
+        body: str,
+        html_body: str | None = None,
     ) -> str:
         raise RuntimeError("Simulated send failure")
 

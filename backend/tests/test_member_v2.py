@@ -168,9 +168,7 @@ async def test_purge_clears_both_email_and_phone(session, topic_with_creator):
     await purge_emails(session, topic.id)
     await session.flush()
 
-    result = await session.execute(
-        select(Member).where(Member.id == member.id)
-    )
+    result = await session.execute(select(Member).where(Member.id == member.id))
     m = result.scalar_one()
     assert m.email is None
     assert m.phone is None

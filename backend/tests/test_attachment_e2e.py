@@ -168,11 +168,13 @@ async def test_list_attachments_multiple_files_e2e(client, session, topic_with_c
             mock_settings.return_value.attachment_max_size_bytes = 10 * 1024 * 1024
 
             # Upload 3 different images
-            for i, (filename, data, ct) in enumerate([
-                ("photo1.jpg", _make_test_jpeg(), "image/jpeg"),
-                ("photo2.png", _make_test_png(), "image/png"),
-                ("photo3.jpg", _make_test_jpeg(), "image/jpeg"),
-            ]):
+            for i, (filename, data, ct) in enumerate(
+                [
+                    ("photo1.jpg", _make_test_jpeg(), "image/jpeg"),
+                    ("photo2.png", _make_test_png(), "image/png"),
+                    ("photo3.jpg", _make_test_jpeg(), "image/jpeg"),
+                ]
+            ):
                 resp = await client.post(
                     f"/topics/{topic.id}/updates/{update.id}/attachments",
                     headers=headers,

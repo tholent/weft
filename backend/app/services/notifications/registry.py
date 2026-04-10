@@ -118,5 +118,16 @@ def create_registry(settings: object) -> ProviderRegistry:
                     sender_id=settings.sns_sender_id,
                 )
             )
+    elif settings.sms_provider == "vonage":
+        if settings.vonage_api_key and settings.vonage_api_secret and settings.vonage_from_sender:
+            from app.services.notifications.vonage_provider import VonageSMSProvider
+
+            registry.register(
+                VonageSMSProvider(
+                    api_key=settings.vonage_api_key,
+                    api_secret=settings.vonage_api_secret,
+                    from_sender=settings.vonage_from_sender,
+                )
+            )
 
     return registry

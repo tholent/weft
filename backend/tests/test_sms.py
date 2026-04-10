@@ -128,9 +128,7 @@ async def test_sms_inbound_stop_mutes_member(client, session, topic_with_creator
 
     # Verify preferences were created / updated to muted
     prefs_result = await session.execute(
-        select(NotificationPreference).where(
-            NotificationPreference.member_id == sms_member.id
-        )
+        select(NotificationPreference).where(NotificationPreference.member_id == sms_member.id)
     )
     prefs = list(prefs_result.scalars().all())
     assert len(prefs) == len(list(NotificationTrigger))
@@ -159,9 +157,7 @@ async def test_sms_inbound_mute_alias_works(client, session, topic_with_creator)
     assert resp.status_code == 200
 
     prefs_result = await session.execute(
-        select(NotificationPreference).where(
-            NotificationPreference.member_id == sms_member.id
-        )
+        select(NotificationPreference).where(NotificationPreference.member_id == sms_member.id)
     )
     prefs = list(prefs_result.scalars().all())
     for pref in prefs:

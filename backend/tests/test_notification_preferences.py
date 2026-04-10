@@ -86,9 +86,7 @@ async def test_get_preferences_owner_can_view_any_member(client, session, topic_
     """Owner can retrieve preferences for any member in their topic."""
     topic, creator, creator_token = topic_with_creator
 
-    member, pref, _ = await _create_member_with_prefs(
-        session, topic.id, "member@example.com"
-    )
+    member, pref, _ = await _create_member_with_prefs(session, topic.id, "member@example.com")
     await session.commit()
 
     resp = await client.get(
@@ -158,12 +156,8 @@ async def test_put_preference_member_cannot_modify_other_member(
     """A member cannot modify another member's notification preferences."""
     topic, creator, _ = topic_with_creator
 
-    member_a, _, token_a = await _create_member_with_prefs(
-        session, topic.id, "a@example.com"
-    )
-    member_b, _, token_b = await _create_member_with_prefs(
-        session, topic.id, "b@example.com"
-    )
+    member_a, _, token_a = await _create_member_with_prefs(session, topic.id, "a@example.com")
+    member_b, _, token_b = await _create_member_with_prefs(session, topic.id, "b@example.com")
     await session.commit()
 
     resp = await client.put(
@@ -179,9 +173,7 @@ async def test_put_preference_member_cannot_modify_other_member(
 
 
 @pytest.mark.anyio
-async def test_put_preference_invalid_delivery_mode_rejected(
-    client, session, topic_with_creator
-):
+async def test_put_preference_invalid_delivery_mode_rejected(client, session, topic_with_creator):
     """PUT with an invalid delivery_mode value returns 422."""
     topic, creator, _ = topic_with_creator
 

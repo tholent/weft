@@ -32,9 +32,7 @@ class MemberInvite(BaseModel):
     @classmethod
     def validate_invite_role(cls, v: MemberRole) -> MemberRole:
         if v not in (MemberRole.recipient, MemberRole.moderator):
-            raise ValueError(
-                "Invited members can only be assigned recipient or moderator roles"
-            )
+            raise ValueError("Invited members can only be assigned recipient or moderator roles")
         # admin and owner roles are only reachable through promotion or transfer
         return v
 

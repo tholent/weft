@@ -75,10 +75,7 @@ async def _get_attachment_links(
     )
     attachments = list(result.scalars().all())
     base = settings.base_url.rstrip("/")
-    return [
-        f"{base}/api/topics/{topic_id}/attachments/{att.id}"
-        for att in attachments
-    ]
+    return [f"{base}/api/topics/{topic_id}/attachments/{att.id}" for att in attachments]
 
 
 async def dispatch_update_notifications(
@@ -170,9 +167,7 @@ async def dispatch_update_notifications(
                 channel=member.notification_channel,
             )
         except Exception:  # noqa: BLE001
-            logger.exception(
-                "Failed to dispatch update notification to member %s", member.id
-            )
+            logger.exception("Failed to dispatch update notification to member %s", member.id)
 
 
 async def dispatch_relay_notifications(
@@ -199,9 +194,7 @@ async def dispatch_relay_notifications(
 
     if circle_ids is None:
         # All active members in the topic
-        result = await session.execute(
-            select(Member).where(Member.topic_id == topic_id)
-        )
+        result = await session.execute(select(Member).where(Member.topic_id == topic_id))
         members = list(result.scalars().all())
     else:
         result = await session.execute(
@@ -242,9 +235,7 @@ async def dispatch_relay_notifications(
                 channel=member.notification_channel,
             )
         except Exception:  # noqa: BLE001
-            logger.exception(
-                "Failed to dispatch relay notification to member %s", member.id
-            )
+            logger.exception("Failed to dispatch relay notification to member %s", member.id)
 
 
 async def dispatch_invite_notification(
@@ -266,17 +257,15 @@ async def dispatch_invite_notification(
         return
 
     address = (
-        member.email
-        if member.notification_channel == NotificationChannel.email
-        else member.phone
+        member.email if member.notification_channel == NotificationChannel.email else member.phone
     )
     if not address:
         return
 
     sms_body = format_invite_sms(topic.default_title, magic_link)
-    email_subject = f"You've been invited to follow \"{topic.default_title}\""
+    email_subject = f'You\'ve been invited to follow "{topic.default_title}"'
     email_body = (
-        f"You've been invited to follow \"{topic.default_title}\".\n\nView updates: {magic_link}"
+        f'You\'ve been invited to follow "{topic.default_title}".\n\nView updates: {magic_link}'
     )
 
     service = _get_service(registry)

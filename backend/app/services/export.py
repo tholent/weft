@@ -53,16 +53,12 @@ async def export_topic(session: AsyncSession, topic_id: uuid.UUID) -> dict[str, 
         raise ValueError(f"Topic {topic_id} not found")
 
     # --- Load circles ---
-    circles_result = await session.execute(
-        select(Circle).where(Circle.topic_id == topic_id)
-    )
+    circles_result = await session.execute(select(Circle).where(Circle.topic_id == topic_id))
     circles = list(circles_result.scalars().all())
     circle_map: dict[uuid.UUID, Circle] = {c.id: c for c in circles}
 
     # --- Load members (for handle lookup only) ---
-    members_result = await session.execute(
-        select(Member).where(Member.topic_id == topic_id)
-    )
+    members_result = await session.execute(select(Member).where(Member.topic_id == topic_id))
     member_map: dict[uuid.UUID, str | None] = {
         m.id: m.display_handle for m in members_result.scalars().all()
     }
@@ -183,9 +179,7 @@ async def export_topic(session: AsyncSession, topic_id: uuid.UUID) -> dict[str, 
 
     # --- Assemble export ---
     exported_circles = [
-        {"name": c.name, "scoped_title": c.scoped_title}
-        for c in circles
-        if c.deleted_at is None
+        {"name": c.name, "scoped_title": c.scoped_title} for c in circles if c.deleted_at is None
     ]
 
     exported_updates = [

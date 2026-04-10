@@ -12,12 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  webServer: {
-    command: 'npm run build && npm run preview',
-    port: 4173
+  testDir: './tests/e2e',
+
+  retries: process.env.CI ? 2 : 0,
+
+  reporter: process.env.CI ? [['list'], ['html']] : 'list',
+
+  use: {
+    baseURL: 'http://localhost:4173',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure'
   },
-  testDir: 'tests/e2e'
+
+  projects: [
+    {
+      name: 'chromium-desktop',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 720 }
+      }
+    },
+    {
+      name: 'chromium-mobile',
+      use: {
+        ...devices['iPhone 13']
+      }
+    }
+  ],
+
+  webServer: {
+    command: 'npm run build && npm run preview -- --port 4173',
+    url: 'http://localhost:4173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000
+  }
 });

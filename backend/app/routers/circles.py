@@ -33,7 +33,7 @@ async def create_circle_endpoint(
     payload: CircleCreate,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> CircleResponse:
     circle = await create_circle(session, topic_id, payload.name, payload.scoped_title)
     return CircleResponse(
         id=circle.id,
@@ -48,7 +48,7 @@ async def list_circles_endpoint(
     topic_id: uuid.UUID,
     member: TopicMemberDep,
     session: SessionDep,
-):
+) -> list[CircleResponse]:
     """List circles. Admin+ sees all; recipients see only their own circle."""
     if member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         circles = await list_circles(session, topic_id)
@@ -88,7 +88,7 @@ async def rename_circle_endpoint(
     payload: CircleUpdate,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> CircleResponse:
     try:
         circle = await rename_circle(
             session,
@@ -114,7 +114,7 @@ async def delete_circle_endpoint(
     circle_id: uuid.UUID,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     try:
         await delete_circle(session, circle_id, topic_id)
     except ValueError as e:

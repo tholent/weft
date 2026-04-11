@@ -40,7 +40,7 @@ async def create_topic_endpoint(
     request: Request,
     payload: TopicCreate,
     session: SessionDep,
-):
+) -> TopicCreateResponse:
     """Create a new topic. No auth required."""
     topic, member, magic_link = await create_topic(
         session, payload.default_title, payload.creator_email
@@ -65,7 +65,7 @@ async def get_topic_endpoint(
     topic_id: uuid.UUID,
     member: TopicMemberDep,
     session: SessionDep,
-):
+) -> TopicResponse:
     """Get topic info. Returns scoped title based on viewer's circle."""
     topic = await get_topic(session, topic_id)
 
@@ -102,7 +102,7 @@ async def close_topic_endpoint(
     topic_id: uuid.UUID,
     member: TopicOwnerDep,
     session: SessionDep,
-):
+) -> TopicResponse:
     """Close a topic. Creator only. Purges all emails."""
     topic = await close_topic(session, topic_id)
     return TopicResponse(

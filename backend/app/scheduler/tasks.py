@@ -13,8 +13,10 @@
 # limitations under the License.
 
 import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col, select
 
 from app.config import Settings, get_settings
@@ -152,7 +154,7 @@ def _build_digest_message(
 
 
 async def _mark_logs(
-    session,
+    session: AsyncSession,
     logs: list[NotificationLog],
     status: NotificationStatus,
     now: datetime,
@@ -172,7 +174,7 @@ async def _mark_logs(
 
 
 async def _send_topic_digest(
-    session,
+    session: AsyncSession,
     member: Member,
     topic_logs: list[NotificationLog],
     registry: ProviderRegistry,
@@ -231,8 +233,8 @@ async def _send_topic_digest(
 
 
 async def _process_member_digest(
-    session,
-    member_id,
+    session: AsyncSession,
+    member_id: uuid.UUID,
     registry: ProviderRegistry,
     settings: Settings,
 ) -> None:

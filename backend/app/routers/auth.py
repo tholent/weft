@@ -29,7 +29,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def verify_magic_link_endpoint(
     payload: MagicLinkVerify,
     session: SessionDep,
-):
+) -> AuthResponse:
     """Verify a magic link and issue a fresh bearer token."""
     try:
         data = verify_magic_link(payload.token)
@@ -59,7 +59,7 @@ async def revoke_current_token(
     request: Request,
     member: CurrentMemberDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Revoke the current bearer token."""
     auth_header = request.headers.get("Authorization", "")
     raw_token = auth_header.removeprefix("Bearer ").strip()

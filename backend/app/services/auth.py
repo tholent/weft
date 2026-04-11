@@ -14,7 +14,9 @@
 
 import hashlib
 import secrets
+import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +30,7 @@ def hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-async def generate_token(session: AsyncSession, member_id) -> str:
+async def generate_token(session: AsyncSession, member_id: uuid.UUID) -> str:
     raw = secrets.token_urlsafe(32)
     token_row = Token(member_id=member_id, token_hash=hash_token(raw))
     session.add(token_row)
@@ -50,7 +52,7 @@ def create_magic_link(member_id: str) -> str:
     return f"{settings.base_url}/auth?t={signed}"
 
 
-def verify_magic_link(signed_token: str, max_age: int = 86400) -> dict:
+def verify_magic_link(signed_token: str, max_age: int = 86400) -> dict[str, Any]:
     """Verify a signed magic link token. Returns {"member_id": ...}."""
     s = _get_serializer()
     try:
@@ -59,6 +61,8 @@ def verify_magic_link(signed_token: str, max_age: int = 86400) -> dict:
         raise ValueError("Magic link has expired")
     except BadSignature:
         raise ValueError("Invalid magic link")
+    if not isinstance(data, dict):
+        raise ValueError("Invalid magic link payload")
     return data
 
 

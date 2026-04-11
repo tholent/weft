@@ -31,7 +31,7 @@ async def request_transfer_endpoint(
     topic_id: uuid.UUID,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> TransferResponse:
     """Request a dead-man's-switch transfer. Admin only."""
     try:
         transfer = await request_transfer(session, topic_id, member.id)
@@ -50,7 +50,7 @@ async def get_transfer_status_endpoint(
     topic_id: uuid.UUID,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> TransferResponse | None:
     """Get current pending transfer status. Admin+ only."""
     result = await session.execute(
         select(CreatorTransfer).where(
@@ -74,7 +74,7 @@ async def cancel_transfer_endpoint(
     topic_id: uuid.UUID,
     member: TopicOwnerDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Cancel a pending transfer. Owner only."""
     await cancel_transfer(session, topic_id)
     return {"detail": "Transfer cancelled"}
@@ -86,7 +86,7 @@ async def direct_transfer_endpoint(
     payload: DirectTransferRequest,
     member: TopicOwnerDep,
     session: SessionDep,
-):
+) -> TransferResponse:
     """Immediately pass ownership to any member. Owner only."""
     try:
         transfer = await execute_direct_transfer(

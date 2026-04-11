@@ -13,15 +13,21 @@
 # limitations under the License.
 
 from collections.abc import AsyncGenerator
+from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.config import get_settings
 
 
-def get_engine():
+def get_engine() -> AsyncEngine:
     settings = get_settings()
-    connect_args = {}
+    connect_args: dict[str, Any] = {}
     if settings.database_url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
     return create_async_engine(settings.database_url, connect_args=connect_args)

@@ -42,7 +42,7 @@ async def invite_member_endpoint(
     payload: MemberInvite,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> MemberResponse:
     """Invite a member. Admin+ only. Sends invite email with magic link."""
     try:
         new_member, raw_token = await invite_member(
@@ -85,7 +85,7 @@ async def list_members_endpoint(
     session: SessionDep,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-):
+) -> PaginatedResponse[MemberResponse]:
     """List members. Admin+ sees all; moderators see their circles; recipients see nothing."""
     if member.role == MemberRole.recipient:
         return PaginatedResponse(items=[], total=0, limit=limit, offset=offset)
@@ -145,7 +145,7 @@ async def move_member_endpoint(
     payload: MemberMove,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Move a member to a different circle. Admin+ only."""
     try:
         await move_member(
@@ -163,7 +163,7 @@ async def promote_member_endpoint(
     payload: MemberPromote,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Promote a member. Admin+ for moderator; creator only for admin."""
     try:
         updated = await promote_member(session, member_id, payload.new_role, member)
@@ -179,7 +179,7 @@ async def rename_member_endpoint(
     payload: MemberRename,
     member: TopicOwnerDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Set a member's display handle. Creator only."""
     result = await session.execute(select(Member).where(Member.id == member_id))
     target = result.scalar_one_or_none()
@@ -196,7 +196,7 @@ async def resend_invite_endpoint(
     member_id: uuid.UUID,
     member: TopicAdminDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Re-send invite link. Admin+ only."""
     result = await session.execute(select(Member).where(Member.id == member_id))
     target = result.scalar_one_or_none()

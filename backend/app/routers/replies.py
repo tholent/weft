@@ -47,7 +47,7 @@ async def create_reply_endpoint(
     payload: ReplyCreate,
     member: TopicMemberDep,
     session: SessionDep,
-):
+) -> ReplyResponse:
     """Create a reply to an update. Any authenticated member."""
     reply = await create_reply(
         session, update_id, member.id, payload.body, payload.wants_to_share, member.role
@@ -71,7 +71,7 @@ async def list_replies_endpoint(
     session: SessionDep,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-):
+) -> PaginatedResponse[ReplyResponse]:
     """List replies for an update. Scoped by role."""
     all_replies = await get_replies_for_update(session, update_id, member)
 
@@ -118,7 +118,7 @@ async def relay_reply_endpoint(
     payload: RelayAction,
     member: TopicModeratorDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Relay a reply to circles. Moderator+ only."""
     await relay_reply(session, reply_id, member.id, payload.circle_ids)
     return {"detail": "Reply relayed"}
@@ -131,7 +131,7 @@ async def dismiss_reply_endpoint(
     reply_id: uuid.UUID,
     member: TopicModeratorDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Dismiss a reply. Moderator+ only."""
     await dismiss_reply(session, reply_id)
     return {"detail": "Reply dismissed"}
@@ -145,7 +145,7 @@ async def create_mod_response_endpoint(
     payload: ModResponseCreate,
     member: TopicModeratorDep,
     session: SessionDep,
-):
+) -> ModResponseResponse:
     """Create a mod response to a reply. Moderator+ only."""
     mod_resp = await create_mod_response(session, reply_id, member.id, payload.body, payload.scope)
     return ModResponseResponse(

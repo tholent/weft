@@ -141,7 +141,7 @@ async def create_update_endpoint(
     payload: UpdateCreate,
     member: TopicModeratorDep,
     session: SessionDep,
-):
+) -> UpdateResponse:
     """Create an update addressed to specified circles. Moderator+ only."""
     try:
         update = await create_update(
@@ -159,7 +159,7 @@ async def get_feed_endpoint(
     session: SessionDep,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-):
+) -> PaginatedResponse[UpdateResponse]:
     """Get feed. Uses member's circle history for visibility."""
     if member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         all_updates = await list_updates_for_topic(session, topic_id)
@@ -180,10 +180,8 @@ async def edit_update_endpoint(
     payload: UpdateEdit,
     member: TopicMemberDep,
     session: SessionDep,
-):
+) -> UpdateResponse:
     """Edit an update. Author only."""
-    from app.models.update import Update
-
     result = await session.execute(select(Update).where(Update.id == update_id))
     update = result.scalar_one_or_none()
     if update is None:
@@ -201,10 +199,8 @@ async def delete_update_endpoint(
     update_id: uuid.UUID,
     member: TopicMemberDep,
     session: SessionDep,
-):
+) -> dict[str, str]:
     """Soft delete an update. Author or admin+ only."""
-    from app.models.update import Update
-
     result = await session.execute(select(Update).where(Update.id == update_id))
     update = result.scalar_one_or_none()
     if update is None:

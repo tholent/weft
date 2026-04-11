@@ -84,6 +84,38 @@ npm run lint
 npm run format
 ```
 
+### Quality gate (the contract CI enforces)
+
+All of these must pass on `main` and on every PR. They are wired into
+`.github/workflows/backend.yml` and `frontend.yml`, and can be run
+locally via the pre-commit hooks in `.pre-commit-config.yaml`
+(`pre-commit install` once per clone).
+
+**Backend:**
+- `ruff check .` — zero errors
+- `ruff format --check .` — zero changes
+- **`mypy app/` in strict mode — zero errors.** Not "fewer than N errors".
+  Not "only in touched files". **Zero.** The backend runs `strict = true`;
+  new code must honour it. If a third-party library lacks stubs, add a
+  targeted `# type: ignore[<code>]` with a comment explaining why.
+- `pytest` — all tests pass
+- mypy is pinned to `>=1.20,<1.21` in `backend/pyproject.toml` so minor
+  bumps that add new strict checks cannot silently regress CI. Bump the
+  pin deliberately when you want the new checks.
+
+**Frontend:**
+- `npm run check` — svelte-check, zero errors
+- `npm run lint` — eslint, zero errors
+- `npm run format:check` — prettier, zero changes
+- `npm run test:unit` — all Vitest tests pass
+- `npm run test:e2e` — all Playwright tests pass (E2E job in CI)
+
+Do NOT weaken `strict = true`, add blanket `exclude` patterns to mypy,
+or mass-suppress errors with `# type: ignore` without an error code.
+If a new check starts failing a wide swath of code, either fix it or
+have an explicit conversation about dropping it — silent drift is how
+we got here in the first place.
+
 ## Key Architectural Rules
 
 These constraints must be enforced at the service layer and are never to be violated:

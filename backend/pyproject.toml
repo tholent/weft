@@ -26,9 +26,12 @@ dev = [
     "anyio",
     "pytest-cov",
     "ruff>=0.15.9",
-    "mypy>=1.10",
+    # Pinned to a tight range: new mypy minors routinely add strict checks
+    # that would silently regress CI. Bump deliberately.
+    "mypy>=1.20,<1.21",
     "tox>=4",
     "tox-uv>=1",
+    "pre-commit>=3.7",
 ]
 
 [tool.ruff]

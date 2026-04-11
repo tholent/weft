@@ -121,7 +121,9 @@ describe('createUpdate', () => {
 			})
 		);
 
-		await createUpdate('topic-1', 'Hello', ['circle-1', 'circle-2'], { 'circle-2': 'Variant body' });
+		await createUpdate('topic-1', 'Hello', ['circle-1', 'circle-2'], {
+			'circle-2': 'Variant body'
+		});
 
 		expect(capturedBody).toEqual({
 			body: 'Hello',

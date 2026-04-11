@@ -16,46 +16,46 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [sveltekit()],
-  // The 'browser' condition forces Vite (and Vitest) to resolve Svelte 5 to
-  // its client build inside jsdom. Without it, component tests load the
-  // server build and crash with `lifecycle_function_unavailable`.
-  resolve: {
-    conditions: ['browser']
-  },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./tests/unit/setup.ts'],
-    include: ['tests/unit/**/*.test.ts', 'src/**/*.test.ts'],
-    environmentOptions: {
-      jsdom: {
-        url: 'http://localhost/',
-      },
-    },
-    coverage: {
-      provider: 'v8',
-      reporter: ['lcov', 'text'],
-      reportsDirectory: 'coverage',
-      include: ['src/**/*.{ts,svelte}'],
-      exclude: [
-        'src/**/*.test.ts',
-        'src/**/*.spec.ts',
-        'tests/unit/**',
-        'src/app.d.ts',
-        'src/routes/+layout.ts',
-        'src/lib/types/**',
-        '**/*.svelte.d.ts'
-      ]
-    }
-  }
+	plugins: [sveltekit()],
+	// The 'browser' condition forces Vite (and Vitest) to resolve Svelte 5 to
+	// its client build inside jsdom. Without it, component tests load the
+	// server build and crash with `lifecycle_function_unavailable`.
+	resolve: {
+		conditions: ['browser']
+	},
+	server: {
+		proxy: {
+			'/api': {
+				target: 'http://localhost:8000',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/api/, '')
+			}
+		}
+	},
+	test: {
+		environment: 'jsdom',
+		globals: true,
+		setupFiles: ['./tests/unit/setup.ts'],
+		include: ['tests/unit/**/*.test.ts', 'src/**/*.test.ts'],
+		environmentOptions: {
+			jsdom: {
+				url: 'http://localhost/'
+			}
+		},
+		coverage: {
+			provider: 'v8',
+			reporter: ['lcov', 'text'],
+			reportsDirectory: 'coverage',
+			include: ['src/**/*.{ts,svelte}'],
+			exclude: [
+				'src/**/*.test.ts',
+				'src/**/*.spec.ts',
+				'tests/unit/**',
+				'src/app.d.ts',
+				'src/routes/+layout.ts',
+				'src/lib/types/**',
+				'**/*.svelte.d.ts'
+			]
+		}
+	}
 });

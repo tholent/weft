@@ -45,19 +45,22 @@ import { test, expect } from './support/fixtures';
 // ---------------------------------------------------------------------------
 
 async function goToOwnerSettings(
-  page: import('@playwright/test').Page,
-  ownerMagic: string
+	page: import('@playwright/test').Page,
+	ownerMagic: string
 ): Promise<void> {
-  await page.goto(`/auth?t=${ownerMagic}`);
-  await page.waitForURL(/\/manage\//);
-  // Wait for the skeleton to resolve — the Updates nav button appears first.
-  await expect(
-    page.getByRole('navigation').getByRole('button', { name: /^updates$/i })
-  ).toBeVisible();
-  // Navigate to the Settings tab (only visible to admin/owner).
-  await page.getByRole('navigation').getByRole('button', { name: /^settings$/i }).click();
-  // Confirm the Settings heading renders.
-  await expect(page.getByRole('heading', { name: /^settings$/i })).toBeVisible();
+	await page.goto(`/auth?t=${ownerMagic}`);
+	await page.waitForURL(/\/manage\//);
+	// Wait for the skeleton to resolve — the Updates nav button appears first.
+	await expect(
+		page.getByRole('navigation').getByRole('button', { name: /^updates$/i })
+	).toBeVisible();
+	// Navigate to the Settings tab (only visible to admin/owner).
+	await page
+		.getByRole('navigation')
+		.getByRole('button', { name: /^settings$/i })
+		.click();
+	// Confirm the Settings heading renders.
+	await expect(page.getByRole('heading', { name: /^settings$/i })).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------
@@ -70,34 +73,33 @@ async function goToOwnerSettings(
 // ---------------------------------------------------------------------------
 
 test('owner closes topic and status becomes closed', async ({ page, seededTopic }) => {
-  await goToOwnerSettings(page, seededTopic.ownerMagic);
+	await goToOwnerSettings(page, seededTopic.ownerMagic);
 
-  // The Close Topic button must be visible for the owner.
-  const closeBtn = page.getByRole('button', { name: /close topic/i });
-  await expect(closeBtn).toBeVisible();
+	// The Close Topic button must be visible for the owner.
+	const closeBtn = page.getByRole('button', { name: /close topic/i });
+	await expect(closeBtn).toBeVisible();
 
-  // Intercept the native confirm() dialog and accept it.
-  page.once('dialog', (dialog) => dialog.accept());
+	// Intercept the native confirm() dialog and accept it.
+	page.once('dialog', (dialog) => dialog.accept());
 
-  // Wait for the POST /topics/{id}/close response so we know the request
-  // completed before asserting backend state.
-  const closeResponsePromise = page.waitForResponse(
-    (resp) =>
-      /\/topics\/[^/]+\/close$/.test(resp.url()) && resp.request().method() === 'POST'
-  );
+	// Wait for the POST /topics/{id}/close response so we know the request
+	// completed before asserting backend state.
+	const closeResponsePromise = page.waitForResponse(
+		(resp) => /\/topics\/[^/]+\/close$/.test(resp.url()) && resp.request().method() === 'POST'
+	);
 
-  await closeBtn.click();
+	await closeBtn.click();
 
-  const closeResp = await closeResponsePromise;
-  expect(closeResp.status()).toBe(200);
+	const closeResp = await closeResponsePromise;
+	expect(closeResp.status()).toBe(200);
 
-  // Verify the returned TopicResponse reports status='closed'. We read state
-  // from the close response body directly because the auth dependency rejects
-  // any further reads against a closed topic with HTTP 403 (see app/deps.py
-  // TopicMemberDep), which would make a follow-up GET /topics/{id} fail.
-  const topicBody = await closeResp.json();
-  expect(topicBody.status).toBe('closed');
-  expect(topicBody.closed_at).not.toBeNull();
+	// Verify the returned TopicResponse reports status='closed'. We read state
+	// from the close response body directly because the auth dependency rejects
+	// any further reads against a closed topic with HTTP 403 (see app/deps.py
+	// TopicMemberDep), which would make a follow-up GET /topics/{id} fail.
+	const topicBody = await closeResp.json();
+	expect(topicBody.status).toBe('closed');
+	expect(topicBody.closed_at).not.toBeNull();
 });
 
 // ---------------------------------------------------------------------------
@@ -112,8 +114,8 @@ test('owner closes topic and status becomes closed', async ({ page, seededTopic 
 // ---------------------------------------------------------------------------
 
 test.skip('all member emails purged after topic close', async ({ page, seededTopic }) => {
-  void page;
-  void seededTopic;
+	void page;
+	void seededTopic;
 });
 
 // ---------------------------------------------------------------------------
@@ -131,10 +133,7 @@ test.skip('all member emails purged after topic close', async ({ page, seededTop
 // that surface instead of the topic header visibility.
 // ---------------------------------------------------------------------------
 
-test.skip('recipient view loads gracefully after topic close', async ({
-  page,
-  seededTopic
-}) => {
-  void page;
-  void seededTopic;
+test.skip('recipient view loads gracefully after topic close', async ({ page, seededTopic }) => {
+	void page;
+	void seededTopic;
 });

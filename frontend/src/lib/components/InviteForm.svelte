@@ -35,8 +35,7 @@
 
 	$: emailRequired = notificationChannel === 'email';
 	$: phoneRequired = notificationChannel === 'sms';
-	$: canSubmit = !submitting && !!circleId &&
-		(emailRequired ? !!email.trim() : !!phone.trim());
+	$: canSubmit = !submitting && !!circleId && (emailRequired ? !!email.trim() : !!phone.trim());
 
 	async function handleSubmit() {
 		if (!canSubmit || !$session.topicId) return;
@@ -74,26 +73,12 @@
 			<option value="sms">SMS</option>
 		</select>
 		{#if notificationChannel === 'email'}
-			<input
-				type="email"
-				bind:value={email}
-				placeholder="Email address"
-				required
-			/>
+			<input type="email" bind:value={email} placeholder="Email address" required />
 		{/if}
 		{#if notificationChannel === 'sms'}
-			<input
-				type="tel"
-				bind:value={phone}
-				placeholder="Phone number"
-				required
-			/>
+			<input type="tel" bind:value={phone} placeholder="Phone number" required />
 		{/if}
-		<input
-			type="text"
-			bind:value={displayHandle}
-			placeholder="Name (optional)"
-		/>
+		<input type="text" bind:value={displayHandle} placeholder="Name (optional)" />
 		<select bind:value={circleId} required>
 			<option value="" disabled>Circle…</option>
 			{#each circles as circle (circle.id)}
@@ -114,26 +99,59 @@
 </form>
 
 <style>
-	.invite-form { margin-bottom: 1.25rem; }
-	.fields { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-	input[type="email"], input[type="tel"], input[type="text"] {
-		flex: 1; min-width: 180px;
-		padding: 0.35rem 0.6rem; border: 1px solid var(--color-border);
-		border-radius: 4px; font-size: var(--text-sm);
+	.invite-form {
+		margin-bottom: 1.25rem;
 	}
-	.channel-select, select {
-		padding: 0.35rem 0.5rem; border: 1px solid var(--color-border);
-		border-radius: 4px; font-size: var(--text-sm);
-		background: var(--color-surface); color: var(--color-text);
+	.fields {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+	input[type='email'],
+	input[type='tel'],
+	input[type='text'] {
+		flex: 1;
+		min-width: 180px;
+		padding: 0.35rem 0.6rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-size: var(--text-sm);
+	}
+	.channel-select,
+	select {
+		padding: 0.35rem 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-size: var(--text-sm);
+		background: var(--color-surface);
+		color: var(--color-text);
 	}
 	button {
-		padding: 0.35rem 1rem; background: var(--color-text); color: white;
-		border: none; border-radius: 4px; font-size: var(--text-sm);
-		cursor: pointer; transition: background 0.15s; white-space: nowrap;
+		padding: 0.35rem 1rem;
+		background: var(--color-text);
+		color: white;
+		border: none;
+		border-radius: 4px;
+		font-size: var(--text-sm);
+		cursor: pointer;
+		transition: background 0.15s;
+		white-space: nowrap;
 	}
-	button:hover:not(:disabled) { background: var(--color-accent); }
-	button:disabled { opacity: 0.5; cursor: default; }
-	.msg { font-size: var(--text-sm); margin: 0.4rem 0 0; }
-	.error { color: var(--color-danger); }
-	.ok { color: #166534; }
+	button:hover:not(:disabled) {
+		background: var(--color-accent);
+	}
+	button:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+	.msg {
+		font-size: var(--text-sm);
+		margin: 0.4rem 0 0;
+	}
+	.error {
+		color: var(--color-danger);
+	}
+	.ok {
+		color: #166534;
+	}
 </style>

@@ -47,10 +47,14 @@
 
 	$: filteredUpdates = $updates
 		.filter((u) => showDeleted || !u.deleted_at)
-		.filter((u) => filterCircleIds.length === 0 || u.circle_ids.some((id) => filterCircleIds.includes(id)))
+		.filter(
+			(u) => filterCircleIds.length === 0 || u.circle_ids.some((id) => filterCircleIds.includes(id))
+		)
 		.sort((a, b) => {
-			if (sortKey === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-			if (sortKey === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+			if (sortKey === 'newest')
+				return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			if (sortKey === 'oldest')
+				return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 			return b.reply_count - a.reply_count;
 		});
 
@@ -109,7 +113,10 @@
 	<div class="topic-header topic-header--skeleton">
 		<div class="header-inner">
 			<div class="skeleton-line" style="width: 50%; height: 2.4rem; border-radius: 3px;"></div>
-			<div class="skeleton-line" style="width: 20%; height: 0.7rem; margin-top: 0.75rem; border-radius: 3px;"></div>
+			<div
+				class="skeleton-line"
+				style="width: 20%; height: 0.7rem; margin-top: 0.75rem; border-radius: 3px;"
+			></div>
 		</div>
 	</div>
 	<div class="content-wrapper">
@@ -139,11 +146,19 @@
 
 	<div class="content-wrapper">
 		<nav>
-			<button class:active={activeTab === 'updates'} on:click={() => (activeTab = 'updates')}>Updates</button>
-			<button class:active={activeTab === 'members'} on:click={() => (activeTab = 'members')}>Members</button>
+			<button class:active={activeTab === 'updates'} on:click={() => (activeTab = 'updates')}
+				>Updates</button
+			>
+			<button class:active={activeTab === 'members'} on:click={() => (activeTab = 'members')}
+				>Members</button
+			>
 			{#if $isAdmin}
-				<button class:active={activeTab === 'circles'} on:click={() => (activeTab = 'circles')}>Circles</button>
-				<button class:active={activeTab === 'settings'} on:click={() => (activeTab = 'settings')}>Settings</button>
+				<button class:active={activeTab === 'circles'} on:click={() => (activeTab = 'circles')}
+					>Circles</button
+				>
+				<button class:active={activeTab === 'settings'} on:click={() => (activeTab = 'settings')}
+					>Settings</button
+				>
 			{/if}
 		</nav>
 
@@ -168,15 +183,17 @@
 								<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 								<div class="circle-popover" on:click|stopPropagation>
 									{#if filterCircleIds.length > 0}
-										<button class="clear-btn" on:click={() => (filterCircleIds = [])}>Clear all</button>
+										<button class="clear-btn" on:click={() => (filterCircleIds = [])}
+											>Clear all</button
+										>
 									{/if}
 									{#each $circles as circle (circle.id)}
 										{@const selected = filterCircleIds.includes(circle.id)}
 										<button
 											class="popover-pill"
 											class:selected
-											on:click={() => toggleFilterCircle(circle.id)}
-										>{circle.name}</button>
+											on:click={() => toggleFilterCircle(circle.id)}>{circle.name}</button
+										>
 									{/each}
 								</div>
 							{/if}
@@ -198,7 +215,12 @@
 				</div>
 			</div>
 			{#each filteredUpdates as update (update.id)}
-				<UpdateCard {update} topicId={$session.topicId ?? ''} circles={$circles} onClick={() => (selectedUpdate = update)} />
+				<UpdateCard
+					{update}
+					topicId={$session.topicId ?? ''}
+					circles={$circles}
+					onClick={() => (selectedUpdate = update)}
+				/>
 			{/each}
 			{#if filteredUpdates.length === 0}
 				<div class="empty-state">
@@ -209,12 +231,11 @@
 						{filterCircleIds.length > 0
 							? 'Try removing the circle filter to see all updates.'
 							: $isModerator
-							? 'Use the form above to post your first update.'
-							: 'Updates will appear here once they are posted.'}
+								? 'Use the form above to post your first update.'
+								: 'Updates will appear here once they are posted.'}
 					</p>
 				</div>
 			{/if}
-
 		{:else if activeTab === 'members'}
 			<h2>Members</h2>
 			{#if $isAdmin}
@@ -234,10 +255,8 @@
 					<p class="empty-body">Invite people above to get started.</p>
 				</div>
 			{/if}
-
 		{:else if activeTab === 'circles'}
 			<CircleManager />
-
 		{:else if activeTab === 'settings'}
 			<h2>Settings</h2>
 			<TransferBanner />
@@ -276,7 +295,8 @@
 		canEdit={selectedUpdate.author_member_id === $session.memberId}
 		topicId={$session.topicId}
 		onClose={() => (selectedUpdate = null)}
-		onUpdate={(updated) => updates.update((all) => all.map((u) => (u.id === updated.id ? updated : u)))}
+		onUpdate={(updated) =>
+			updates.update((all) => all.map((u) => (u.id === updated.id ? updated : u)))}
 	/>
 {/if}
 
@@ -353,7 +373,9 @@
 		font-weight: 500;
 		color: var(--color-text-muted);
 		margin-bottom: -1px;
-		transition: color 0.15s, border-color 0.15s;
+		transition:
+			color 0.15s,
+			border-color 0.15s;
 	}
 
 	nav button:hover {
@@ -406,7 +428,9 @@
 		flex-shrink: 0;
 	}
 
-	.circle-filter-wrap { position: relative; }
+	.circle-filter-wrap {
+		position: relative;
+	}
 
 	.circle-filter-btn {
 		padding: 0.2rem 0.65rem;
@@ -471,7 +495,9 @@
 		margin-bottom: 0.1rem;
 	}
 
-	.clear-btn:hover { color: var(--color-accent); }
+	.clear-btn:hover {
+		color: var(--color-accent);
+	}
 
 	.sort-select {
 		padding: 0.2rem 0.4rem;
@@ -537,5 +563,7 @@
 		transition: opacity 0.15s;
 	}
 
-	.danger:hover { opacity: 0.88; }
+	.danger:hover {
+		opacity: 0.88;
+	}
 </style>

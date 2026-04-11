@@ -30,13 +30,13 @@ import type { SeedTopicSpec } from './fixtures/seed-client';
 
 /** Sign in via owner magic link and wait for the manage page to be ready. */
 async function signInAsOwner(
-  page: import('@playwright/test').Page,
-  ownerMagic: string
+	page: import('@playwright/test').Page,
+	ownerMagic: string
 ): Promise<void> {
-  await page.goto(`/auth?t=${ownerMagic}`);
-  await page.waitForURL(/\/manage\/[^/]+/);
-  // Wait for skeleton to resolve — the Updates nav tab becomes visible once data loads.
-  await expect(page.getByRole('button', { name: /^updates$/i })).toBeVisible();
+	await page.goto(`/auth?t=${ownerMagic}`);
+	await page.waitForURL(/\/manage\/[^/]+/);
+	// Wait for skeleton to resolve — the Updates nav tab becomes visible once data loads.
+	await expect(page.getByRole('button', { name: /^updates$/i })).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------
@@ -56,17 +56,17 @@ async function signInAsOwner(
 // ---------------------------------------------------------------------------
 
 test('expired bearer token redirects to landing page', async ({ page, seededTopic }) => {
-  await page.goto(`/auth?t=${seededTopic.ownerMagic}`);
-  await page.waitForURL(/\/manage\//);
+	await page.goto(`/auth?t=${seededTopic.ownerMagic}`);
+	await page.waitForURL(/\/manage\//);
 
-  // Corrupt the bearer so the next API call returns 401.
-  await page.evaluate(() => {
-    localStorage.setItem('weft_token', 'not-a-real-bearer');
-  });
+	// Corrupt the bearer so the next API call returns 401.
+	await page.evaluate(() => {
+		localStorage.setItem('weft_token', 'not-a-real-bearer');
+	});
 
-  await page.reload();
-  await page.waitForURL('http://127.0.0.1:4173/');
-  await expect(page.getByRole('heading', { name: /^weft$/i })).toBeVisible();
+	await page.reload();
+	await page.waitForURL('http://127.0.0.1:4173/');
+	await expect(page.getByRole('heading', { name: /^weft$/i })).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -93,40 +93,40 @@ test('expired bearer token redirects to landing page', async ({ page, seededTopi
 // ---------------------------------------------------------------------------
 
 test('network error mid-request surfaces as an unhandled browser exception', async ({
-  page,
-  seededTopic
+	page,
+	seededTopic
 }) => {
-  await signInAsOwner(page, seededTopic.ownerMagic);
+	await signInAsOwner(page, seededTopic.ownerMagic);
 
-  // Collect unhandled page errors (uncaught exceptions + unhandled rejections).
-  const pageErrors: Error[] = [];
-  page.on('pageerror', (err) => pageErrors.push(err));
+	// Collect unhandled page errors (uncaught exceptions + unhandled rejections).
+	const pageErrors: Error[] = [];
+	page.on('pageerror', (err) => pageErrors.push(err));
 
-  // Intercept the create-update endpoint and return a 500 error.
-  // The URL pattern matches POST /topics/<id>/updates.
-  await page.route('**/topics/**/updates', (route) => {
-    if (route.request().method() === 'POST') {
-      route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ detail: 'Internal Server Error' })
-      });
-    } else {
-      // Allow GET (feed reload) to pass through so the page can still render.
-      route.continue();
-    }
-  });
+	// Intercept the create-update endpoint and return a 500 error.
+	// The URL pattern matches POST /topics/<id>/updates.
+	await page.route('**/topics/**/updates', (route) => {
+		if (route.request().method() === 'POST') {
+			route.fulfill({
+				status: 500,
+				contentType: 'application/json',
+				body: JSON.stringify({ detail: 'Internal Server Error' })
+			});
+		} else {
+			// Allow GET (feed reload) to pass through so the page can still render.
+			route.continue();
+		}
+	});
 
-  // Fill the compose box and send.
-  await page.getByPlaceholder('Write an update…').fill('This update should fail');
-  await page.getByRole('button', { name: /^send$/i }).click();
+	// Fill the compose box and send.
+	await page.getByPlaceholder('Write an update…').fill('This update should fail');
+	await page.getByRole('button', { name: /^send$/i }).click();
 
-  // Wait briefly for the async rejection to propagate.
-  await page.waitForTimeout(500);
+	// Wait briefly for the async rejection to propagate.
+	await page.waitForTimeout(500);
 
-  // Assert that a page-level error was raised — confirming the thrown ApiError
-  // reached the browser's unhandled-rejection handler.
-  expect(pageErrors.length).toBeGreaterThan(0);
+	// Assert that a page-level error was raised — confirming the thrown ApiError
+	// reached the browser's unhandled-rejection handler.
+	expect(pageErrors.length).toBeGreaterThan(0);
 });
 
 // ---------------------------------------------------------------------------
@@ -137,20 +137,20 @@ test('network error mid-request surfaces as an unhandled browser exception', asy
 // ---------------------------------------------------------------------------
 
 const EMPTY_TOPIC_SPEC: SeedTopicSpec = {
-  title: 'Empty topic for E2E',
-  owner_email: 'owner@example.com',
-  owner_name: 'Owner',
-  circles: [{ name: 'Family', members: [] }]
+	title: 'Empty topic for E2E',
+	owner_email: 'owner@example.com',
+	owner_name: 'Owner',
+	circles: [{ name: 'Family', members: [] }]
 };
 
 test('empty feed shows "Nothing posted yet."', async ({ page, seedClient }) => {
-  await seedClient.reset();
-  const data = await seedClient.seedTopic(EMPTY_TOPIC_SPEC);
+	await seedClient.reset();
+	const data = await seedClient.seedTopic(EMPTY_TOPIC_SPEC);
 
-  await signInAsOwner(page, data.magic_links.owner);
+	await signInAsOwner(page, data.magic_links.owner);
 
-  // The Updates tab is the default. With no updates the empty-state renders.
-  await expect(page.getByText(/nothing posted yet\./i)).toBeVisible();
+	// The Updates tab is the default. With no updates the empty-state renders.
+	await expect(page.getByText(/nothing posted yet\./i)).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -165,8 +165,8 @@ test('empty feed shows "Nothing posted yet."', async ({ page, seedClient }) => {
 // ---------------------------------------------------------------------------
 
 test.skip('empty members list shows "No members yet."', async ({ page, seedClient }) => {
-  void page;
-  void seedClient;
+	void page;
+	void seedClient;
 });
 
 // ---------------------------------------------------------------------------
@@ -179,39 +179,39 @@ test.skip('empty members list shows "No members yet."', async ({ page, seedClien
 // ---------------------------------------------------------------------------
 
 test('update with no replies shows "No replies yet." in UpdateModal', async ({
-  page,
-  seedClient
+	page,
+	seedClient
 }) => {
-  await seedClient.reset();
-  const data = await seedClient.seedTopic({
-    title: 'Replies empty topic',
-    owner_email: 'owner@example.com',
-    owner_name: 'Owner',
-    circles: [{ name: 'Family', members: [] }],
-    updates: [
-      {
-        body: 'Update with no replies',
-        circle_names: ['Family'],
-        author_email: 'owner@example.com'
-      }
-    ]
-  });
+	await seedClient.reset();
+	const data = await seedClient.seedTopic({
+		title: 'Replies empty topic',
+		owner_email: 'owner@example.com',
+		owner_name: 'Owner',
+		circles: [{ name: 'Family', members: [] }],
+		updates: [
+			{
+				body: 'Update with no replies',
+				circle_names: ['Family'],
+				author_email: 'owner@example.com'
+			}
+		]
+	});
 
-  await signInAsOwner(page, data.magic_links.owner);
+	await signInAsOwner(page, data.magic_links.owner);
 
-  // Click the update card to open UpdateModal.
-  const updateCard = page.locator('.update-row').filter({ hasText: 'Update with no replies' });
-  await updateCard.click();
+	// Click the update card to open UpdateModal.
+	const updateCard = page.locator('.update-row').filter({ hasText: 'Update with no replies' });
+	await updateCard.click();
 
-  // UpdateModal is open — wait for the dialog to be visible.
-  const modal = page.locator('[role="dialog"]');
-  await expect(modal).toBeVisible();
+	// UpdateModal is open — wait for the dialog to be visible.
+	const modal = page.locator('[role="dialog"]');
+	await expect(modal).toBeVisible();
 
-  // The replies section loads asynchronously (onMount → getReplies).
-  // Wait for the "Replies (0)" heading or the empty paragraph.
-  await expect(modal.getByText(/no replies yet\./i)).toBeVisible();
+	// The replies section loads asynchronously (onMount → getReplies).
+	// Wait for the "Replies (0)" heading or the empty paragraph.
+	await expect(modal.getByText(/no replies yet\./i)).toBeVisible();
 
-  // Close the modal.
-  await modal.getByRole('button', { name: '✕' }).click();
-  await expect(modal).not.toBeVisible();
+	// Close the modal.
+	await modal.getByRole('button', { name: '✕' }).click();
+	await expect(modal).not.toBeVisible();
 });

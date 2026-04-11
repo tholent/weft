@@ -225,14 +225,11 @@ describe('UpdateModal — replies loading', () => {
 		let capturedUpdateId: string | undefined;
 
 		server.use(
-			http.get(
-				'http://localhost/api/topics/:topicId/updates/:updateId/replies',
-				({ params }) => {
-					capturedTopicId = params.topicId as string;
-					capturedUpdateId = params.updateId as string;
-					return HttpResponse.json({ items: [] });
-				}
-			)
+			http.get('http://localhost/api/topics/:topicId/updates/:updateId/replies', ({ params }) => {
+				capturedTopicId = params.topicId as string;
+				capturedUpdateId = params.updateId as string;
+				return HttpResponse.json({ items: [] });
+			})
 		);
 
 		const update = makeUpdate({ id: 'update-99' });
@@ -291,7 +288,14 @@ describe('UpdateModal — circle pills', () => {
 		];
 		const update = makeUpdate({ id: 'update-1', circle_ids: ['c1', 'c2'] });
 		render(UpdateModal, {
-			props: { update, circles, isModerator: false, canEdit: false, topicId: 'topic-1', onClose: vi.fn() }
+			props: {
+				update,
+				circles,
+				isModerator: false,
+				canEdit: false,
+				topicId: 'topic-1',
+				onClose: vi.fn()
+			}
 		});
 
 		await waitFor(() => {

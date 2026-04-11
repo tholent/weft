@@ -33,17 +33,22 @@ import { test, expect } from './support/fixtures';
 
 /** Navigate to the Settings tab as the given user via magic link. */
 async function goToSettingsTab(
-  page: import('@playwright/test').Page,
-  magic: string
+	page: import('@playwright/test').Page,
+	magic: string
 ): Promise<void> {
-  await page.goto(`/auth?t=${magic}`);
-  await page.waitForURL(/\/manage\//);
-  // Wait for the skeleton to resolve — the Updates nav button appears first.
-  await expect(page.getByRole('navigation').getByRole('button', { name: /^updates$/i })).toBeVisible();
-  // Click the Settings tab (only visible to admin/owner).
-  await page.getByRole('navigation').getByRole('button', { name: /^settings$/i }).click();
-  // Confirm the Settings heading renders.
-  await expect(page.getByRole('heading', { name: /^settings$/i })).toBeVisible();
+	await page.goto(`/auth?t=${magic}`);
+	await page.waitForURL(/\/manage\//);
+	// Wait for the skeleton to resolve — the Updates nav button appears first.
+	await expect(
+		page.getByRole('navigation').getByRole('button', { name: /^updates$/i })
+	).toBeVisible();
+	// Click the Settings tab (only visible to admin/owner).
+	await page
+		.getByRole('navigation')
+		.getByRole('button', { name: /^settings$/i })
+		.click();
+	// Confirm the Settings heading renders.
+	await expect(page.getByRole('heading', { name: /^settings$/i })).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------
@@ -55,24 +60,19 @@ async function goToSettingsTab(
 // ---------------------------------------------------------------------------
 
 test('owner downloads topic export with correct filename', async ({ page, seededTopic }) => {
-  await goToSettingsTab(page, seededTopic.ownerMagic);
+	await goToSettingsTab(page, seededTopic.ownerMagic);
 
-  // The Export section label should be visible. Scope the text query to the
-  // .section-label class so it does not collide with the "Export Topic Data"
-  // button, which also matches /export/.
-  await expect(
-    page.locator('.section-label', { hasText: /^Export$/ })
-  ).toBeVisible();
+	// The Export section label should be visible. Scope the text query to the
+	// .section-label class so it does not collide with the "Export Topic Data"
+	// button, which also matches /export/.
+	await expect(page.locator('.section-label', { hasText: /^Export$/ })).toBeVisible();
 
-  const exportBtn = page.getByRole('button', { name: /export topic data/i });
-  await expect(exportBtn).toBeVisible();
+	const exportBtn = page.getByRole('button', { name: /export topic data/i });
+	await expect(exportBtn).toBeVisible();
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    exportBtn.click()
-  ]);
+	const [download] = await Promise.all([page.waitForEvent('download'), exportBtn.click()]);
 
-  expect(download.suggestedFilename()).toBe(`weft-export-${seededTopic.topicId}.json`);
+	expect(download.suggestedFilename()).toBe(`weft-export-${seededTopic.topicId}.json`);
 });
 
 // ---------------------------------------------------------------------------
@@ -83,11 +83,11 @@ test('owner downloads topic export with correct filename', async ({ page, seeded
 // ---------------------------------------------------------------------------
 
 test('admin sees the export button on the settings tab', async ({ page, seededTopic }) => {
-  const adminMagic = seededTopic.adminMagic['admin@example.com'];
-  await goToSettingsTab(page, adminMagic);
+	const adminMagic = seededTopic.adminMagic['admin@example.com'];
+	await goToSettingsTab(page, adminMagic);
 
-  const exportBtn = page.getByRole('button', { name: /export topic data/i });
-  await expect(exportBtn).toBeVisible();
+	const exportBtn = page.getByRole('button', { name: /export topic data/i });
+	await expect(exportBtn).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -99,17 +99,19 @@ test('admin sees the export button on the settings tab', async ({ page, seededTo
 // ---------------------------------------------------------------------------
 
 test('moderator does not see the export button', async ({ page, seededTopic }) => {
-  const modMagic = seededTopic.moderatorMagic['mod@example.com'];
-  await page.goto(`/auth?t=${modMagic}`);
-  await page.waitForURL(/\/manage\//);
-  // Wait for the page to finish loading (Updates tab renders content).
-  await expect(page.getByRole('navigation').getByRole('button', { name: /^updates$/i })).toBeVisible();
+	const modMagic = seededTopic.moderatorMagic['mod@example.com'];
+	await page.goto(`/auth?t=${modMagic}`);
+	await page.waitForURL(/\/manage\//);
+	// Wait for the page to finish loading (Updates tab renders content).
+	await expect(
+		page.getByRole('navigation').getByRole('button', { name: /^updates$/i })
+	).toBeVisible();
 
-  // The Settings tab button should not be in the DOM for moderators.
-  await expect(
-    page.getByRole('navigation').getByRole('button', { name: /^settings$/i })
-  ).not.toBeVisible();
+	// The Settings tab button should not be in the DOM for moderators.
+	await expect(
+		page.getByRole('navigation').getByRole('button', { name: /^settings$/i })
+	).not.toBeVisible();
 
-  // The export button itself should not appear anywhere on the page.
-  expect(await page.getByRole('button', { name: /export topic data/i }).count()).toBe(0);
+	// The export button itself should not appear anywhere on the page.
+	expect(await page.getByRole('button', { name: /export topic data/i }).count()).toBe(0);
 });

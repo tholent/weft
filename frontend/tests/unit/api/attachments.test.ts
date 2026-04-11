@@ -21,11 +21,7 @@ import { makeAttachment } from '../fixtures';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeResponse(
-	status: number,
-	ok: boolean,
-	jsonFn: () => Promise<unknown>
-): Response {
+function makeResponse(status: number, ok: boolean, jsonFn: () => Promise<unknown>): Response {
 	return { ok, status, json: jsonFn } as unknown as Response;
 }
 
@@ -63,9 +59,9 @@ describe('api/attachments', () => {
 	describe('uploadAttachment', () => {
 		it('sends POST to /api/topics/:topicId/updates/:updateId/attachments', async () => {
 			const fakeAttachment = makeAttachment({ id: 'att-1', filename: 'a.txt' });
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => fakeAttachment)
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(200, true, async () => fakeAttachment));
 			globalThis.fetch = mockFetch;
 
 			const file = new File(['hello'], 'a.txt', { type: 'text/plain' });
@@ -78,9 +74,9 @@ describe('api/attachments', () => {
 
 		it('sends FormData body', async () => {
 			const fakeAttachment = makeAttachment();
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => fakeAttachment)
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(200, true, async () => fakeAttachment));
 			globalThis.fetch = mockFetch;
 
 			const file = new File(['hello'], 'a.txt', { type: 'text/plain' });
@@ -95,9 +91,9 @@ describe('api/attachments', () => {
 			// It must NOT pass Content-Type: application/json, as that would break the
 			// multipart boundary that the browser sets automatically when body is FormData.
 			const fakeAttachment = makeAttachment();
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => fakeAttachment)
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(200, true, async () => fakeAttachment));
 			globalThis.fetch = mockFetch;
 
 			localStorage.setItem('weft_token', 'tok-abc');
@@ -114,9 +110,9 @@ describe('api/attachments', () => {
 
 		it('injects Authorization header when token is present', async () => {
 			const fakeAttachment = makeAttachment();
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => fakeAttachment)
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(200, true, async () => fakeAttachment));
 			globalThis.fetch = mockFetch;
 
 			localStorage.setItem('weft_token', 'bearer-token-xyz');
@@ -130,9 +126,9 @@ describe('api/attachments', () => {
 
 		it('omits Authorization header when no token', async () => {
 			const fakeAttachment = makeAttachment();
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => fakeAttachment)
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(200, true, async () => fakeAttachment));
 			globalThis.fetch = mockFetch;
 
 			localStorage.removeItem('weft_token');
@@ -146,9 +142,9 @@ describe('api/attachments', () => {
 
 		it('returns parsed Attachment on success', async () => {
 			const fakeAttachment = makeAttachment({ id: 'att-42', filename: 'photo.jpg' });
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => fakeAttachment)
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(200, true, async () => fakeAttachment));
 			globalThis.fetch = mockFetch;
 
 			const file = new File(['data'], 'photo.jpg');
@@ -160,9 +156,7 @@ describe('api/attachments', () => {
 
 		it('401 response clears token, redirects to /, and throws ApiError(401)', async () => {
 			localStorage.setItem('weft_token', 'secret');
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(401, false, async () => ({}))
-			);
+			const mockFetch = vi.fn().mockResolvedValue(makeResponse(401, false, async () => ({})));
 			globalThis.fetch = mockFetch;
 
 			const file = new File(['x'], 'x.txt');
@@ -175,9 +169,9 @@ describe('api/attachments', () => {
 		});
 
 		it('non-2xx throws ApiError with detail message', async () => {
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(413, false, async () => ({ detail: 'File too large' }))
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(413, false, async () => ({ detail: 'File too large' })));
 			globalThis.fetch = mockFetch;
 
 			const file = new File(['x'], 'x.txt');
@@ -218,9 +212,7 @@ describe('api/attachments', () => {
 	describe('listAttachments', () => {
 		it('sends GET to /api/topics/:topicId/updates/:updateId/attachments', async () => {
 			const fakeList = [makeAttachment({ id: 'att-1' }), makeAttachment({ id: 'att-2' })];
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => fakeList)
-			);
+			const mockFetch = vi.fn().mockResolvedValue(makeResponse(200, true, async () => fakeList));
 			globalThis.fetch = mockFetch;
 
 			const result = await listAttachments('topic-1', 'update-1');
@@ -233,9 +225,7 @@ describe('api/attachments', () => {
 		});
 
 		it('sets Content-Type application/json', async () => {
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(200, true, async () => [])
-			);
+			const mockFetch = vi.fn().mockResolvedValue(makeResponse(200, true, async () => []));
 			globalThis.fetch = mockFetch;
 
 			await listAttachments('topic-1', 'update-1');
@@ -246,9 +236,9 @@ describe('api/attachments', () => {
 		});
 
 		it('throws ApiError on non-2xx', async () => {
-			const mockFetch = vi.fn().mockResolvedValue(
-				makeResponse(403, false, async () => ({ detail: 'Forbidden' }))
-			);
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue(makeResponse(403, false, async () => ({ detail: 'Forbidden' })));
 			globalThis.fetch = mockFetch;
 
 			await expect(listAttachments('topic-1', 'update-1')).rejects.toSatisfy(

@@ -1,0 +1,19 @@
+# Generated SvelteKit output
+.svelte-kit/
+build/
+
+# Build artifacts and dependencies
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Lockfiles and vendored assets
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Ephemeral binary fixtures used by the E2E suite
+tests/e2e/fixtures/*.png
+tests/e2e/fixtures/*.bin

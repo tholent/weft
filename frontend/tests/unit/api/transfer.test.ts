@@ -15,7 +15,12 @@
 import { describe, it, expect } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/msw-server';
-import { requestTransfer, getTransferStatus, cancelTransfer, directTransfer } from '$lib/api/transfer';
+import {
+	requestTransfer,
+	getTransferStatus,
+	cancelTransfer,
+	directTransfer
+} from '$lib/api/transfer';
 import type { CreatorTransfer } from '$lib/types/transfer';
 
 function makeTransfer(overrides: Partial<CreatorTransfer> = {}): CreatorTransfer {

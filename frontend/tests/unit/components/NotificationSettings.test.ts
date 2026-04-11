@@ -107,9 +107,7 @@ describe('NotificationSettings — onMount preferences load', () => {
 		render(NotificationSettings);
 
 		await waitFor(() => {
-			expect(
-				screen.getByText('No notification preferences configured.')
-			).toBeInTheDocument();
+			expect(screen.getByText('No notification preferences configured.')).toBeInTheDocument();
 		});
 	});
 
@@ -123,16 +121,19 @@ describe('NotificationSettings — onMount preferences load', () => {
 		render(NotificationSettings);
 
 		await waitFor(() => {
-			expect(
-				screen.getByText('Failed to load notification preferences.')
-			).toBeInTheDocument();
+			expect(screen.getByText('Failed to load notification preferences.')).toBeInTheDocument();
 		});
 	});
 
 	it('does nothing when session has no topicId or memberId', async () => {
 		// Override session to have null IDs — no fetch should be made.
 		// Use session.set directly to bypass login()'s string-only signature.
-		session.set({ token: 'test-token', memberId: null, role: 'recipient' as MemberRole, topicId: null });
+		session.set({
+			token: 'test-token',
+			memberId: null,
+			role: 'recipient' as MemberRole,
+			topicId: null
+		});
 
 		// If a GET were fired and unhandled, MSW would throw (onUnhandledRequest: 'error').
 		// The component's onMount guard returns early without setting loading=false,
@@ -343,9 +344,7 @@ describe('NotificationSettings — delivery mode change fires PUT', () => {
 		await fireEvent.change(select, { target: { value: 'digest' } });
 
 		await waitFor(() => {
-			expect(
-				screen.getByText('Failed to save preference. Please try again.')
-			).toBeInTheDocument();
+			expect(screen.getByText('Failed to save preference. Please try again.')).toBeInTheDocument();
 		});
 	});
 });

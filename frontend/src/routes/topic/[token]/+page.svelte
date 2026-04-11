@@ -60,7 +60,10 @@
 	<div class="topic-header topic-header--skeleton">
 		<div class="header-inner">
 			<div class="skeleton-line" style="width: 55%; height: 2.4rem; border-radius: 3px;"></div>
-			<div class="skeleton-line" style="width: 25%; height: 0.75rem; margin-top: 0.75rem; border-radius: 3px;"></div>
+			<div
+				class="skeleton-line"
+				style="width: 25%; height: 0.75rem; margin-top: 0.75rem; border-radius: 3px;"
+			></div>
 		</div>
 	</div>
 	<div class="feed-wrapper">
@@ -91,7 +94,9 @@
 					loadReplies(update.id);
 				}}
 			>
-				{update.reply_count > 0 ? `${update.reply_count} ${update.reply_count === 1 ? 'reply' : 'replies'}` : 'Reply'}
+				{update.reply_count > 0
+					? `${update.reply_count} ${update.reply_count === 1 ? 'reply' : 'replies'}`
+					: 'Reply'}
 			</button>
 			{#if replyingTo === update.id}
 				<ComposeBox
@@ -168,7 +173,9 @@
 		font-family: var(--font-ui);
 		letter-spacing: 0.03em;
 		color: var(--color-text-secondary);
-		transition: border-color 0.15s, color 0.15s;
+		transition:
+			border-color 0.15s,
+			color 0.15s;
 	}
 
 	.reply-btn:hover {

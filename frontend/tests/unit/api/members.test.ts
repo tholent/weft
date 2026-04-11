@@ -344,14 +344,11 @@ describe('renameMember', () => {
 		let capturedUrl: string | undefined;
 
 		server.use(
-			http.patch(
-				'http://localhost/api/topics/:topicId/members/:memberId/handle',
-				({ request }) => {
-					capturedMethod = request.method;
-					capturedUrl = request.url;
-					return new HttpResponse(null, { status: 204 });
-				}
-			)
+			http.patch('http://localhost/api/topics/:topicId/members/:memberId/handle', ({ request }) => {
+				capturedMethod = request.method;
+				capturedUrl = request.url;
+				return new HttpResponse(null, { status: 204 });
+			})
 		);
 
 		await renameMember('topic-1', 'member-1', 'NewHandle');

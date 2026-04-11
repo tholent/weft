@@ -81,7 +81,9 @@
 					{loading ? 'Creating…' : 'Begin'}
 					{#if !loading}<span class="arrow">→</span>{/if}
 				</button>
-				<p class="privacy-note">No account. No tracking. All contact info purged when you're done.</p>
+				<p class="privacy-note">
+					No account. No tracking. All contact info purged when you're done.
+				</p>
 			</div>
 		</form>
 	{/if}
@@ -158,7 +160,10 @@
 		font-size: var(--text-base);
 		background: var(--color-surface);
 		color: var(--color-text);
-		transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+		transition:
+			border-color 0.15s,
+			box-shadow 0.15s,
+			transform 0.1s;
 	}
 
 	input:focus {
@@ -186,7 +191,9 @@
 		font-size: var(--text-base);
 		font-weight: 500;
 		letter-spacing: 0.02em;
-		transition: background 0.15s, transform 0.1s;
+		transition:
+			background 0.15s,
+			transform 0.1s;
 	}
 
 	button[type='submit']:hover:not(:disabled) {

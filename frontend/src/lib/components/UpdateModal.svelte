@@ -49,7 +49,12 @@
 		submitting = true;
 		try {
 			const updated = await editUpdate(topicId, update.id, editBody.trim(), editVariants);
-			update = { ...update, body: updated.body, body_variants: updated.body_variants, edited_at: updated.edited_at };
+			update = {
+				...update,
+				body: updated.body,
+				body_variants: updated.body_variants,
+				edited_at: updated.edited_at
+			};
 			onUpdate(update);
 			editing = false;
 		} finally {
@@ -61,12 +66,11 @@
 		.map((id) => circles.find((c) => c.id === id)?.name)
 		.filter((name): name is string => name !== undefined);
 
-	$: variantEntries = Object.entries(update.body_variants ?? {})
-		.map(([circleId, variantBody]) => ({
-			circleId,
-			circleName: circles.find((c) => c.id === circleId)?.name ?? circleId,
-			body: variantBody
-		}));
+	$: variantEntries = Object.entries(update.body_variants ?? {}).map(([circleId, variantBody]) => ({
+		circleId,
+		circleName: circles.find((c) => c.id === circleId)?.name ?? circleId,
+		body: variantBody
+	}));
 
 	onMount(async () => {
 		replies = await getReplies(topicId, update.id);
@@ -180,7 +184,12 @@
 				</div>
 			{/if}
 			{#if replies.length > 0}
-				<ReplyThread {replies} {isModerator} onRelay={isModerator ? handleRelay : null} onDismiss={isModerator ? handleDismiss : null} />
+				<ReplyThread
+					{replies}
+					{isModerator}
+					onRelay={isModerator ? handleRelay : null}
+					onDismiss={isModerator ? handleDismiss : null}
+				/>
 			{:else}
 				<p class="empty">No replies yet.</p>
 			{/if}
@@ -190,65 +199,230 @@
 
 <style>
 	.backdrop {
-		position: fixed; inset: 0;
+		position: fixed;
+		inset: 0;
 		background: rgba(0, 0, 0, 0.35);
 		backdrop-filter: blur(4px);
 		-webkit-backdrop-filter: blur(4px);
-		display: flex; align-items: center; justify-content: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		z-index: 100;
 	}
 	.modal {
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
 		border-radius: 4px;
-		padding: 1.5rem; width: min(600px, 90vw);
-		max-height: 80vh; overflow-y: auto;
+		padding: 1.5rem;
+		width: min(600px, 90vw);
+		max-height: 80vh;
+		overflow-y: auto;
 		position: relative;
 		animation: modal-in 0.18s ease-out;
-		box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-border-strong) transparent;
 	}
-	.modal::-webkit-scrollbar { width: 6px; }
-	.modal::-webkit-scrollbar-track { background: transparent; }
-	.modal::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 3px; }
+	.modal::-webkit-scrollbar {
+		width: 6px;
+	}
+	.modal::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.modal::-webkit-scrollbar-thumb {
+		background: var(--color-border-strong);
+		border-radius: 3px;
+	}
 	@keyframes modal-in {
-		from { opacity: 0; transform: translateY(6px); }
-		to { opacity: 1; transform: translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 	.close {
-		position: absolute; top: 0.85rem; right: 0.85rem;
-		background: none; border: 1px solid var(--color-border); border-radius: 2px;
-		font-size: 0.75rem; width: 1.75rem; height: 1.75rem;
-		display: flex; align-items: center; justify-content: center;
-		cursor: pointer; color: var(--color-text-muted); line-height: 1;
-		transition: border-color 0.15s, color 0.15s;
+		position: absolute;
+		top: 0.85rem;
+		right: 0.85rem;
+		background: none;
+		border: 1px solid var(--color-border);
+		border-radius: 2px;
+		font-size: 0.75rem;
+		width: 1.75rem;
+		height: 1.75rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		color: var(--color-text-muted);
+		line-height: 1;
+		transition:
+			border-color 0.15s,
+			color 0.15s;
 	}
-	.close:hover { border-color: var(--color-border-strong); color: var(--color-text); }
-	.body { margin: 0 0 0.75rem; line-height: 1.75; white-space: pre-wrap; font-family: var(--font-body); font-size: var(--text-lg); }
-	.edit-body { width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; font-size: var(--text-base); line-height: 1.6; resize: vertical; margin-bottom: 0.5rem; box-sizing: border-box; }
-	.variant-edit { font-size: var(--text-sm); margin-top: 0.35rem; margin-bottom: 0; }
-	.edit-actions { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
-	.edit-actions button { padding: 0.35rem 0.9rem; border: none; border-radius: 4px; cursor: pointer; font-size: var(--text-sm); transition: background 0.15s; }
-	.edit-actions button:not(.cancel) { background: var(--color-accent); color: white; }
-	.edit-actions button:not(.cancel):hover:not(:disabled) { background: var(--color-accent-dark); }
-	.edit-actions button:disabled { opacity: 0.5; cursor: default; }
-	.edit-actions button.cancel { background: none; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
-	.meta { font-size: var(--text-sm); color: var(--color-text-secondary); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; font-family: var(--font-ui); }
-	.edited { font-style: italic; }
-	.edit-btn { background: none; border: none; color: var(--color-text-secondary); font-size: var(--text-xs); cursor: pointer; padding: 0; text-decoration: underline; }
-	.circles { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
-	.pill { font-size: var(--text-xs); background: var(--color-accent-light); border-radius: 4px; padding: 0.1rem 0.6rem; color: var(--color-accent); border: 1px solid #f0d0b0; }
-	.variants { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
-	.variant { background: var(--color-accent-light); border-left: 3px solid var(--color-accent); border-radius: 0 4px 4px 0; padding: 0.5rem 0.75rem; }
-	.variant-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.04em; }
-	.variant-body { margin: 0.25rem 0 0; font-size: var(--text-sm); line-height: 1.5; white-space: pre-wrap; }
-	.replies-section { margin-top: 1.25rem; border-top: 1px solid var(--color-border); padding-top: 1rem; }
-	.replies-section h3 { margin: 0 0 0.75rem; font-size: 0.95rem; }
-	.empty { color: var(--color-text-muted); font-size: var(--text-sm); }
-	.compose { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-	.compose textarea { padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; font-size: var(--text-sm); resize: vertical; }
-	.compose button { align-self: flex-end; padding: 0.35rem 0.9rem; background: var(--color-accent); color: white; border: none; border-radius: 2px; cursor: pointer; font-size: var(--text-sm); transition: background 0.15s; }
-	.compose button:hover:not(:disabled) { background: var(--color-accent-dark); }
-	.compose button:disabled { opacity: 0.5; cursor: default; }
+	.close:hover {
+		border-color: var(--color-border-strong);
+		color: var(--color-text);
+	}
+	.body {
+		margin: 0 0 0.75rem;
+		line-height: 1.75;
+		white-space: pre-wrap;
+		font-family: var(--font-body);
+		font-size: var(--text-lg);
+	}
+	.edit-body {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-family: inherit;
+		font-size: var(--text-base);
+		line-height: 1.6;
+		resize: vertical;
+		margin-bottom: 0.5rem;
+		box-sizing: border-box;
+	}
+	.variant-edit {
+		font-size: var(--text-sm);
+		margin-top: 0.35rem;
+		margin-bottom: 0;
+	}
+	.edit-actions {
+		display: flex;
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
+	}
+	.edit-actions button {
+		padding: 0.35rem 0.9rem;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: var(--text-sm);
+		transition: background 0.15s;
+	}
+	.edit-actions button:not(.cancel) {
+		background: var(--color-accent);
+		color: white;
+	}
+	.edit-actions button:not(.cancel):hover:not(:disabled) {
+		background: var(--color-accent-dark);
+	}
+	.edit-actions button:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+	.edit-actions button.cancel {
+		background: none;
+		border: 1px solid var(--color-border);
+		color: var(--color-text-secondary);
+	}
+	.meta {
+		font-size: var(--text-sm);
+		color: var(--color-text-secondary);
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+		align-items: center;
+		font-family: var(--font-ui);
+	}
+	.edited {
+		font-style: italic;
+	}
+	.edit-btn {
+		background: none;
+		border: none;
+		color: var(--color-text-secondary);
+		font-size: var(--text-xs);
+		cursor: pointer;
+		padding: 0;
+		text-decoration: underline;
+	}
+	.circles {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+		margin-top: 0.5rem;
+	}
+	.pill {
+		font-size: var(--text-xs);
+		background: var(--color-accent-light);
+		border-radius: 4px;
+		padding: 0.1rem 0.6rem;
+		color: var(--color-accent);
+		border: 1px solid #f0d0b0;
+	}
+	.variants {
+		margin-top: 0.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.variant {
+		background: var(--color-accent-light);
+		border-left: 3px solid var(--color-accent);
+		border-radius: 0 4px 4px 0;
+		padding: 0.5rem 0.75rem;
+	}
+	.variant-label {
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--color-accent);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+	.variant-body {
+		margin: 0.25rem 0 0;
+		font-size: var(--text-sm);
+		line-height: 1.5;
+		white-space: pre-wrap;
+	}
+	.replies-section {
+		margin-top: 1.25rem;
+		border-top: 1px solid var(--color-border);
+		padding-top: 1rem;
+	}
+	.replies-section h3 {
+		margin: 0 0 0.75rem;
+		font-size: 0.95rem;
+	}
+	.empty {
+		color: var(--color-text-muted);
+		font-size: var(--text-sm);
+	}
+	.compose {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+	.compose textarea {
+		padding: 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-family: inherit;
+		font-size: var(--text-sm);
+		resize: vertical;
+	}
+	.compose button {
+		align-self: flex-end;
+		padding: 0.35rem 0.9rem;
+		background: var(--color-accent);
+		color: white;
+		border: none;
+		border-radius: 2px;
+		cursor: pointer;
+		font-size: var(--text-sm);
+		transition: background 0.15s;
+	}
+	.compose button:hover:not(:disabled) {
+		background: var(--color-accent-dark);
+	}
+	.compose button:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
 </style>

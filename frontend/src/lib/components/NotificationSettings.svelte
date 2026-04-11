@@ -18,7 +18,11 @@
 	import { onMount } from 'svelte';
 	import { session } from '$lib/stores/session';
 	import { listNotificationPreferences, setNotificationPreference } from '$lib/api/notifications';
-	import type { NotificationPreference, NotificationTrigger, DeliveryMode } from '$lib/types/notification';
+	import type {
+		NotificationPreference,
+		NotificationTrigger,
+		DeliveryMode
+	} from '$lib/types/notification';
 
 	const TRIGGER_LABELS: Record<NotificationTrigger, string> = {
 		new_update: 'New updates',
@@ -105,7 +109,11 @@
 							<select
 								value={pref.delivery_mode}
 								disabled={saving === pref.trigger}
-								on:change={(e) => handleChange(pref.trigger, (e.currentTarget as HTMLSelectElement).value as DeliveryMode)}
+								on:change={(e) =>
+									handleChange(
+										pref.trigger,
+										(e.currentTarget as HTMLSelectElement).value as DeliveryMode
+									)}
 								class="mode-select"
 								class:saving={saving === pref.trigger}
 							>

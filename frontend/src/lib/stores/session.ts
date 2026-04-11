@@ -25,7 +25,9 @@ interface SessionState {
 const initial: SessionState = {
 	token: typeof localStorage !== 'undefined' ? localStorage.getItem('weft_token') : null,
 	memberId: typeof localStorage !== 'undefined' ? localStorage.getItem('weft_member_id') : null,
-	role: (typeof localStorage !== 'undefined' ? localStorage.getItem('weft_role') : null) as MemberRole | null,
+	role: (typeof localStorage !== 'undefined'
+		? localStorage.getItem('weft_role')
+		: null) as MemberRole | null,
 	topicId: typeof localStorage !== 'undefined' ? localStorage.getItem('weft_topic_id') : null
 };
 
@@ -33,11 +35,21 @@ export const session = writable<SessionState>(initial);
 
 export const isAuthenticated = derived(session, ($s) => $s.token !== null);
 // treat legacy 'creator' value as 'owner' until re-auth overwrites localStorage
-export const isOwner = derived(session, ($s) => $s.role === 'owner' || $s.role === ('creator' as MemberRole));
-export const isAdmin = derived(session, ($s) => $s.role === 'admin' || $s.role === 'owner' || $s.role === ('creator' as MemberRole));
+export const isOwner = derived(
+	session,
+	($s) => $s.role === 'owner' || $s.role === ('creator' as MemberRole)
+);
+export const isAdmin = derived(
+	session,
+	($s) => $s.role === 'admin' || $s.role === 'owner' || $s.role === ('creator' as MemberRole)
+);
 export const isModerator = derived(
 	session,
-	($s) => $s.role === 'moderator' || $s.role === 'admin' || $s.role === 'owner' || $s.role === ('creator' as MemberRole)
+	($s) =>
+		$s.role === 'moderator' ||
+		$s.role === 'admin' ||
+		$s.role === 'owner' ||
+		$s.role === ('creator' as MemberRole)
 );
 
 export function login(token: string, memberId: string, role: MemberRole, topicId: string) {

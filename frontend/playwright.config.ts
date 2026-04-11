@@ -15,49 +15,49 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests/e2e',
+	testDir: './tests/e2e',
 
-  // Tests share a single SQLite DB via the seededTopic fixture. Running workers
-  // in parallel causes race conditions where one worker's reset() wipes rows that
-  // another worker's magic-link verify call depends on. Serialise to one worker
-  // until FT-32+ introduces per-worker databases.
-  fullyParallel: false,
-  workers: 1,
+	// Tests share a single SQLite DB via the seededTopic fixture. Running workers
+	// in parallel causes race conditions where one worker's reset() wipes rows that
+	// another worker's magic-link verify call depends on. Serialise to one worker
+	// until FT-32+ introduces per-worker databases.
+	fullyParallel: false,
+	workers: 1,
 
-  retries: process.env.CI ? 2 : 0,
+	retries: process.env.CI ? 2 : 0,
 
-  reporter: process.env.CI ? [['list'], ['html']] : 'list',
+	reporter: process.env.CI ? [['list'], ['html']] : 'list',
 
-  use: {
-    baseURL: 'http://127.0.0.1:4173',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure'
-  },
+	use: {
+		baseURL: 'http://127.0.0.1:4173',
+		trace: 'on-first-retry',
+		screenshot: 'only-on-failure'
+	},
 
-  projects: [
-    {
-      name: 'chromium-desktop',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1280, height: 720 }
-      }
-    },
-    {
-      name: 'chromium-mobile',
-      use: {
-        ...devices['iPhone 13'],
-        browserName: 'chromium',
-        defaultBrowserType: 'chromium',
-      }
-    }
-  ],
+	projects: [
+		{
+			name: 'chromium-desktop',
+			use: {
+				...devices['Desktop Chrome'],
+				viewport: { width: 1280, height: 720 }
+			}
+		},
+		{
+			name: 'chromium-mobile',
+			use: {
+				...devices['iPhone 13'],
+				browserName: 'chromium',
+				defaultBrowserType: 'chromium'
+			}
+		}
+	],
 
-  webServer: {
-    command: 'bash scripts/start-e2e.sh',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    stdout: 'pipe',
-    stderr: 'pipe'
-  }
+	webServer: {
+		command: 'bash scripts/start-e2e.sh',
+		url: 'http://127.0.0.1:4173',
+		reuseExistingServer: !process.env.CI,
+		timeout: 120_000,
+		stdout: 'pipe',
+		stderr: 'pipe'
+	}
 });

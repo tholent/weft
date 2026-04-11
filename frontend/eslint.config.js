@@ -18,26 +18,29 @@ import globals from 'globals';
 import ts from 'typescript-eslint';
 
 export default ts.config(
-  eslint.configs.recommended,
-  ...ts.configs.recommended,
-  ...svelte.configs['flat/recommended'],
-  {
-    languageOptions: {
-      globals: { ...globals.browser, ...globals.node }
-    }
-  },
-  {
-    files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
-    languageOptions: {
-      parserOptions: {
-        parser: ts.parser
-      }
-    }
-  },
-  {
-    rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }]
-    }
-  },
-  { ignores: ['build/', '.svelte-kit/', 'dist/'] }
+	eslint.configs.recommended,
+	...ts.configs.recommended,
+	...svelte.configs['flat/recommended'],
+	{
+		languageOptions: {
+			globals: { ...globals.browser, ...globals.node }
+		}
+	},
+	{
+		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+		languageOptions: {
+			parserOptions: {
+				parser: ts.parser
+			}
+		}
+	},
+	{
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ varsIgnorePattern: '^_', argsIgnorePattern: '^_' }
+			]
+		}
+	},
+	{ ignores: ['build/', '.svelte-kit/', 'dist/'] }
 );

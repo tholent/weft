@@ -21,18 +21,18 @@ import type { SeedTopicSpec } from '../fixtures/seed-client';
 // ---------------------------------------------------------------------------
 
 export interface SeededTopic {
-  topicId: string;
-  ownerBearer: string;
-  ownerMagic: string;
-  adminMagic: Record<string, string>;
-  moderatorMagic: Record<string, string>;
-  recipientMagic: Record<string, string>;
-  circleIds: Record<string, string>;
+	topicId: string;
+	ownerBearer: string;
+	ownerMagic: string;
+	adminMagic: Record<string, string>;
+	moderatorMagic: Record<string, string>;
+	recipientMagic: Record<string, string>;
+	circleIds: Record<string, string>;
 }
 
 interface Fixtures {
-  seedClient: SeedClient;
-  seededTopic: SeededTopic;
+	seedClient: SeedClient;
+	seededTopic: SeededTopic;
 }
 
 // ---------------------------------------------------------------------------
@@ -41,20 +41,20 @@ interface Fixtures {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_SEED_SPEC: SeedTopicSpec = {
-  title: 'E2E Seed Topic',
-  owner_email: 'owner@example.com',
-  owner_name: 'Seed Owner',
-  circles: [
-    {
-      name: 'Family',
-      members: [
-        { email: 'alice@example.com', role: 'recipient', name: 'Alice' },
-        { email: 'bob@example.com', role: 'recipient', name: 'Bob' },
-        { email: 'admin@example.com', role: 'admin', name: 'Admin User' },
-        { email: 'mod@example.com', role: 'moderator', name: 'Mod User' }
-      ]
-    }
-  ]
+	title: 'E2E Seed Topic',
+	owner_email: 'owner@example.com',
+	owner_name: 'Seed Owner',
+	circles: [
+		{
+			name: 'Family',
+			members: [
+				{ email: 'alice@example.com', role: 'recipient', name: 'Alice' },
+				{ email: 'bob@example.com', role: 'recipient', name: 'Bob' },
+				{ email: 'admin@example.com', role: 'admin', name: 'Admin User' },
+				{ email: 'mod@example.com', role: 'moderator', name: 'Mod User' }
+			]
+		}
+	]
 };
 
 // ---------------------------------------------------------------------------
@@ -62,30 +62,30 @@ const DEFAULT_SEED_SPEC: SeedTopicSpec = {
 // ---------------------------------------------------------------------------
 
 export const test = base.extend<Fixtures>({
-  seedClient: async ({ request }, use) => {
-    await use(new SeedClient(request));
-  },
+	seedClient: async ({ request }, use) => {
+		await use(new SeedClient(request));
+	},
 
-  seededTopic: async ({ seedClient }, use) => {
-    await seedClient.reset();
-    const data = await seedClient.seedTopic(DEFAULT_SEED_SPEC);
+	seededTopic: async ({ seedClient }, use) => {
+		await seedClient.reset();
+		const data = await seedClient.seedTopic(DEFAULT_SEED_SPEC);
 
-    const topic: SeededTopic = {
-      topicId: data.topic_id,
-      ownerBearer: data.owner_token,
-      ownerMagic: data.magic_links.owner,
-      adminMagic: data.magic_links.admins,
-      moderatorMagic: data.magic_links.moderators,
-      recipientMagic: data.magic_links.recipients,
-      circleIds: data.circle_ids
-    };
+		const topic: SeededTopic = {
+			topicId: data.topic_id,
+			ownerBearer: data.owner_token,
+			ownerMagic: data.magic_links.owner,
+			adminMagic: data.magic_links.admins,
+			moderatorMagic: data.magic_links.moderators,
+			recipientMagic: data.magic_links.recipients,
+			circleIds: data.circle_ids
+		};
 
-    await use(topic);
+		await use(topic);
 
-    // Optional teardown — reset the DB after the test so the next test
-    // always starts from a clean state.
-    await seedClient.reset();
-  }
+		// Optional teardown — reset the DB after the test so the next test
+		// always starts from a clean state.
+		await seedClient.reset();
+	}
 });
 
 export { expect };

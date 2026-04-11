@@ -20,9 +20,9 @@ import { test, expect } from './support/fixtures';
 // ---------------------------------------------------------------------------
 
 test('owner magic link redirects to manage', async ({ page, seededTopic }) => {
-  await page.goto(`/auth?t=${seededTopic.ownerMagic}`);
-  await page.waitForURL(/\/manage\/[^/]+/);
-  expect(page.url()).toMatch(/\/manage\/[^/]+/);
+	await page.goto(`/auth?t=${seededTopic.ownerMagic}`);
+	await page.waitForURL(/\/manage\/[^/]+/);
+	expect(page.url()).toMatch(/\/manage\/[^/]+/);
 });
 
 // ---------------------------------------------------------------------------
@@ -30,10 +30,10 @@ test('owner magic link redirects to manage', async ({ page, seededTopic }) => {
 // ---------------------------------------------------------------------------
 
 test('admin magic link redirects to manage', async ({ page, seededTopic }) => {
-  const adminToken = Object.values(seededTopic.adminMagic)[0];
-  await page.goto(`/auth?t=${adminToken}`);
-  await page.waitForURL(/\/manage\/[^/]+/);
-  expect(page.url()).toMatch(/\/manage\/[^/]+/);
+	const adminToken = Object.values(seededTopic.adminMagic)[0];
+	await page.goto(`/auth?t=${adminToken}`);
+	await page.waitForURL(/\/manage\/[^/]+/);
+	expect(page.url()).toMatch(/\/manage\/[^/]+/);
 });
 
 // ---------------------------------------------------------------------------
@@ -41,10 +41,10 @@ test('admin magic link redirects to manage', async ({ page, seededTopic }) => {
 // ---------------------------------------------------------------------------
 
 test('moderator magic link redirects to manage', async ({ page, seededTopic }) => {
-  const moderatorToken = Object.values(seededTopic.moderatorMagic)[0];
-  await page.goto(`/auth?t=${moderatorToken}`);
-  await page.waitForURL(/\/manage\/[^/]+/);
-  expect(page.url()).toMatch(/\/manage\/[^/]+/);
+	const moderatorToken = Object.values(seededTopic.moderatorMagic)[0];
+	await page.goto(`/auth?t=${moderatorToken}`);
+	await page.waitForURL(/\/manage\/[^/]+/);
+	expect(page.url()).toMatch(/\/manage\/[^/]+/);
 });
 
 // ---------------------------------------------------------------------------
@@ -53,10 +53,10 @@ test('moderator magic link redirects to manage', async ({ page, seededTopic }) =
 // ---------------------------------------------------------------------------
 
 test('recipient magic link redirects to topic', async ({ page, seededTopic }) => {
-  const recipientToken = Object.values(seededTopic.recipientMagic)[0];
-  await page.goto(`/auth?t=${recipientToken}`);
-  await page.waitForURL(/\/topic\/[^/]+/);
-  expect(page.url()).toMatch(/\/topic\/[^/]+/);
+	const recipientToken = Object.values(seededTopic.recipientMagic)[0];
+	await page.goto(`/auth?t=${recipientToken}`);
+	await page.waitForURL(/\/topic\/[^/]+/);
+	expect(page.url()).toMatch(/\/topic\/[^/]+/);
 });
 
 // ---------------------------------------------------------------------------
@@ -69,9 +69,9 @@ test('recipient magic link redirects to topic', async ({ page, seededTopic }) =>
 // ---------------------------------------------------------------------------
 
 test('invalid token redirects to landing page', async ({ page }) => {
-  await page.goto('/auth?t=this-is-not-a-valid-signed-token');
-  await page.waitForURL('http://127.0.0.1:4173/');
-  await expect(page.getByRole('heading', { name: /^weft$/i })).toBeVisible();
+	await page.goto('/auth?t=this-is-not-a-valid-signed-token');
+	await page.waitForURL('http://127.0.0.1:4173/');
+	await expect(page.getByRole('heading', { name: /^weft$/i })).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -79,9 +79,9 @@ test('invalid token redirects to landing page', async ({ page }) => {
 // ---------------------------------------------------------------------------
 
 test('missing token shows no token provided error', async ({ page }) => {
-  await page.goto('/auth');
-  await expect(page.getByRole('heading', { name: /link error/i })).toBeVisible();
-  await expect(page.getByText('No token provided.')).toBeVisible();
+	await page.goto('/auth');
+	await expect(page.getByRole('heading', { name: /link error/i })).toBeVisible();
+	await expect(page.getByText('No token provided.')).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -90,12 +90,11 @@ test('missing token shows no token provided error', async ({ page }) => {
 // ---------------------------------------------------------------------------
 
 test('tampered token redirects to landing page', async ({ page, seededTopic }) => {
-  const real = seededTopic.ownerMagic;
-  const mid = Math.floor(real.length / 2);
-  // Flip one character: replace with 'X' unless it already is, then use 'Y'.
-  const tampered =
-    real.slice(0, mid) + (real[mid] === 'X' ? 'Y' : 'X') + real.slice(mid + 1);
-  await page.goto(`/auth?t=${tampered}`);
-  await page.waitForURL('http://127.0.0.1:4173/');
-  await expect(page.getByRole('heading', { name: /^weft$/i })).toBeVisible();
+	const real = seededTopic.ownerMagic;
+	const mid = Math.floor(real.length / 2);
+	// Flip one character: replace with 'X' unless it already is, then use 'Y'.
+	const tampered = real.slice(0, mid) + (real[mid] === 'X' ? 'Y' : 'X') + real.slice(mid + 1);
+	await page.goto(`/auth?t=${tampered}`);
+	await page.waitForURL('http://127.0.0.1:4173/');
+	await expect(page.getByRole('heading', { name: /^weft$/i })).toBeVisible();
 });

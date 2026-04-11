@@ -13,6 +13,6 @@
 // limitations under the License.
 
 declare global {
-  namespace App {}
+	namespace App {}
 }
 export {};

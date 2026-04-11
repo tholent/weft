@@ -183,7 +183,12 @@ describe('session store', () => {
 		it('is true for legacy role=creator', async () => {
 			const { session, isOwner } = await freshImport();
 			// Cast through unknown since 'creator' is not in the current MemberRole union
-			session.set({ token: 't', memberId: 'm', role: 'creator' as unknown as MemberRole, topicId: 'tp' });
+			session.set({
+				token: 't',
+				memberId: 'm',
+				role: 'creator' as unknown as MemberRole,
+				topicId: 'tp'
+			});
 			expect(get(isOwner)).toBe(true);
 		});
 
@@ -230,7 +235,12 @@ describe('session store', () => {
 
 		it('is true for legacy role=creator', async () => {
 			const { session, isAdmin } = await freshImport();
-			session.set({ token: 't', memberId: 'm', role: 'creator' as unknown as MemberRole, topicId: 'tp' });
+			session.set({
+				token: 't',
+				memberId: 'm',
+				role: 'creator' as unknown as MemberRole,
+				topicId: 'tp'
+			});
 			expect(get(isAdmin)).toBe(true);
 		});
 
@@ -276,7 +286,12 @@ describe('session store', () => {
 
 		it('is true for legacy role=creator', async () => {
 			const { session, isModerator } = await freshImport();
-			session.set({ token: 't', memberId: 'm', role: 'creator' as unknown as MemberRole, topicId: 'tp' });
+			session.set({
+				token: 't',
+				memberId: 'm',
+				role: 'creator' as unknown as MemberRole,
+				topicId: 'tp'
+			});
 			expect(get(isModerator)).toBe(true);
 		});
 

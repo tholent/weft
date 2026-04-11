@@ -20,11 +20,7 @@ import { request, ApiError } from '$lib/api/client';
 // ---------------------------------------------------------------------------
 
 /** Build a minimal Response-shaped object for vi.fn() to resolve. */
-function makeResponse(
-	status: number,
-	ok: boolean,
-	jsonFn: () => Promise<unknown>
-): Response {
+function makeResponse(status: number, ok: boolean, jsonFn: () => Promise<unknown>): Response {
 	return { ok, status, json: jsonFn } as unknown as Response;
 }
 
@@ -59,9 +55,7 @@ describe('api/client', () => {
 	// 1. Bearer header injected when localStorage has weft_token
 	test('injects Authorization header when weft_token is present', async () => {
 		localStorage.setItem('weft_token', 'abc');
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(200, true, async () => ({}))
-		);
+		const mockFetch = vi.fn().mockResolvedValue(makeResponse(200, true, async () => ({})));
 		globalThis.fetch = mockFetch;
 
 		await request('/ping');
@@ -74,9 +68,7 @@ describe('api/client', () => {
 	// 2. No Authorization header when weft_token is absent
 	test('omits Authorization header when weft_token is absent', async () => {
 		localStorage.removeItem('weft_token');
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(200, true, async () => ({}))
-		);
+		const mockFetch = vi.fn().mockResolvedValue(makeResponse(200, true, async () => ({})));
 		globalThis.fetch = mockFetch;
 
 		await request('/ping');
@@ -88,9 +80,7 @@ describe('api/client', () => {
 
 	// 3. Default Content-Type is application/json
 	test('sets Content-Type application/json by default', async () => {
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(200, true, async () => ({}))
-		);
+		const mockFetch = vi.fn().mockResolvedValue(makeResponse(200, true, async () => ({})));
 		globalThis.fetch = mockFetch;
 
 		await request('/ping');
@@ -102,9 +92,7 @@ describe('api/client', () => {
 
 	// 4. Override Content-Type via options.headers
 	test('allows caller to override Content-Type', async () => {
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(200, true, async () => ({}))
-		);
+		const mockFetch = vi.fn().mockResolvedValue(makeResponse(200, true, async () => ({})));
 		globalThis.fetch = mockFetch;
 
 		await request('/ping', { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -117,9 +105,7 @@ describe('api/client', () => {
 	// 5. 401 clears token, redirects, and throws ApiError(401)
 	test('401 response clears weft_token, redirects to /, and throws ApiError', async () => {
 		localStorage.setItem('weft_token', 'secret');
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(401, false, async () => ({}))
-		);
+		const mockFetch = vi.fn().mockResolvedValue(makeResponse(401, false, async () => ({})));
 		globalThis.fetch = mockFetch;
 
 		await expect(request('/protected')).rejects.toSatisfy(
@@ -132,9 +118,9 @@ describe('api/client', () => {
 
 	// 6. Non-2xx with JSON detail field
 	test('non-2xx with JSON detail throws ApiError with that message', async () => {
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(500, false, async () => ({ detail: 'boom' }))
-		);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(makeResponse(500, false, async () => ({ detail: 'boom' })));
 		globalThis.fetch = mockFetch;
 
 		await expect(request('/fail')).rejects.toSatisfy(
@@ -164,9 +150,7 @@ describe('api/client', () => {
 
 	// 8. 204 resolves undefined (early return before json())
 	test('204 response resolves to undefined', async () => {
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(204, true, async () => ({}))
-		);
+		const mockFetch = vi.fn().mockResolvedValue(makeResponse(204, true, async () => ({})));
 		globalThis.fetch = mockFetch;
 
 		const result = await request('/x');
@@ -175,9 +159,9 @@ describe('api/client', () => {
 
 	// 9. 200 JSON resolves the parsed body
 	test('200 response resolves to parsed JSON body', async () => {
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(200, true, async () => ({ foo: 'bar' }))
-		);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(makeResponse(200, true, async () => ({ foo: 'bar' })));
 		globalThis.fetch = mockFetch;
 
 		const result = await request('/data');
@@ -186,9 +170,7 @@ describe('api/client', () => {
 
 	// 10. URL built from API_BASE + path
 	test('builds URL as /api + path', async () => {
-		const mockFetch = vi.fn().mockResolvedValue(
-			makeResponse(200, true, async () => ({}))
-		);
+		const mockFetch = vi.fn().mockResolvedValue(makeResponse(200, true, async () => ({})));
 		globalThis.fetch = mockFetch;
 
 		await request('/ping');

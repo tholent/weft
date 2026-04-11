@@ -193,7 +193,9 @@ describe('MemberRow — retroactive_revoke checkbox', () => {
 		render(MemberRow, { props: { member, circles, viewerRole: 'admin' } });
 
 		// The checkbox is wrapped in a <label class="retro">
-		const checkbox = document.querySelector('label.retro input[type="checkbox"]') as HTMLInputElement;
+		const checkbox = document.querySelector(
+			'label.retro input[type="checkbox"]'
+		) as HTMLInputElement;
 		expect(checkbox).not.toBeNull();
 		expect(checkbox).toBeInTheDocument();
 	});
@@ -204,7 +206,9 @@ describe('MemberRow — retroactive_revoke checkbox', () => {
 
 		render(MemberRow, { props: { member, circles, viewerRole: 'admin' } });
 
-		const checkbox = document.querySelector('label.retro input[type="checkbox"]') as HTMLInputElement;
+		const checkbox = document.querySelector(
+			'label.retro input[type="checkbox"]'
+		) as HTMLInputElement;
 		expect(checkbox.checked).toBe(false);
 	});
 
@@ -214,7 +218,9 @@ describe('MemberRow — retroactive_revoke checkbox', () => {
 
 		render(MemberRow, { props: { member, circles, viewerRole: 'admin' } });
 
-		const checkbox = document.querySelector('label.retro input[type="checkbox"]') as HTMLInputElement;
+		const checkbox = document.querySelector(
+			'label.retro input[type="checkbox"]'
+		) as HTMLInputElement;
 		await fireEvent.click(checkbox);
 
 		expect(checkbox.checked).toBe(true);
@@ -226,7 +232,9 @@ describe('MemberRow — retroactive_revoke checkbox', () => {
 
 		render(MemberRow, { props: { member, circles, viewerRole: 'admin' } });
 
-		const checkbox = document.querySelector('label.retro input[type="checkbox"]') as HTMLInputElement;
+		const checkbox = document.querySelector(
+			'label.retro input[type="checkbox"]'
+		) as HTMLInputElement;
 		await fireEvent.click(checkbox);
 		expect(checkbox.checked).toBe(true);
 

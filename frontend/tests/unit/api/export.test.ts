@@ -97,24 +97,20 @@ describe('downloadTopicExport', () => {
 			Object.defineProperty(URL, 'createObjectURL', {
 				value: () => '',
 				writable: true,
-				configurable: true,
+				configurable: true
 			});
 		}
 		if (typeof URL.revokeObjectURL !== 'function') {
 			Object.defineProperty(URL, 'revokeObjectURL', {
 				value: () => {},
 				writable: true,
-				configurable: true,
+				configurable: true
 			});
 		}
 
 		// Stub URL object methods
-		createObjUrlSpy = vi
-			.spyOn(URL, 'createObjectURL')
-			.mockReturnValue('blob:fake-url');
-		revokeObjUrlSpy = vi
-			.spyOn(URL, 'revokeObjectURL')
-			.mockImplementation(() => {});
+		createObjUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake-url');
+		revokeObjUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
 		// Create a real anchor before installing spy, so we have a genuine anchor to return
 		const originalCreateElement = document.createElement.bind(document);
@@ -124,13 +120,11 @@ describe('downloadTopicExport', () => {
 
 		// Spy on createElement to return the fake anchor when 'a' is requested.
 		// Cast via unknown to satisfy TypeScript's overloaded createElement signature.
-		createElementSpy = vi
-			.spyOn(document, 'createElement')
-			.mockImplementation(((tag: string) => {
-				if (tag === 'a') return fakeAnchor;
-				// Fall through to real implementation for other tags
-				return originalCreateElement(tag);
-			}) as typeof document.createElement);
+		createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => {
+			if (tag === 'a') return fakeAnchor;
+			// Fall through to real implementation for other tags
+			return originalCreateElement(tag);
+		}) as typeof document.createElement);
 
 		// Spy on document.body.appendChild so click/cleanup can be observed
 		appendChildSpy = vi

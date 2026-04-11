@@ -30,7 +30,10 @@
 	$: preview = update.deleted_at ? '[removed]' : update.body;
 
 	$: circleEntries = update.circle_ids
-		.map((id) => ({ name: circles.find((c) => c.id === id)?.name, hasVariant: id in update.body_variants }))
+		.map((id) => ({
+			name: circles.find((c) => c.id === id)?.name,
+			hasVariant: id in update.body_variants
+		}))
 		.filter((e): e is { name: string; hasVariant: boolean } => e.name !== undefined);
 
 	$: attachments = update.attachments ?? [];
@@ -93,10 +96,14 @@
 				</span>
 			{/each}
 			{#if update.pending_reply_count > 0}
-				<span class="pending-badge" title="Awaiting moderation">{update.pending_reply_count} pending</span>
+				<span class="pending-badge" title="Awaiting moderation"
+					>{update.pending_reply_count} pending</span
+				>
 			{/if}
 			{#if update.reply_count > 0}
-				<span class="reply-badge">{update.reply_count} {update.reply_count === 1 ? 'reply' : 'replies'}</span>
+				<span class="reply-badge"
+					>{update.reply_count} {update.reply_count === 1 ? 'reply' : 'replies'}</span
+				>
 			{/if}
 		</div>
 	</div>
@@ -118,7 +125,10 @@
 		margin: 0.5rem 0;
 		cursor: pointer;
 		background: var(--color-surface);
-		transition: background 0.15s, box-shadow 0.15s, transform 0.12s;
+		transition:
+			background 0.15s,
+			box-shadow 0.15s,
+			transform 0.12s;
 	}
 
 	.update-row:hover {
@@ -169,7 +179,9 @@
 		transition: opacity 0.15s;
 	}
 
-	.thumb-btn:hover .thumb { opacity: 0.82; }
+	.thumb-btn:hover .thumb {
+		opacity: 0.82;
+	}
 
 	.lightbox-overlay {
 		position: fixed;

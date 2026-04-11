@@ -67,9 +67,7 @@ describe('CircleManager — list rendering', () => {
 	});
 
 	it('renders the scoped_title in parentheses when present', () => {
-		seedStores('topic-1', [
-			makeCircle({ id: 'c1', name: 'VIP', scoped_title: 'VIP Guests' })
-		]);
+		seedStores('topic-1', [makeCircle({ id: 'c1', name: 'VIP', scoped_title: 'VIP Guests' })]);
 		render(CircleManager);
 
 		expect(screen.getByText('(VIP Guests)')).toBeInTheDocument();
@@ -266,13 +264,10 @@ describe('CircleManager — delete circle', () => {
 		let deleteCalledUrl: string | undefined;
 
 		server.use(
-			http.delete(
-				`http://localhost/api/topics/${topicId}/circles/${circle.id}`,
-				({ request }) => {
-					deleteCalledUrl = request.url;
-					return new HttpResponse(null, { status: 204 });
-				}
-			),
+			http.delete(`http://localhost/api/topics/${topicId}/circles/${circle.id}`, ({ request }) => {
+				deleteCalledUrl = request.url;
+				return new HttpResponse(null, { status: 204 });
+			}),
 			// handleDelete calls listCircles after the DELETE to refresh the store
 			http.get(`http://localhost/api/topics/${topicId}/circles`, () => {
 				return HttpResponse.json([]);

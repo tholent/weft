@@ -14,135 +14,152 @@
  */
 
 :root {
-  /* Typography */
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Lora', Georgia, serif;
-  --font-ui: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+	/* Typography */
+	--font-display: 'Cormorant Garamond', Georgia, serif;
+	--font-body: 'Lora', Georgia, serif;
+	--font-ui: 'DM Sans', system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
-  /* Type scale */
-  --text-xs: 0.72rem;
-  --text-sm: 0.85rem;
-  --text-base: 1rem;
-  --text-lg: 1.15rem;
-  --text-xl: 1.4rem;
-  --text-2xl: 2rem;
-  --text-3xl: 2.8rem;
+	/* Type scale */
+	--text-xs: 0.72rem;
+	--text-sm: 0.85rem;
+	--text-base: 1rem;
+	--text-lg: 1.15rem;
+	--text-xl: 1.4rem;
+	--text-2xl: 2rem;
+	--text-3xl: 2.8rem;
 
-  /* Colors — light mode */
-  --color-bg: #fdfaf5;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f7f3ec;
-  --color-border: #e5e0d8;
-  --color-border-strong: #cac3b8;
-  --color-text: #1c1107;
-  --color-text-secondary: #6b5f52;
-  --color-text-muted: #9c9088;
-  --color-accent: #c2620a;
-  --color-accent-dark: #a05008;
-  --color-accent-light: #fef3e2;
-  --color-danger: #b91c1c;
-  --color-danger-bg: #fef2f2;
-  --color-success-bg: #f0fdf4;
-  --color-success-border: #86efac;
+	/* Colors — light mode */
+	--color-bg: #fdfaf5;
+	--color-surface: #ffffff;
+	--color-surface-hover: #f7f3ec;
+	--color-border: #e5e0d8;
+	--color-border-strong: #cac3b8;
+	--color-text: #1c1107;
+	--color-text-secondary: #6b5f52;
+	--color-text-muted: #9c9088;
+	--color-accent: #c2620a;
+	--color-accent-dark: #a05008;
+	--color-accent-light: #fef3e2;
+	--color-danger: #b91c1c;
+	--color-danger-bg: #fef2f2;
+	--color-success-bg: #f0fdf4;
+	--color-success-border: #86efac;
 
-  --content-width: 680px;
+	--content-width: 680px;
 }
 
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #151210;
-    --color-surface: #1f1b17;
-    --color-surface-hover: #28231d;
-    --color-border: #332b22;
-    --color-border-strong: #4a3d30;
-    --color-text: #f0ebe3;
-    --color-text-secondary: #b5a898;
-    --color-text-muted: #7a6e62;
-    --color-accent: #e07030;
-    --color-accent-dark: #f08040;
-    --color-accent-light: #271608;
-    --color-danger: #f87171;
-    --color-danger-bg: #2d1010;
-    --color-success-bg: #052e16;
-    --color-success-border: #166534;
-  }
+	:root {
+		--color-bg: #151210;
+		--color-surface: #1f1b17;
+		--color-surface-hover: #28231d;
+		--color-border: #332b22;
+		--color-border-strong: #4a3d30;
+		--color-text: #f0ebe3;
+		--color-text-secondary: #b5a898;
+		--color-text-muted: #7a6e62;
+		--color-accent: #e07030;
+		--color-accent-dark: #f08040;
+		--color-accent-light: #271608;
+		--color-danger: #f87171;
+		--color-danger-bg: #2d1010;
+		--color-success-bg: #052e16;
+		--color-success-border: #166534;
+	}
 }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
 
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
 
 body {
-  background-color: var(--color-bg);
-  /* Subtle paper grain texture */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
-  color: var(--color-text);
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+	background-color: var(--color-bg);
+	/* Subtle paper grain texture */
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
+	color: var(--color-text);
+	font-family: var(--font-ui);
+	font-size: var(--text-base);
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.2;
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	line-height: 1.2;
 }
 
-input, textarea, select, button { font-family: inherit; }
+input,
+textarea,
+select,
+button {
+	font-family: inherit;
+}
 
-textarea:focus, input:focus, select:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
+textarea:focus,
+input:focus,
+select:focus {
+	outline: none;
+	border-color: var(--color-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
 /* ─── Skeleton loaders ───────────────────────────────────────────────────── */
 
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
 }
 
 .skeleton-line {
-  height: 0.85rem;
-  border-radius: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-hover) 25%,
-    var(--color-surface) 50%,
-    var(--color-surface-hover) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
+	height: 0.85rem;
+	border-radius: 3px;
+	background: linear-gradient(
+		90deg,
+		var(--color-surface-hover) 25%,
+		var(--color-surface) 50%,
+		var(--color-surface-hover) 75%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.6s ease-in-out infinite;
 }
 
 .skeleton-card {
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-border);
-  border-radius: 8px;
-  padding: 0.85rem 1rem;
-  margin: 0.5rem 0;
+	border: 1px solid var(--color-border);
+	border-left: 3px solid var(--color-border);
+	border-radius: 8px;
+	padding: 0.85rem 1rem;
+	margin: 0.5rem 0;
 }
 
 .skeleton-card .skeleton-line + .skeleton-line {
-  margin-top: 0.45rem;
+	margin-top: 0.45rem;
 }
 
 .skeleton-card .skeleton-meta {
-  height: 0.6rem;
-  width: 38%;
-  border-radius: 3px;
-  margin-top: 0.85rem;
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-hover) 25%,
-    var(--color-surface) 50%,
-    var(--color-surface-hover) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
+	height: 0.6rem;
+	width: 38%;
+	border-radius: 3px;
+	margin-top: 0.85rem;
+	background: linear-gradient(
+		90deg,
+		var(--color-surface-hover) 25%,
+		var(--color-surface) 50%,
+		var(--color-surface-hover) 75%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.6s ease-in-out infinite;
 }

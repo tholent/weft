@@ -113,20 +113,18 @@ before each test. If you need a different topology, call `seedClient` directly:
 
 ```ts
 test('two circles', async ({ page, seedClient }) => {
-  await seedClient.reset();
-  const seed = await seedClient.seedTopic({
-    title: 'Two circle topic',
-    owner_email: 'owner@example.com',
-    owner_name: 'Owner',
-    circles: [
-      { name: 'Family', members: [{ email: 'alice@example.com', role: 'recipient' }] },
-      { name: 'Coworkers', members: [{ email: 'bob@example.com', role: 'recipient' }] },
-    ],
-    updates: [
-      { body: 'Hi family', circle_names: ['Family'], author_email: 'owner@example.com' },
-    ],
-  });
-  // ... seed.magic_links.owner / seed.magic_links.recipients['alice@example.com']
+	await seedClient.reset();
+	const seed = await seedClient.seedTopic({
+		title: 'Two circle topic',
+		owner_email: 'owner@example.com',
+		owner_name: 'Owner',
+		circles: [
+			{ name: 'Family', members: [{ email: 'alice@example.com', role: 'recipient' }] },
+			{ name: 'Coworkers', members: [{ email: 'bob@example.com', role: 'recipient' }] }
+		],
+		updates: [{ body: 'Hi family', circle_names: ['Family'], author_email: 'owner@example.com' }]
+	});
+	// ... seed.magic_links.owner / seed.magic_links.recipients['alice@example.com']
 });
 ```
 
@@ -214,7 +212,7 @@ await userEvent.type(input, 'hello');
 
 // ✗ bad — Svelte reactive updates have not flushed yet
 fireEvent.click(button);
-expect(screen.getByText('after click')).toBeVisible();  // flaky!
+expect(screen.getByText('after click')).toBeVisible(); // flaky!
 ```
 
 For state updates triggered by async code (MSW responses, `onMount` fetches),
@@ -222,7 +220,7 @@ wrap assertions in `waitFor`:
 
 ```ts
 await waitFor(() => {
-  expect(screen.getByText(/loaded/i)).toBeInTheDocument();
+	expect(screen.getByText(/loaded/i)).toBeInTheDocument();
 });
 ```
 
@@ -246,11 +244,11 @@ reliable `Blob.text()` / `Blob.arrayBuffer()`. Two real cases to know about:
 // Define stubs BEFORE vi.spyOn — otherwise spyOn fails with
 // "createObjectURL does not exist"
 if (typeof URL.createObjectURL !== 'function') {
-  Object.defineProperty(URL, 'createObjectURL', {
-    value: () => '',
-    writable: true,
-    configurable: true,
-  });
+	Object.defineProperty(URL, 'createObjectURL', {
+		value: () => '',
+		writable: true,
+		configurable: true
+	});
 }
 const spy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake');
 ```
@@ -260,8 +258,8 @@ const spy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake');
 const original = globalThis.Blob;
 const calls: { parts: BlobPart[]; type: string | undefined }[] = [];
 globalThis.Blob = vi.fn((parts, options) => {
-  calls.push({ parts, type: options?.type });
-  return new original(parts, options);
+	calls.push({ parts, type: options?.type });
+	return new original(parts, options);
 }) as unknown as typeof Blob;
 ```
 
@@ -274,9 +272,9 @@ jsdom environment URL:
 
 ```ts
 server.use(
-  http.post('http://localhost/api/topics/topic-1/members', async ({ request }) => {
-    // ...
-  }),
+	http.post('http://localhost/api/topics/topic-1/members', async ({ request }) => {
+		// ...
+	})
 );
 ```
 
@@ -311,7 +309,10 @@ test fails. Scope to a container:
 
 ```ts
 // ✓ disambiguate by parent role
-await page.getByRole('navigation').getByRole('button', { name: /^circles$/i }).click();
+await page
+	.getByRole('navigation')
+	.getByRole('button', { name: /^circles$/i })
+	.click();
 
 // ✓ disambiguate by CSS class
 await expect(page.locator('.section-label', { hasText: 'Export' })).toBeVisible();
@@ -340,13 +341,13 @@ Component unit tests live only for reusable components under
 product states or missing UI. Each has a detailed comment in the spec file
 explaining why. Summary:
 
-| Spec | Count | Reason |
-|---|---|---|
-| `moderator-reply-flow.spec.ts` | 2 | No mod-response submission form exists in `ReplyThread.svelte` yet. |
-| `transfer-flow.spec.ts` | 2 | The dead-man switch in `app/deps.py` auto-cancels any pending transfer the moment the owner authenticates, so the owner-side Cancel button is dead code. |
-| `close-topic.spec.ts` | 4 | After close, `TopicMemberDep` rejects every read of the topic with HTTP 403, so the frontend can't fetch member or topic state to verify the purge or render a "closed" banner. The purge itself is verified by `backend/tests/test_purge.py`. |
-| `error-and-empty-states.spec.ts` | 2 | The owner is always a member of their own topic, so the "No members yet." empty state is unreachable from the owner's view. |
-| `mobile-viewport.spec.ts` | 4 | File-level `test.beforeEach` skips all tests when running under `chromium-desktop`. They run in `chromium-mobile`. |
+| Spec                             | Count | Reason                                                                                                                                                                                                                                         |
+| -------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `moderator-reply-flow.spec.ts`   | 2     | No mod-response submission form exists in `ReplyThread.svelte` yet.                                                                                                                                                                            |
+| `transfer-flow.spec.ts`          | 2     | The dead-man switch in `app/deps.py` auto-cancels any pending transfer the moment the owner authenticates, so the owner-side Cancel button is dead code.                                                                                       |
+| `close-topic.spec.ts`            | 4     | After close, `TopicMemberDep` rejects every read of the topic with HTTP 403, so the frontend can't fetch member or topic state to verify the purge or render a "closed" banner. The purge itself is verified by `backend/tests/test_purge.py`. |
+| `error-and-empty-states.spec.ts` | 2     | The owner is always a member of their own topic, so the "No members yet." empty state is unreachable from the owner's view.                                                                                                                    |
+| `mobile-viewport.spec.ts`        | 4     | File-level `test.beforeEach` skips all tests when running under `chromium-desktop`. They run in `chromium-mobile`.                                                                                                                             |
 
 When any of the dead-code product states above are implemented or removed,
 update the corresponding `test.skip` to either a real assertion or a deletion.

@@ -15,7 +15,13 @@
 import { describe, it, expect } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/msw-server';
-import { getReplies, createReply, relayReply, dismissReply, createModResponse } from '$lib/api/replies';
+import {
+	getReplies,
+	createReply,
+	relayReply,
+	dismissReply,
+	createModResponse
+} from '$lib/api/replies';
 import { makeReply } from '../fixtures';
 import type { ModResponseScope } from '$lib/types/reply';
 
@@ -100,10 +106,13 @@ describe('createReply', () => {
 		let capturedBody: unknown;
 
 		server.use(
-			http.post('http://localhost/api/topics/:topicId/updates/:updateId/replies', async ({ request }) => {
-				capturedBody = await request.json();
-				return HttpResponse.json(makeReply());
-			})
+			http.post(
+				'http://localhost/api/topics/:topicId/updates/:updateId/replies',
+				async ({ request }) => {
+					capturedBody = await request.json();
+					return HttpResponse.json(makeReply());
+				}
+			)
 		);
 
 		await createReply('topic-1', 'update-1', 'My reply');
@@ -115,10 +124,13 @@ describe('createReply', () => {
 		let capturedBody: unknown;
 
 		server.use(
-			http.post('http://localhost/api/topics/:topicId/updates/:updateId/replies', async ({ request }) => {
-				capturedBody = await request.json();
-				return HttpResponse.json(makeReply());
-			})
+			http.post(
+				'http://localhost/api/topics/:topicId/updates/:updateId/replies',
+				async ({ request }) => {
+					capturedBody = await request.json();
+					return HttpResponse.json(makeReply());
+				}
+			)
 		);
 
 		await createReply('topic-1', 'update-1', 'Share me', true);
@@ -202,7 +214,7 @@ describe('relayReply', () => {
 		await relayReply('topic-1', 'update-1', 'reply-1', undefined);
 
 		// circle_ids must be null in the body, NOT missing from the payload
-		expect((capturedBody as Record<string, unknown>)).toHaveProperty('circle_ids');
+		expect(capturedBody as Record<string, unknown>).toHaveProperty('circle_ids');
 		expect((capturedBody as Record<string, unknown>).circle_ids).toBeNull();
 	});
 
@@ -282,9 +294,7 @@ describe('createModResponse', () => {
 		await createModResponse('topic-1', 'update-1', 'reply-1', 'Mod response body', 'sender_only');
 
 		expect(capturedMethod).toBe('POST');
-		expect(capturedUrl).toContain(
-			'/api/topics/topic-1/updates/update-1/replies/reply-1/respond'
-		);
+		expect(capturedUrl).toContain('/api/topics/topic-1/updates/update-1/replies/reply-1/respond');
 	});
 
 	it('serializes the scope enum field as a string: sender_only', async () => {

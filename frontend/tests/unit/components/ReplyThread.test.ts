@@ -65,7 +65,11 @@ describe('ReplyThread — non-moderator view', () => {
 	});
 
 	it('renders reply body text regardless of isModerator', () => {
-		const reply = makeReply({ id: 'r6', body: 'A reply from a recipient', relay_status: 'pending' });
+		const reply = makeReply({
+			id: 'r6',
+			body: 'A reply from a recipient',
+			relay_status: 'pending'
+		});
 		render(ReplyThread, { props: { replies: [reply], isModerator: false } });
 
 		expect(screen.getByText('A reply from a recipient')).toBeInTheDocument();

@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-	NotificationPreference,
-	NotificationPreferenceUpdate
-} from '$lib/types/notification';
+import type { NotificationPreference, NotificationPreferenceUpdate } from '$lib/types/notification';
 import { request } from './client';
 
 export function listNotificationPreferences(

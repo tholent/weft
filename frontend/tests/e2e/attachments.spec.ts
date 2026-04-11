@@ -38,12 +38,12 @@ const FIXTURES = path.join(process.cwd(), 'tests/e2e/fixtures');
 // ---------------------------------------------------------------------------
 
 async function signInAsOwner(
-  page: import('@playwright/test').Page,
-  ownerMagic: string
+	page: import('@playwright/test').Page,
+	ownerMagic: string
 ): Promise<void> {
-  await page.goto(`/auth?t=${ownerMagic}`);
-  await page.waitForURL(/\/manage\/[^/]+/);
-  await expect(page.getByRole('button', { name: /^updates$/i })).toBeVisible();
+	await page.goto(`/auth?t=${ownerMagic}`);
+	await page.waitForURL(/\/manage\/[^/]+/);
+	await expect(page.getByRole('button', { name: /^updates$/i })).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------
@@ -52,39 +52,39 @@ async function signInAsOwner(
 // ---------------------------------------------------------------------------
 
 test('owner uploads a PNG attachment and the thumbnail appears on the update card', async ({
-  page,
-  seededTopic
+	page,
+	seededTopic
 }) => {
-  await signInAsOwner(page, seededTopic.ownerMagic);
+	await signInAsOwner(page, seededTopic.ownerMagic);
 
-  // Type a body in the ComposeBox.
-  const compose = page.getByPlaceholder('Write an update…');
-  await compose.fill('Photo update with attachment');
+	// Type a body in the ComposeBox.
+	const compose = page.getByPlaceholder('Write an update…');
+	await compose.fill('Photo update with attachment');
 
-  // The file input is hidden (display:none). setInputFiles works on hidden inputs.
-  const fileInput = page.locator('input[type="file"].file-input-hidden');
-  await fileInput.setInputFiles(path.join(FIXTURES, 'sample.png'));
+	// The file input is hidden (display:none). setInputFiles works on hidden inputs.
+	const fileInput = page.locator('input[type="file"].file-input-hidden');
+	await fileInput.setInputFiles(path.join(FIXTURES, 'sample.png'));
 
-  // A preview thumbnail should appear in the compose area immediately after selection.
-  await expect(page.locator('.photo-thumb').first()).toBeVisible();
+	// A preview thumbnail should appear in the compose area immediately after selection.
+	await expect(page.locator('.photo-thumb').first()).toBeVisible();
 
-  // Submit the update.
-  await page.getByRole('button', { name: /^send$/i }).click();
+	// Submit the update.
+	await page.getByRole('button', { name: /^send$/i }).click();
 
-  // ComposeBox refreshes the feed BEFORE uploadAttachment fires, so the freshly
-  // rendered UpdateCard does not include the attachment yet. Reload the page
-  // so the next feed fetch includes the attachment row. (This is a known
-  // timing quirk in handleSubmit — see ComposeBox.svelte line ~119.)
-  await expect(page.getByText('Photo update with attachment')).toBeVisible();
-  await page.reload();
+	// ComposeBox refreshes the feed BEFORE uploadAttachment fires, so the freshly
+	// rendered UpdateCard does not include the attachment yet. Reload the page
+	// so the next feed fetch includes the attachment row. (This is a known
+	// timing quirk in handleSubmit — see ComposeBox.svelte line ~119.)
+	await expect(page.getByText('Photo update with attachment')).toBeVisible();
+	await page.reload();
 
-  // After reload the UpdateCard should include the attachment thumbnail.
-  const updateCard = page
-    .locator('.update-row')
-    .filter({ hasText: 'Photo update with attachment' });
-  await expect(updateCard.locator('.attachment-grid img.thumb').first()).toBeVisible({
-    timeout: 10000
-  });
+	// After reload the UpdateCard should include the attachment thumbnail.
+	const updateCard = page
+		.locator('.update-row')
+		.filter({ hasText: 'Photo update with attachment' });
+	await expect(updateCard.locator('.attachment-grid img.thumb').first()).toBeVisible({
+		timeout: 10000
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -94,29 +94,29 @@ test('owner uploads a PNG attachment and the thumbnail appears on the update car
 // ---------------------------------------------------------------------------
 
 test('thumbnail src points to the attachment API endpoint', async ({ page, seededTopic }) => {
-  await signInAsOwner(page, seededTopic.ownerMagic);
+	await signInAsOwner(page, seededTopic.ownerMagic);
 
-  const compose = page.getByPlaceholder('Write an update…');
-  await compose.fill('Thumbnail endpoint test');
+	const compose = page.getByPlaceholder('Write an update…');
+	await compose.fill('Thumbnail endpoint test');
 
-  const fileInput = page.locator('input[type="file"].file-input-hidden');
-  await fileInput.setInputFiles(path.join(FIXTURES, 'sample.png'));
+	const fileInput = page.locator('input[type="file"].file-input-hidden');
+	await fileInput.setInputFiles(path.join(FIXTURES, 'sample.png'));
 
-  await page.getByRole('button', { name: /^send$/i }).click();
+	await page.getByRole('button', { name: /^send$/i }).click();
 
-  // Reload to capture the attachment in the feed (see handleSubmit race note).
-  await expect(page.getByText('Thumbnail endpoint test')).toBeVisible();
-  await page.reload();
+	// Reload to capture the attachment in the feed (see handleSubmit race note).
+	await expect(page.getByText('Thumbnail endpoint test')).toBeVisible();
+	await page.reload();
 
-  const updateCard = page.locator('.update-row').filter({ hasText: 'Thumbnail endpoint test' });
-  const thumbImg = updateCard.locator('.attachment-grid img.thumb').first();
-  await expect(thumbImg).toBeVisible({ timeout: 10000 });
+	const updateCard = page.locator('.update-row').filter({ hasText: 'Thumbnail endpoint test' });
+	const thumbImg = updateCard.locator('.attachment-grid img.thumb').first();
+	await expect(thumbImg).toBeVisible({ timeout: 10000 });
 
-  // The src should point at the attachment endpoint on the configured API
-  // base. In unit tests that's /api/...; in E2E it's the absolute backend URL
-  // because VITE_API_BASE is baked in at build time. Accept either form.
-  const src = await thumbImg.getAttribute('src');
-  expect(src).toMatch(/\/topics\/[^/]+\/attachments\/[^/]+/);
+	// The src should point at the attachment endpoint on the configured API
+	// base. In unit tests that's /api/...; in E2E it's the absolute backend URL
+	// because VITE_API_BASE is baked in at build time. Accept either form.
+	const src = await thumbImg.getAttribute('src');
+	expect(src).toMatch(/\/topics\/[^/]+\/attachments\/[^/]+/);
 });
 
 // ---------------------------------------------------------------------------
@@ -125,42 +125,42 @@ test('thumbnail src points to the attachment API endpoint', async ({ page, seede
 // ---------------------------------------------------------------------------
 
 test('clicking an attachment thumbnail opens the lightbox and clicking the overlay closes it', async ({
-  page,
-  seededTopic
+	page,
+	seededTopic
 }) => {
-  await signInAsOwner(page, seededTopic.ownerMagic);
+	await signInAsOwner(page, seededTopic.ownerMagic);
 
-  const compose = page.getByPlaceholder('Write an update…');
-  await compose.fill('Lightbox test update');
+	const compose = page.getByPlaceholder('Write an update…');
+	await compose.fill('Lightbox test update');
 
-  const fileInput = page.locator('input[type="file"].file-input-hidden');
-  await fileInput.setInputFiles(path.join(FIXTURES, 'sample.png'));
+	const fileInput = page.locator('input[type="file"].file-input-hidden');
+	await fileInput.setInputFiles(path.join(FIXTURES, 'sample.png'));
 
-  await page.getByRole('button', { name: /^send$/i }).click();
+	await page.getByRole('button', { name: /^send$/i }).click();
 
-  // Reload to capture the attachment in the feed (see handleSubmit race note).
-  await expect(page.getByText('Lightbox test update')).toBeVisible();
-  await page.reload();
+	// Reload to capture the attachment in the feed (see handleSubmit race note).
+	await expect(page.getByText('Lightbox test update')).toBeVisible();
+	await page.reload();
 
-  const updateCard = page.locator('.update-row').filter({ hasText: 'Lightbox test update' });
-  const thumbBtn = updateCard.locator('.thumb-btn').first();
-  await expect(thumbBtn).toBeVisible({ timeout: 10000 });
+	const updateCard = page.locator('.update-row').filter({ hasText: 'Lightbox test update' });
+	const thumbBtn = updateCard.locator('.thumb-btn').first();
+	await expect(thumbBtn).toBeVisible({ timeout: 10000 });
 
-  // Click the thumbnail button to open the lightbox.
-  await thumbBtn.click();
+	// Click the thumbnail button to open the lightbox.
+	await thumbBtn.click();
 
-  // The lightbox overlay should be visible.
-  const overlay = page.locator('.lightbox-overlay');
-  await expect(overlay).toBeVisible();
+	// The lightbox overlay should be visible.
+	const overlay = page.locator('.lightbox-overlay');
+	await expect(overlay).toBeVisible();
 
-  // The full-size image inside the lightbox should also be visible.
-  await expect(overlay.locator('.lightbox-img')).toBeVisible();
+	// The full-size image inside the lightbox should also be visible.
+	await expect(overlay.locator('.lightbox-img')).toBeVisible();
 
-  // Click the overlay to close the lightbox.
-  await overlay.click();
+	// Click the overlay to close the lightbox.
+	await overlay.click();
 
-  // Overlay should be gone.
-  await expect(overlay).not.toBeVisible();
+	// Overlay should be gone.
+	await expect(overlay).not.toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -174,29 +174,29 @@ test('clicking an attachment thumbnail opens the lightbox and clicking the overl
 // ---------------------------------------------------------------------------
 
 test('uploading an oversized image shows an upload error after submit', async ({
-  page,
-  seededTopic
+	page,
+	seededTopic
 }) => {
-  await signInAsOwner(page, seededTopic.ownerMagic);
+	await signInAsOwner(page, seededTopic.ownerMagic);
 
-  const compose = page.getByPlaceholder('Write an update…');
-  await compose.fill('Oversize attachment test');
+	const compose = page.getByPlaceholder('Write an update…');
+	await compose.fill('Oversize attachment test');
 
-  const fileInput = page.locator('input[type="file"].file-input-hidden');
-  await fileInput.setInputFiles(path.join(FIXTURES, 'oversize.png'));
+	const fileInput = page.locator('input[type="file"].file-input-hidden');
+	await fileInput.setInputFiles(path.join(FIXTURES, 'oversize.png'));
 
-  // Preview appears in compose area.
-  await expect(page.locator('.photo-thumb').first()).toBeVisible();
+	// Preview appears in compose area.
+	await expect(page.locator('.photo-thumb').first()).toBeVisible();
 
-  await page.getByRole('button', { name: /^send$/i }).click();
+	await page.getByRole('button', { name: /^send$/i }).click();
 
-  // The update body should be posted successfully (the update appears).
-  await expect(page.getByText('Oversize attachment test')).toBeVisible();
+	// The update body should be posted successfully (the update appears).
+	await expect(page.getByText('Oversize attachment test')).toBeVisible();
 
-  // The upload error paragraph should appear because the attachment was rejected.
-  await expect(page.locator('.upload-error')).toBeVisible({ timeout: 8000 });
-  const errorText = await page.locator('.upload-error').textContent();
-  expect(errorText).toContain('oversize.png');
+	// The upload error paragraph should appear because the attachment was rejected.
+	await expect(page.locator('.upload-error')).toBeVisible({ timeout: 8000 });
+	const errorText = await page.locator('.upload-error').textContent();
+	expect(errorText).toContain('oversize.png');
 });
 
 // ---------------------------------------------------------------------------
@@ -213,27 +213,27 @@ test('uploading an oversized image shows an upload error after submit', async ({
 // ---------------------------------------------------------------------------
 
 test('uploading a non-image binary file shows an upload error after submit', async ({
-  page,
-  seededTopic
+	page,
+	seededTopic
 }) => {
-  await signInAsOwner(page, seededTopic.ownerMagic);
+	await signInAsOwner(page, seededTopic.ownerMagic);
 
-  const compose = page.getByPlaceholder('Write an update…');
-  await compose.fill('Non-image MIME test');
+	const compose = page.getByPlaceholder('Write an update…');
+	await compose.fill('Non-image MIME test');
 
-  const fileInput = page.locator('input[type="file"].file-input-hidden');
-  await fileInput.setInputFiles(path.join(FIXTURES, 'oversize.bin'));
+	const fileInput = page.locator('input[type="file"].file-input-hidden');
+	await fileInput.setInputFiles(path.join(FIXTURES, 'oversize.bin'));
 
-  // The file is staged — a preview may or may not render (blob URL exists).
-  // We only assert the error surfaced after submit.
+	// The file is staged — a preview may or may not render (blob URL exists).
+	// We only assert the error surfaced after submit.
 
-  await page.getByRole('button', { name: /^send$/i }).click();
+	await page.getByRole('button', { name: /^send$/i }).click();
 
-  // The update body appears (update was created successfully).
-  await expect(page.getByText('Non-image MIME test')).toBeVisible();
+	// The update body appears (update was created successfully).
+	await expect(page.getByText('Non-image MIME test')).toBeVisible();
 
-  // Upload error should be shown because MIME is rejected by the backend.
-  await expect(page.locator('.upload-error')).toBeVisible({ timeout: 8000 });
-  const errorText = await page.locator('.upload-error').textContent();
-  expect(errorText).toContain('oversize.bin');
+	// Upload error should be shown because MIME is rejected by the backend.
+	await expect(page.locator('.upload-error')).toBeVisible({ timeout: 8000 });
+	const errorText = await page.locator('.upload-error').textContent();
+	expect(errorText).toContain('oversize.bin');
 });

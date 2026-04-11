@@ -29,17 +29,22 @@ import { test, expect } from './support/fixtures';
 
 /** Navigate to the Settings tab as the given user via magic link. */
 async function goToSettingsTab(
-  page: import('@playwright/test').Page,
-  magic: string
+	page: import('@playwright/test').Page,
+	magic: string
 ): Promise<void> {
-  await page.goto(`/auth?t=${magic}`);
-  await page.waitForURL(/\/manage\//);
-  // Wait for the skeleton to resolve — the Updates nav button appears first.
-  await expect(page.getByRole('navigation').getByRole('button', { name: /^updates$/i })).toBeVisible();
-  // Click the Settings tab (only visible to admin/owner).
-  await page.getByRole('navigation').getByRole('button', { name: /^settings$/i }).click();
-  // Confirm the Settings heading renders.
-  await expect(page.getByRole('heading', { name: /^settings$/i })).toBeVisible();
+	await page.goto(`/auth?t=${magic}`);
+	await page.waitForURL(/\/manage\//);
+	// Wait for the skeleton to resolve — the Updates nav button appears first.
+	await expect(
+		page.getByRole('navigation').getByRole('button', { name: /^updates$/i })
+	).toBeVisible();
+	// Click the Settings tab (only visible to admin/owner).
+	await page
+		.getByRole('navigation')
+		.getByRole('button', { name: /^settings$/i })
+		.click();
+	// Confirm the Settings heading renders.
+	await expect(page.getByRole('heading', { name: /^settings$/i })).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------
@@ -52,21 +57,21 @@ async function goToSettingsTab(
 // ---------------------------------------------------------------------------
 
 test('admin initiates a transfer request', async ({ page, seededTopic }) => {
-  const adminMagic = seededTopic.adminMagic['admin@example.com'];
-  await goToSettingsTab(page, adminMagic);
+	const adminMagic = seededTopic.adminMagic['admin@example.com'];
+	await goToSettingsTab(page, adminMagic);
 
-  // The request button is visible before any transfer exists.
-  const requestBtn = page.getByRole('button', { name: /request creator transfer/i });
-  await expect(requestBtn).toBeVisible();
+	// The request button is visible before any transfer exists.
+	const requestBtn = page.getByRole('button', { name: /request creator transfer/i });
+	await expect(requestBtn).toBeVisible();
 
-  // Click to initiate transfer.
-  await requestBtn.click();
+	// Click to initiate transfer.
+	await requestBtn.click();
 
-  // The pending state banner should now be visible.
-  await expect(page.getByText(/creator transfer pending/i)).toBeVisible();
+	// The pending state banner should now be visible.
+	await expect(page.getByText(/creator transfer pending/i)).toBeVisible();
 
-  // The request button should no longer be visible (pending branch replaced it).
-  await expect(requestBtn).not.toBeVisible();
+	// The request button should no longer be visible (pending branch replaced it).
+	await expect(requestBtn).not.toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -87,9 +92,9 @@ test('admin initiates a transfer request', async ({ page, seededTopic }) => {
 // ---------------------------------------------------------------------------
 
 test.skip('owner cancels a pending transfer', async ({ page, seededTopic }) => {
-  // intentionally empty — see comment above
-  void page;
-  void seededTopic;
+	// intentionally empty — see comment above
+	void page;
+	void seededTopic;
 });
 
 // ---------------------------------------------------------------------------
@@ -106,59 +111,55 @@ test.skip('owner cancels a pending transfer', async ({ page, seededTopic }) => {
 // ---------------------------------------------------------------------------
 
 test('owner direct transfer via PassTheTorch swaps roles', async ({ page, seededTopic }) => {
-  await goToSettingsTab(page, seededTopic.ownerMagic);
+	await goToSettingsTab(page, seededTopic.ownerMagic);
 
-  // The "Pass the Torch" section heading is visible for owners.
-  // `getByText` would be ambiguous because both the <p class="section-label">
-  // and the <button> contain that text — scope to the label explicitly.
-  await expect(
-    page.locator('.section-label', { hasText: 'Pass the Torch' })
-  ).toBeVisible();
+	// The "Pass the Torch" section heading is visible for owners.
+	// `getByText` would be ambiguous because both the <p class="section-label">
+	// and the <button> contain that text — scope to the label explicitly.
+	await expect(page.locator('.section-label', { hasText: 'Pass the Torch' })).toBeVisible();
 
-  // The dropdown is "Select new owner…" (disabled placeholder).
-  const ownerSelect = page.locator('.torch select');
-  await expect(ownerSelect).toBeVisible();
+	// The dropdown is "Select new owner…" (disabled placeholder).
+	const ownerSelect = page.locator('.torch select');
+	await expect(ownerSelect).toBeVisible();
 
-  // Select the admin option. selectOption's {label} needs an exact string
-  // and Playwright's locator().filter() does not traverse <option> children
-  // of a closed <select>, so resolve the option value directly from the DOM.
-  const adminOptionValue = await ownerSelect.evaluate((el) => {
-    const select = el as HTMLSelectElement;
-    const match = Array.from(select.options).find((o) => /admin/i.test(o.textContent ?? ''));
-    return match ? match.value : null;
-  });
-  expect(adminOptionValue).toBeTruthy();
-  await ownerSelect.selectOption(adminOptionValue as string);
+	// Select the admin option. selectOption's {label} needs an exact string
+	// and Playwright's locator().filter() does not traverse <option> children
+	// of a closed <select>, so resolve the option value directly from the DOM.
+	const adminOptionValue = await ownerSelect.evaluate((el) => {
+		const select = el as HTMLSelectElement;
+		const match = Array.from(select.options).find((o) => /admin/i.test(o.textContent ?? ''));
+		return match ? match.value : null;
+	});
+	expect(adminOptionValue).toBeTruthy();
+	await ownerSelect.selectOption(adminOptionValue as string);
 
-  // Click "Pass the Torch" to open the confirmation box.
-  const torchBtn = page.getByRole('button', { name: /pass the torch/i });
-  await expect(torchBtn).toBeEnabled();
-  await torchBtn.click();
+	// Click "Pass the Torch" to open the confirmation box.
+	const torchBtn = page.getByRole('button', { name: /pass the torch/i });
+	await expect(torchBtn).toBeEnabled();
+	await torchBtn.click();
 
-  // Confirmation box: verify the descriptive text is shown.
-  await expect(
-    page.getByText(/you are about to transfer ownership to/i)
-  ).toBeVisible();
-  await expect(page.getByText(/you will become an admin/i)).toBeVisible();
+	// Confirmation box: verify the descriptive text is shown.
+	await expect(page.getByText(/you are about to transfer ownership to/i)).toBeVisible();
+	await expect(page.getByText(/you will become an admin/i)).toBeVisible();
 
-  // Confirm the transfer.
-  const confirmBtn = page.getByRole('button', { name: /yes, transfer ownership/i });
-  await expect(confirmBtn).toBeEnabled();
+	// Confirm the transfer.
+	const confirmBtn = page.getByRole('button', { name: /yes, transfer ownership/i });
+	await expect(confirmBtn).toBeEnabled();
 
-  // Wait for the directTransfer API call to complete.
-  const transferPromise = page.waitForResponse(
-    (resp) => /\/transfer\/direct/.test(resp.url()) && resp.request().method() === 'POST'
-  );
-  await confirmBtn.click();
-  const transferResp = await transferPromise;
-  expect(transferResp.status()).toBe(200);
+	// Wait for the directTransfer API call to complete.
+	const transferPromise = page.waitForResponse(
+		(resp) => /\/transfer\/direct/.test(resp.url()) && resp.request().method() === 'POST'
+	);
+	await confirmBtn.click();
+	const transferResp = await transferPromise;
+	expect(transferResp.status()).toBe(200);
 
-  // After transfer the onTransferred callback calls login() with role 'admin'.
-  // The role badge in the header should now show "admin".
-  await expect(page.locator('.role-badge')).toHaveText('admin');
+	// After transfer the onTransferred callback calls login() with role 'admin'.
+	// The role badge in the header should now show "admin".
+	await expect(page.locator('.role-badge')).toHaveText('admin');
 
-  // The PassTheTorch section should no longer be visible (isOwner is now false).
-  await expect(page.locator('.torch')).not.toBeVisible();
+	// The PassTheTorch section should no longer be visible (isOwner is now false).
+	await expect(page.locator('.torch')).not.toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -175,30 +176,29 @@ test('owner direct transfer via PassTheTorch swaps roles', async ({ page, seeded
 // ---------------------------------------------------------------------------
 
 test('request button absent after admin initiates transfer (duplicate blocked by UI)', async ({
-  page,
-  seededTopic
+	page,
+	seededTopic
 }) => {
-  const adminMagic = seededTopic.adminMagic['admin@example.com'];
-  await goToSettingsTab(page, adminMagic);
+	const adminMagic = seededTopic.adminMagic['admin@example.com'];
+	await goToSettingsTab(page, adminMagic);
 
-  const requestBtn = page.getByRole('button', { name: /request creator transfer/i });
-  await expect(requestBtn).toBeVisible();
+	const requestBtn = page.getByRole('button', { name: /request creator transfer/i });
+	await expect(requestBtn).toBeVisible();
 
-  // Listen for the POST response to confirm the first request succeeds.
-  const firstPostPromise = page.waitForResponse(
-    (resp) =>
-      /\/topics\/[^/]+\/transfer$/.test(resp.url()) && resp.request().method() === 'POST'
-  );
+	// Listen for the POST response to confirm the first request succeeds.
+	const firstPostPromise = page.waitForResponse(
+		(resp) => /\/topics\/[^/]+\/transfer$/.test(resp.url()) && resp.request().method() === 'POST'
+	);
 
-  await requestBtn.click();
+	await requestBtn.click();
 
-  const firstResp = await firstPostPromise;
-  // Should succeed (200 or 201).
-  expect([200, 201]).toContain(firstResp.status());
+	const firstResp = await firstPostPromise;
+	// Should succeed (200 or 201).
+	expect([200, 201]).toContain(firstResp.status());
 
-  // Pending text is visible.
-  await expect(page.getByText(/creator transfer pending/i)).toBeVisible();
+	// Pending text is visible.
+	await expect(page.getByText(/creator transfer pending/i)).toBeVisible();
 
-  // The request button is no longer in the DOM — a second click is impossible.
-  await expect(requestBtn).not.toBeVisible();
+	// The request button is no longer in the DOM — a second click is impossible.
+	await expect(requestBtn).not.toBeVisible();
 });

@@ -101,17 +101,84 @@
 </div>
 
 <style>
-	.member-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border); flex-wrap: wrap; gap: 0.5rem; }
-	.info { display: flex; align-items: center; gap: 0.5rem; }
-	.handle { font-weight: 500; }
-	.role-badge { padding: 0.1rem 0.5rem; border-radius: 3px; font-size: var(--text-xs); text-transform: capitalize; }
-	.actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-	select, input { padding: 0.25rem 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--text-sm); }
-	button { padding: 0.25rem 0.6rem; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--text-sm); cursor: pointer; background: var(--color-surface); color: var(--color-text-secondary); transition: background 0.1s, border-color 0.1s; }
-	button:hover { background: var(--color-surface-hover); border-color: var(--color-border-strong); }
-	.rename-btn { background: none; border: none; cursor: pointer; padding: 0 0.25rem; color: var(--color-text-secondary); }
-	.promote-btn { background: var(--color-accent-light); border-color: #f0d0b0; color: var(--color-accent); font-weight: 500; }
-	.promote-btn:hover { background: var(--color-accent); color: white; border-color: var(--color-accent); }
-	.secondary-btn { color: var(--color-text-muted); font-size: var(--text-xs); }
-	.retro { font-size: var(--text-xs); display: flex; align-items: center; gap: 0.2rem; }
+	.member-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.5rem 0;
+		border-bottom: 1px solid var(--color-border);
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.info {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.handle {
+		font-weight: 500;
+	}
+	.role-badge {
+		padding: 0.1rem 0.5rem;
+		border-radius: 3px;
+		font-size: var(--text-xs);
+		text-transform: capitalize;
+	}
+	.actions {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	select,
+	input {
+		padding: 0.25rem 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-size: var(--text-sm);
+	}
+	button {
+		padding: 0.25rem 0.6rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-size: var(--text-sm);
+		cursor: pointer;
+		background: var(--color-surface);
+		color: var(--color-text-secondary);
+		transition:
+			background 0.1s,
+			border-color 0.1s;
+	}
+	button:hover {
+		background: var(--color-surface-hover);
+		border-color: var(--color-border-strong);
+	}
+	.rename-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 0 0.25rem;
+		color: var(--color-text-secondary);
+	}
+	.promote-btn {
+		background: var(--color-accent-light);
+		border-color: #f0d0b0;
+		color: var(--color-accent);
+		font-weight: 500;
+	}
+	.promote-btn:hover {
+		background: var(--color-accent);
+		color: white;
+		border-color: var(--color-accent);
+	}
+	.secondary-btn {
+		color: var(--color-text-muted);
+		font-size: var(--text-xs);
+	}
+	.retro {
+		font-size: var(--text-xs);
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
 </style>

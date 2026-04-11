@@ -19,14 +19,23 @@ export function listCircles(topicId: string): Promise<Circle[]> {
 	return request(`/topics/${topicId}/circles`);
 }
 
-export function createCircle(topicId: string, name: string, scoped_title?: string): Promise<Circle> {
+export function createCircle(
+	topicId: string,
+	name: string,
+	scoped_title?: string
+): Promise<Circle> {
 	return request(`/topics/${topicId}/circles`, {
 		method: 'POST',
 		body: JSON.stringify({ name, scoped_title })
 	});
 }
 
-export function renameCircle(topicId: string, circleId: string, name?: string, scoped_title?: string): Promise<Circle> {
+export function renameCircle(
+	topicId: string,
+	circleId: string,
+	name?: string,
+	scoped_title?: string
+): Promise<Circle> {
 	return request(`/topics/${topicId}/circles/${circleId}`, {
 		method: 'PATCH',
 		body: JSON.stringify({ name, scoped_title })

@@ -74,8 +74,8 @@
 		<div class="confirm-box">
 			<p class="confirm-msg">
 				You are about to transfer ownership to
-				<strong>{selectedMember?.display_handle || 'Anonymous'}</strong>.
-				You will become an admin. This cannot be undone.
+				<strong>{selectedMember?.display_handle || 'Anonymous'}</strong>. You will become an admin.
+				This cannot be undone.
 			</p>
 			<div class="confirm-actions">
 				<button class="confirm-btn" disabled={submitting} on:click={handleConfirm}>
@@ -89,38 +89,88 @@
 </div>
 
 <style>
-	.torch { margin-top: 0.5rem; }
-	.row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+	.torch {
+		margin-top: 0.5rem;
+	}
+	.row {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		align-items: center;
+	}
 	select {
-		padding: 0.35rem 0.5rem; border: 1px solid var(--color-border);
-		border-radius: 4px; font-size: var(--text-sm);
-		background: var(--color-surface); color: var(--color-text); flex: 1; min-width: 180px;
+		padding: 0.35rem 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-size: var(--text-sm);
+		background: var(--color-surface);
+		color: var(--color-text);
+		flex: 1;
+		min-width: 180px;
 	}
 	.torch-btn {
-		padding: 0.35rem 1rem; border: none; border-radius: 4px;
-		background: var(--color-text); color: white;
-		font-size: var(--text-sm); cursor: pointer; transition: background 0.15s; white-space: nowrap;
+		padding: 0.35rem 1rem;
+		border: none;
+		border-radius: 4px;
+		background: var(--color-text);
+		color: white;
+		font-size: var(--text-sm);
+		cursor: pointer;
+		transition: background 0.15s;
+		white-space: nowrap;
 	}
-	.torch-btn:hover:not(:disabled) { background: var(--color-accent); }
-	.torch-btn:disabled { opacity: 0.4; cursor: default; }
+	.torch-btn:hover:not(:disabled) {
+		background: var(--color-accent);
+	}
+	.torch-btn:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
 	.confirm-box {
-		background: #fff8f0; border: 1px solid #f0d0b0;
+		background: #fff8f0;
+		border: 1px solid #f0d0b0;
 		border-left: 4px solid var(--color-accent);
-		border-radius: 4px; padding: 0.75rem 1rem;
+		border-radius: 4px;
+		padding: 0.75rem 1rem;
 	}
-	.confirm-msg { margin: 0 0 0.75rem; font-size: var(--text-sm); line-height: 1.5; }
-	.confirm-actions { display: flex; gap: 0.5rem; }
+	.confirm-msg {
+		margin: 0 0 0.75rem;
+		font-size: var(--text-sm);
+		line-height: 1.5;
+	}
+	.confirm-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
 	.confirm-btn {
-		padding: 0.35rem 1rem; border: none; border-radius: 4px;
-		background: var(--color-accent); color: white;
-		font-size: var(--text-sm); cursor: pointer; transition: background 0.15s;
+		padding: 0.35rem 1rem;
+		border: none;
+		border-radius: 4px;
+		background: var(--color-accent);
+		color: white;
+		font-size: var(--text-sm);
+		cursor: pointer;
+		transition: background 0.15s;
 	}
-	.confirm-btn:hover:not(:disabled) { background: #a0500a; }
-	.confirm-btn:disabled { opacity: 0.5; cursor: default; }
+	.confirm-btn:hover:not(:disabled) {
+		background: #a0500a;
+	}
+	.confirm-btn:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
 	.cancel-btn {
-		padding: 0.35rem 0.8rem; border: 1px solid var(--color-border);
-		border-radius: 4px; background: var(--color-surface);
-		color: var(--color-text-secondary); font-size: var(--text-sm); cursor: pointer;
+		padding: 0.35rem 0.8rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		background: var(--color-surface);
+		color: var(--color-text-secondary);
+		font-size: var(--text-sm);
+		cursor: pointer;
 	}
-	.error { color: var(--color-danger); font-size: var(--text-sm); margin: 0.4rem 0 0; }
+	.error {
+		color: var(--color-danger);
+		font-size: var(--text-sm);
+		margin: 0.4rem 0 0;
+	}
 </style>

@@ -42,21 +42,34 @@ export async function listMembers(topicId: string): Promise<Member[]> {
 	return data.items;
 }
 
-export function moveMember(topicId: string, memberId: string, new_circle_id: string, retroactive_revoke = false): Promise<void> {
+export function moveMember(
+	topicId: string,
+	memberId: string,
+	new_circle_id: string,
+	retroactive_revoke = false
+): Promise<void> {
 	return request(`/topics/${topicId}/members/${memberId}/circle`, {
 		method: 'PATCH',
 		body: JSON.stringify({ new_circle_id, retroactive_revoke })
 	});
 }
 
-export function promoteMember(topicId: string, memberId: string, new_role: MemberRole): Promise<void> {
+export function promoteMember(
+	topicId: string,
+	memberId: string,
+	new_role: MemberRole
+): Promise<void> {
 	return request(`/topics/${topicId}/members/${memberId}/role`, {
 		method: 'PATCH',
 		body: JSON.stringify({ new_role })
 	});
 }
 
-export function renameMember(topicId: string, memberId: string, display_handle: string): Promise<void> {
+export function renameMember(
+	topicId: string,
+	memberId: string,
+	display_handle: string
+): Promise<void> {
 	return request(`/topics/${topicId}/members/${memberId}/handle`, {
 		method: 'PATCH',
 		body: JSON.stringify({ display_handle })

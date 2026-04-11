@@ -22,7 +22,9 @@
 	export let mode: 'update' | 'reply' | 'mod_response';
 	export let targetCircles: Circle[] = [];
 	/** Callback receives form data. For update mode, must return Promise<{ id: string }> so attachments can be uploaded. */
-	export let onSubmit: (data: Record<string, unknown>) => Promise<{ id: string }> | Promise<void> | void;
+	export let onSubmit: (
+		data: Record<string, unknown>
+	) => Promise<{ id: string }> | Promise<void> | void;
 
 	const MAX_PHOTOS = 5;
 
@@ -106,7 +108,8 @@
 		uploadError = '';
 
 		if (mode === 'update') {
-			const circle_ids = selectedCircles.length > 0 ? selectedCircles : targetCircles.map((c) => c.id);
+			const circle_ids =
+				selectedCircles.length > 0 ? selectedCircles : targetCircles.map((c) => c.id);
 			const circle_bodies: Record<string, string> = {};
 			for (const id of selectedCircles) {
 				if (customEnabled[id] && customBody[id]?.trim()) {
@@ -160,8 +163,12 @@
 	<textarea
 		bind:value={body}
 		placeholder={mode === 'update'
-			? hasAnyCustom ? 'Default message (for circles without a custom message)…' : 'Write an update…'
-			: mode === 'reply' ? 'Write a reply…' : 'Write a response…'}
+			? hasAnyCustom
+				? 'Default message (for circles without a custom message)…'
+				: 'Write an update…'
+			: mode === 'reply'
+				? 'Write a reply…'
+				: 'Write a response…'}
 		rows="3"
 	></textarea>
 
@@ -185,7 +192,12 @@
 			{#each photoPreviews as src, i}
 				<div class="photo-thumb-wrap">
 					<img class="photo-thumb" {src} alt="Attachment {i + 1}" />
-					<button type="button" class="photo-remove" on:click={() => removePhoto(i)} title="Remove photo">×</button>
+					<button
+						type="button"
+						class="photo-remove"
+						on:click={() => removePhoto(i)}
+						title="Remove photo">×</button
+					>
 				</div>
 			{/each}
 		</div>
@@ -200,16 +212,22 @@
 			<div class="circle-pills">
 				{#each visibleCircles as circle (circle.id)}
 					{@const selected = selectedCircles.includes(circle.id)}
-					<span class="pill-wrap" class:selected class:has-alt={selected && customEnabled[circle.id]}>
-						<button type="button" class="circle-pill" on:click={() => toggleCircle(circle.id)}>{circle.name}</button>
+					<span
+						class="pill-wrap"
+						class:selected
+						class:has-alt={selected && customEnabled[circle.id]}
+					>
+						<button type="button" class="circle-pill" on:click={() => toggleCircle(circle.id)}
+							>{circle.name}</button
+						>
 						{#if selected}
 							<button
 								type="button"
 								class="pill-alt"
 								class:active={customEnabled[circle.id]}
 								on:click={() => toggleCustom(circle.id)}
-								title="Custom message for {circle.name}"
-							>ALT</button>
+								title="Custom message for {circle.name}">ALT</button
+							>
 						{/if}
 					</span>
 				{/each}
@@ -220,23 +238,32 @@
 							class="overflow-btn"
 							class:has-selected={overflowSelected > 0}
 							on:click|stopPropagation={() => (popoverOpen = !popoverOpen)}
-						>{overflowSelected > 0 ? `+${overflowSelected}` : '+'}</button>
+							>{overflowSelected > 0 ? `+${overflowSelected}` : '+'}</button
+						>
 						{#if popoverOpen}
 							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 							<div class="popover" on:click|stopPropagation>
 								{#each overflowCircles as circle (circle.id)}
 									{@const selected = selectedCircles.includes(circle.id)}
 									<div class="popover-row">
-										<span class="pill-wrap" class:selected class:has-alt={selected && customEnabled[circle.id]}>
-											<button type="button" class="circle-pill" on:click={() => toggleCircle(circle.id)}>{circle.name}</button>
+										<span
+											class="pill-wrap"
+											class:selected
+											class:has-alt={selected && customEnabled[circle.id]}
+										>
+											<button
+												type="button"
+												class="circle-pill"
+												on:click={() => toggleCircle(circle.id)}>{circle.name}</button
+											>
 											{#if selected}
 												<button
 													type="button"
 													class="pill-alt"
 													class:active={customEnabled[circle.id]}
 													on:click={() => toggleCustom(circle.id)}
-													title="Custom message for {circle.name}"
-												>ALT</button>
+													title="Custom message for {circle.name}">ALT</button
+												>
 											{/if}
 										</span>
 									</div>
@@ -265,7 +292,9 @@
 				on:click={handlePhotoClick}
 				title={photos.length >= MAX_PHOTOS ? `Maximum ${MAX_PHOTOS} photos` : 'Attach photos'}
 			>
-				{#if uploading}Uploading…{:else}📎 {photos.length > 0 ? `${photos.length}/${MAX_PHOTOS}` : 'Photo'}{/if}
+				{#if uploading}Uploading…{:else}📎 {photos.length > 0
+						? `${photos.length}/${MAX_PHOTOS}`
+						: 'Photo'}{/if}
 			</button>
 		{/if}
 
@@ -289,92 +318,239 @@
 </form>
 
 <style>
-	.compose { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.5rem 0; }
-	textarea { padding: 0.5rem; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; resize: vertical; width: 100%; box-sizing: border-box; }
+	.compose {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin: 0.5rem 0;
+	}
+	textarea {
+		padding: 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-family: inherit;
+		resize: vertical;
+		width: 100%;
+		box-sizing: border-box;
+	}
 
-	.custom-messages { display: flex; flex-direction: column; gap: 0.5rem; }
-	.custom-entry { display: flex; flex-direction: column; gap: 0.2rem; }
-	.custom-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.04em; }
+	.custom-messages {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.custom-entry {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+	.custom-label {
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--color-accent);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
 
 	.photo-previews {
-		display: flex; flex-wrap: wrap; gap: 0.5rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 	.photo-thumb-wrap {
-		position: relative; display: inline-flex;
+		position: relative;
+		display: inline-flex;
 	}
 	.photo-thumb {
-		width: 72px; height: 72px; object-fit: cover;
-		border-radius: 4px; border: 1px solid var(--color-border);
+		width: 72px;
+		height: 72px;
+		object-fit: cover;
+		border-radius: 4px;
+		border: 1px solid var(--color-border);
 	}
 	.photo-remove {
-		position: absolute; top: -6px; right: -6px;
-		width: 18px; height: 18px; border-radius: 50%;
-		background: var(--color-text); color: white;
-		border: none; font-size: 0.75rem; line-height: 1;
-		cursor: pointer; display: flex; align-items: center; justify-content: center;
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		width: 18px;
+		height: 18px;
+		border-radius: 50%;
+		background: var(--color-text);
+		color: white;
+		border: none;
+		font-size: 0.75rem;
+		line-height: 1;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		padding: 0;
 	}
-	.photo-remove:hover { background: var(--color-danger); }
+	.photo-remove:hover {
+		background: var(--color-danger);
+	}
 
-	.upload-error { font-size: var(--text-xs); color: var(--color-danger); margin: 0; }
+	.upload-error {
+		font-size: var(--text-xs);
+		color: var(--color-danger);
+		margin: 0;
+	}
 
-	.file-input-hidden { display: none; }
+	.file-input-hidden {
+		display: none;
+	}
 
 	.photo-btn {
-		padding: 0.2rem 0.6rem; border-radius: 4px; font-size: var(--text-xs);
-		border: 1px solid var(--color-border-strong); background: none;
-		color: var(--color-text-secondary); cursor: pointer; transition: all 0.1s;
+		padding: 0.2rem 0.6rem;
+		border-radius: 4px;
+		font-size: var(--text-xs);
+		border: 1px solid var(--color-border-strong);
+		background: none;
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		transition: all 0.1s;
 		white-space: nowrap;
 	}
-	.photo-btn:hover:not(:disabled) { background: var(--color-accent-light); border-color: var(--color-accent); color: var(--color-accent); }
-	.photo-btn:disabled { opacity: 0.5; cursor: default; }
+	.photo-btn:hover:not(:disabled) {
+		background: var(--color-accent-light);
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+	.photo-btn:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
 
-	.footer { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+	.footer {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
 
-	.circle-pills { display: flex; align-items: center; gap: 0.25rem; flex: 1; flex-wrap: wrap; }
+	.circle-pills {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		flex: 1;
+		flex-wrap: wrap;
+	}
 	.pill-wrap {
-		display: inline-flex; align-items: stretch;
-		border: 1px solid var(--color-border-strong); border-radius: 4px;
-		overflow: hidden; transition: all 0.1s;
+		display: inline-flex;
+		align-items: stretch;
+		border: 1px solid var(--color-border-strong);
+		border-radius: 4px;
+		overflow: hidden;
+		transition: all 0.1s;
 	}
 	.pill-wrap.selected {
-		background: var(--color-accent-light); border-color: var(--color-accent);
+		background: var(--color-accent-light);
+		border-color: var(--color-accent);
 	}
 	.circle-pill {
-		background: none; border: none; border-radius: 0;
-		padding: 0.2rem 0.65rem; font-size: var(--text-xs);
-		color: var(--color-text-secondary); cursor: pointer;
+		background: none;
+		border: none;
+		border-radius: 0;
+		padding: 0.2rem 0.65rem;
+		font-size: var(--text-xs);
+		color: var(--color-text-secondary);
+		cursor: pointer;
 	}
-	.pill-wrap.selected .circle-pill { color: var(--color-accent); }
+	.pill-wrap.selected .circle-pill {
+		color: var(--color-accent);
+	}
 	.pill-alt {
-		display: inline-flex; align-items: center; align-self: stretch;
-		background: color-mix(in srgb, var(--color-accent-light) 40%, var(--color-surface)); border: none;
+		display: inline-flex;
+		align-items: center;
+		align-self: stretch;
+		background: color-mix(in srgb, var(--color-accent-light) 40%, var(--color-surface));
+		border: none;
 		border-left: 1px solid #f0d0b0;
 		padding: 0 0.35rem;
-		font-size: 0.55rem; font-weight: 700; letter-spacing: 0.06em;
-		color: color-mix(in srgb, var(--color-accent) 55%, var(--color-surface)); cursor: pointer; transition: all 0.1s;
+		font-size: 0.55rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		color: color-mix(in srgb, var(--color-accent) 55%, var(--color-surface));
+		cursor: pointer;
+		transition: all 0.1s;
 	}
-	.pill-alt.active { background: var(--color-accent); border-left-color: var(--color-accent); color: white; }
+	.pill-alt.active {
+		background: var(--color-accent);
+		border-left-color: var(--color-accent);
+		color: white;
+	}
 
-	.overflow-wrap { position: relative; display: inline-flex; align-items: center; }
+	.overflow-wrap {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+	}
 	.overflow-btn {
-		padding: 0.2rem 0.55rem; border-radius: 4px; font-size: var(--text-xs);
-		border: 1px solid var(--color-border-strong); background: none;
-		color: var(--color-text-secondary); cursor: pointer; transition: all 0.1s; white-space: nowrap;
+		padding: 0.2rem 0.55rem;
+		border-radius: 4px;
+		font-size: var(--text-xs);
+		border: 1px solid var(--color-border-strong);
+		background: none;
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		transition: all 0.1s;
+		white-space: nowrap;
 	}
-	.overflow-btn.has-selected { background: var(--color-accent-light); border-color: var(--color-accent); color: var(--color-accent); }
+	.overflow-btn.has-selected {
+		background: var(--color-accent-light);
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
 	.popover {
-		position: absolute; bottom: calc(100% + 0.35rem); left: 0;
-		background: var(--color-surface); border: 1px solid var(--color-border);
-		border-radius: 6px; padding: 0.5rem; z-index: 50;
-		display: flex; flex-direction: column; gap: 0.3rem;
-		box-shadow: 0 4px 12px rgba(0,0,0,0.12); min-width: 140px;
+		position: absolute;
+		bottom: calc(100% + 0.35rem);
+		left: 0;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		padding: 0.5rem;
+		z-index: 50;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+		min-width: 140px;
 	}
-	.popover-row { display: flex; align-items: center; gap: 0.25rem; }
+	.popover-row {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
 
-	.share-check { display: flex; align-items: center; gap: 0.25rem; font-size: var(--text-sm); white-space: nowrap; }
-	select { padding: 0.3rem 0.4rem; border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--text-sm); }
-	.send-btn { margin-left: auto; padding: 0.4rem 1rem; background: var(--color-text); color: white; border: none; border-radius: 4px; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
-	.send-btn:hover:not(:disabled) { background: var(--color-accent); }
-	.send-btn:disabled { opacity: 0.5; cursor: default; }
+	.share-check {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: var(--text-sm);
+		white-space: nowrap;
+	}
+	select {
+		padding: 0.3rem 0.4rem;
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		font-size: var(--text-sm);
+	}
+	.send-btn {
+		margin-left: auto;
+		padding: 0.4rem 1rem;
+		background: var(--color-text);
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background 0.15s;
+		white-space: nowrap;
+	}
+	.send-btn:hover:not(:disabled) {
+		background: var(--color-accent);
+	}
+	.send-btn:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
 </style>

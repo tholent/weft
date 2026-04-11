@@ -135,7 +135,11 @@ describe('renameCircle', () => {
 
 	it('sends PATCH with both name and scoped_title when both are provided', async () => {
 		let capturedBody: unknown;
-		const fakeCircle = makeCircle({ id: 'circle-8', name: 'Inner Circle', scoped_title: 'IC Updates' });
+		const fakeCircle = makeCircle({
+			id: 'circle-8',
+			name: 'Inner Circle',
+			scoped_title: 'IC Updates'
+		});
 
 		server.use(
 			http.patch('http://localhost/api/topics/:topicId/circles/:circleId', async ({ request }) => {

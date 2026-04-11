@@ -48,8 +48,8 @@ import { test, expect } from './support/fixtures';
  * Sign in via a magic-link token and wait for the redirect to complete.
  */
 async function signIn(page: Page, token: string, expectedRoute: RegExp) {
-  await page.goto(`/auth?t=${token}`);
-  await page.waitForURL(expectedRoute);
+	await page.goto(`/auth?t=${token}`);
+	await page.waitForURL(expectedRoute);
 }
 
 // ---------------------------------------------------------------------------
@@ -61,57 +61,59 @@ async function signIn(page: Page, token: string, expectedRoute: RegExp) {
 // ---------------------------------------------------------------------------
 
 test('recipient posts a shareable reply and it appears in the thread', async ({
-  page,
-  seedClient
+	page,
+	seedClient
 }) => {
-  await seedClient.reset();
-  const seed = await seedClient.seedTopic({
-    title: 'Shareable reply test',
-    owner_email: 'owner@example.com',
-    owner_name: 'Owner',
-    circles: [
-      {
-        name: 'Family',
-        members: [{ email: 'alice@example.com', role: 'recipient', name: 'Alice' }]
-      }
-    ],
-    updates: [
-      {
-        body: 'Update to reply to',
-        circle_names: ['Family'],
-        author_email: 'owner@example.com'
-      }
-    ]
-  });
+	await seedClient.reset();
+	const seed = await seedClient.seedTopic({
+		title: 'Shareable reply test',
+		owner_email: 'owner@example.com',
+		owner_name: 'Owner',
+		circles: [
+			{
+				name: 'Family',
+				members: [{ email: 'alice@example.com', role: 'recipient', name: 'Alice' }]
+			}
+		],
+		updates: [
+			{
+				body: 'Update to reply to',
+				circle_names: ['Family'],
+				author_email: 'owner@example.com'
+			}
+		]
+	});
 
-  const aliceMagic = seed.magic_links.recipients['alice@example.com'];
-  await signIn(page, aliceMagic, /\/topic\//);
+	const aliceMagic = seed.magic_links.recipients['alice@example.com'];
+	await signIn(page, aliceMagic, /\/topic\//);
 
-  // Wait for the update to load.
-  await expect(page.getByText('Update to reply to')).toBeVisible();
+	// Wait for the update to load.
+	await expect(page.getByText('Update to reply to')).toBeVisible();
 
-  // Click the "Reply" button to reveal the ComposeBox.
-  const replyButton = page.getByRole('button', { name: 'Reply' });
-  await expect(replyButton).toBeVisible();
-  await replyButton.click();
+	// Click the "Reply" button to reveal the ComposeBox.
+	const replyButton = page.getByRole('button', { name: 'Reply' });
+	await expect(replyButton).toBeVisible();
+	await replyButton.click();
 
-  // Fill the reply body in the ComposeBox (placeholder: "Write a reply…").
-  const replyTextarea = page.getByPlaceholder('Write a reply…');
-  await expect(replyTextarea).toBeVisible();
-  await replyTextarea.fill('This is Alice sharing with the group');
+	// Fill the reply body in the ComposeBox (placeholder: "Write a reply…").
+	const replyTextarea = page.getByPlaceholder('Write a reply…');
+	await expect(replyTextarea).toBeVisible();
+	await replyTextarea.fill('This is Alice sharing with the group');
 
-  // Check the "Share with group" checkbox that maps to wants_to_share.
-  const shareCheckbox = page.getByLabel('Share with group');
-  await expect(shareCheckbox).toBeVisible();
-  await shareCheckbox.check();
-  await expect(shareCheckbox).toBeChecked();
+	// Check the "Share with group" checkbox that maps to wants_to_share.
+	const shareCheckbox = page.getByLabel('Share with group');
+	await expect(shareCheckbox).toBeVisible();
+	await shareCheckbox.check();
+	await expect(shareCheckbox).toBeChecked();
 
-  // Submit via the "Send" button.
-  await page.getByRole('button', { name: 'Send' }).click();
+	// Submit via the "Send" button.
+	await page.getByRole('button', { name: 'Send' }).click();
 
-  // After submission the page calls loadReplies() → GET /replies, and the
-  // result is rendered in a <p class="reply-body"> inside .reply-thread.
-  await expect(page.getByText('This is Alice sharing with the group')).toBeVisible({ timeout: 5000 });
+	// After submission the page calls loadReplies() → GET /replies, and the
+	// result is rendered in a <p class="reply-body"> inside .reply-thread.
+	await expect(page.getByText('This is Alice sharing with the group')).toBeVisible({
+		timeout: 5000
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -123,61 +125,61 @@ test('recipient posts a shareable reply and it appears in the thread', async ({
 // ---------------------------------------------------------------------------
 
 test('moderator approves a pending reply and Approve button disappears', async ({
-  page,
-  seedClient
+	page,
+	seedClient
 }) => {
-  await seedClient.reset();
-  const seed = await seedClient.seedTopic({
-    title: 'Relay reply test',
-    owner_email: 'owner@example.com',
-    owner_name: 'Owner',
-    circles: [
-      {
-        name: 'Family',
-        members: [
-          { email: 'alice@example.com', role: 'recipient', name: 'Alice' },
-          { email: 'mod@example.com', role: 'moderator', name: 'Mod User' }
-        ]
-      }
-    ],
-    updates: [
-      {
-        body: 'Update with a pending reply',
-        circle_names: ['Family'],
-        author_email: 'owner@example.com'
-      }
-    ],
-    replies: [
-      {
-        update_index: 0,
-        author_email: 'alice@example.com',
-        body: 'Alice pending reply for relay'
-      }
-    ]
-  });
+	await seedClient.reset();
+	const seed = await seedClient.seedTopic({
+		title: 'Relay reply test',
+		owner_email: 'owner@example.com',
+		owner_name: 'Owner',
+		circles: [
+			{
+				name: 'Family',
+				members: [
+					{ email: 'alice@example.com', role: 'recipient', name: 'Alice' },
+					{ email: 'mod@example.com', role: 'moderator', name: 'Mod User' }
+				]
+			}
+		],
+		updates: [
+			{
+				body: 'Update with a pending reply',
+				circle_names: ['Family'],
+				author_email: 'owner@example.com'
+			}
+		],
+		replies: [
+			{
+				update_index: 0,
+				author_email: 'alice@example.com',
+				body: 'Alice pending reply for relay'
+			}
+		]
+	});
 
-  const modMagic = seed.magic_links.moderators['mod@example.com'];
-  await signIn(page, modMagic, /\/manage\//);
+	const modMagic = seed.magic_links.moderators['mod@example.com'];
+	await signIn(page, modMagic, /\/manage\//);
 
-  // The Updates tab is active by default. Click the update card to open the
-  // UpdateModal (the whole .update-row is clickable via the onClick prop).
-  await expect(page.getByText('Update with a pending reply')).toBeVisible();
-  await page.getByText('Update with a pending reply').click();
+	// The Updates tab is active by default. Click the update card to open the
+	// UpdateModal (the whole .update-row is clickable via the onClick prop).
+	await expect(page.getByText('Update with a pending reply')).toBeVisible();
+	await page.getByText('Update with a pending reply').click();
 
-  // The UpdateModal loads replies on mount. Wait for the reply body.
-  await expect(page.getByText('Alice pending reply for relay')).toBeVisible({ timeout: 5000 });
+	// The UpdateModal loads replies on mount. Wait for the reply body.
+	await expect(page.getByText('Alice pending reply for relay')).toBeVisible({ timeout: 5000 });
 
-  // A pending reply shows an "Approve" button (class="action approve") when
-  // viewed by a moderator (ReplyThread.svelte line 50).
-  const approveButton = page.getByRole('button', { name: 'Approve' });
-  await expect(approveButton).toBeVisible();
-  await approveButton.click();
+	// A pending reply shows an "Approve" button (class="action approve") when
+	// viewed by a moderator (ReplyThread.svelte line 50).
+	const approveButton = page.getByRole('button', { name: 'Approve' });
+	await expect(approveButton).toBeVisible();
+	await approveButton.click();
 
-  // After relay the component refreshes replies from the server.  The reply
-  // status transitions from "pending" → "relayed", so the Approve button must
-  // disappear and a "relayed" status badge must appear.
-  await expect(approveButton).not.toBeVisible({ timeout: 5000 });
-  await expect(page.getByText('relayed')).toBeVisible({ timeout: 5000 });
+	// After relay the component refreshes replies from the server.  The reply
+	// status transitions from "pending" → "relayed", so the Approve button must
+	// disappear and a "relayed" status badge must appear.
+	await expect(approveButton).not.toBeVisible({ timeout: 5000 });
+	await expect(page.getByText('relayed')).toBeVisible({ timeout: 5000 });
 });
 
 // ---------------------------------------------------------------------------
@@ -192,79 +194,79 @@ test('moderator approves a pending reply and Approve button disappears', async (
 // ---------------------------------------------------------------------------
 
 test('moderator dismisses a reply and can undo it', async ({ page, seedClient }) => {
-  await seedClient.reset();
-  const seed = await seedClient.seedTopic({
-    title: 'Dismiss reply test',
-    owner_email: 'owner@example.com',
-    owner_name: 'Owner',
-    circles: [
-      {
-        name: 'Family',
-        members: [
-          { email: 'alice@example.com', role: 'recipient', name: 'Alice' },
-          { email: 'bob@example.com', role: 'recipient', name: 'Bob' },
-          { email: 'mod@example.com', role: 'moderator', name: 'Mod User' }
-        ]
-      }
-    ],
-    updates: [
-      {
-        body: 'Update with two pending replies',
-        circle_names: ['Family'],
-        author_email: 'owner@example.com'
-      }
-    ],
-    replies: [
-      {
-        update_index: 0,
-        author_email: 'alice@example.com',
-        body: 'Alice reply — keep this one'
-      },
-      {
-        update_index: 0,
-        author_email: 'bob@example.com',
-        body: 'Bob reply — dismiss this one'
-      }
-    ]
-  });
+	await seedClient.reset();
+	const seed = await seedClient.seedTopic({
+		title: 'Dismiss reply test',
+		owner_email: 'owner@example.com',
+		owner_name: 'Owner',
+		circles: [
+			{
+				name: 'Family',
+				members: [
+					{ email: 'alice@example.com', role: 'recipient', name: 'Alice' },
+					{ email: 'bob@example.com', role: 'recipient', name: 'Bob' },
+					{ email: 'mod@example.com', role: 'moderator', name: 'Mod User' }
+				]
+			}
+		],
+		updates: [
+			{
+				body: 'Update with two pending replies',
+				circle_names: ['Family'],
+				author_email: 'owner@example.com'
+			}
+		],
+		replies: [
+			{
+				update_index: 0,
+				author_email: 'alice@example.com',
+				body: 'Alice reply — keep this one'
+			},
+			{
+				update_index: 0,
+				author_email: 'bob@example.com',
+				body: 'Bob reply — dismiss this one'
+			}
+		]
+	});
 
-  const modMagic = seed.magic_links.moderators['mod@example.com'];
-  await signIn(page, modMagic, /\/manage\//);
+	const modMagic = seed.magic_links.moderators['mod@example.com'];
+	await signIn(page, modMagic, /\/manage\//);
 
-  // Open the UpdateModal.
-  await expect(page.getByText('Update with two pending replies')).toBeVisible();
-  await page.getByText('Update with two pending replies').click();
+	// Open the UpdateModal.
+	await expect(page.getByText('Update with two pending replies')).toBeVisible();
+	await page.getByText('Update with two pending replies').click();
 
-  // Both replies must be visible.
-  await expect(page.getByText("Alice reply — keep this one")).toBeVisible({ timeout: 5000 });
-  await expect(page.getByText("Bob reply — dismiss this one")).toBeVisible({ timeout: 5000 });
+	// Both replies must be visible.
+	await expect(page.getByText('Alice reply — keep this one')).toBeVisible({ timeout: 5000 });
+	await expect(page.getByText('Bob reply — dismiss this one')).toBeVisible({ timeout: 5000 });
 
-  // Two "Dismiss" buttons are rendered (one per pending reply).
-  // We target the one adjacent to Bob's reply by using a locator scoped to the
-  // reply container.  ReplyThread renders each reply in a <div class="reply">.
-  // The reply with Bob's text contains a Dismiss button.
-  const bobReplyContainer = page.locator('.reply', { hasText: "Bob reply — dismiss this one" });
-  const dismissButton = bobReplyContainer.getByRole('button', { name: 'Dismiss' });
-  await expect(dismissButton).toBeVisible();
-  await dismissButton.click();
+	// Two "Dismiss" buttons are rendered (one per pending reply).
+	// We target the one adjacent to Bob's reply by using a locator scoped to the
+	// reply container.  ReplyThread renders each reply in a <div class="reply">.
+	// The reply with Bob's text contains a Dismiss button.
+	const bobReplyContainer = page.locator('.reply', { hasText: 'Bob reply — dismiss this one' });
+	const dismissButton = bobReplyContainer.getByRole('button', { name: 'Dismiss' });
+	await expect(dismissButton).toBeVisible();
+	await dismissButton.click();
 
-  // Dismiss button disappears, "dismissed" badge appears, "Undo" button appears.
-  await expect(dismissButton).not.toBeVisible({ timeout: 5000 });
-  await expect(bobReplyContainer.getByText('dismissed')).toBeVisible({ timeout: 5000 });
+	// Dismiss button disappears, "dismissed" badge appears, "Undo" button appears.
+	await expect(dismissButton).not.toBeVisible({ timeout: 5000 });
+	await expect(bobReplyContainer.getByText('dismissed')).toBeVisible({ timeout: 5000 });
 
-  const undoButton = bobReplyContainer.getByRole('button', { name: 'Undo' });
-  await expect(undoButton).toBeVisible();
+	const undoButton = bobReplyContainer.getByRole('button', { name: 'Undo' });
+	await expect(undoButton).toBeVisible();
 
-  // Alice's reply is still pending — her Approve/Dismiss buttons still present.
-  const aliceReplyContainer = page.locator('.reply', { hasText: "Alice reply — keep this one" });
-  await expect(aliceReplyContainer.getByRole('button', { name: 'Dismiss' })).toBeVisible();
+	// Alice's reply is still pending — her Approve/Dismiss buttons still present.
+	const aliceReplyContainer = page.locator('.reply', { hasText: 'Alice reply — keep this one' });
+	await expect(aliceReplyContainer.getByRole('button', { name: 'Dismiss' })).toBeVisible();
 
-  // Click Undo — this calls relay() on the dismissed reply, which transitions
-  // it from "dismissed" → "relayed" (ReplyThread.svelte line 55: undo calls relay).
-  await undoButton.click();
-  await expect(undoButton).not.toBeVisible({ timeout: 5000 });
-  // After undo the reply is relayed; a "relayed" badge is expected.
-  await expect(bobReplyContainer.getByText('relayed')).toBeVisible({ timeout: 5000 });
+	// Click Undo — this calls relay() on the dismissed reply, which transitions
+	// it from "dismissed" → "relayed" (ReplyThread.svelte line 55: undo calls relay).
+	await undoButton.click();
+	await expect(undoButton).not.toBeVisible({ timeout: 5000 });
+	// After undo the reply is relayed; a "relayed" badge is expected.
+	await expect(bobReplyContainer.getByText('relayed')).toBeVisible({ timeout: 5000 });
 });
 
 // ---------------------------------------------------------------------------
@@ -296,5 +298,5 @@ test('moderator dismisses a reply and can undo it', async ({ page, seedClient })
 // ---------------------------------------------------------------------------
 
 test.skip('moderator posts a mod response — UI not yet implemented', async () => {
-  // See block comment above. Remove .skip when the mod-response form lands.
+	// See block comment above. Remove .skip when the mod-response form lands.
 });

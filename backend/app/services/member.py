@@ -16,7 +16,7 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.models.circle import Circle
 from app.models.enums import MemberRole, NotificationChannel
@@ -168,10 +168,10 @@ async def list_members(
     if circle_id is not None:
         # Filter to members currently in this circle
         stmt = stmt.where(
-            Member.id.in_(  # type: ignore[union-attr]
+            col(Member.id).in_(
                 select(MemberCircleHistory.member_id).where(
                     MemberCircleHistory.circle_id == circle_id,
-                    MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+                    col(MemberCircleHistory.revoked_at).is_(None),
                 )
             )
         )

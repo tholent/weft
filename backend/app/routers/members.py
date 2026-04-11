@@ -16,7 +16,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.deps import SessionDep, TopicAdminDep, TopicMemberDep, TopicOwnerDep
 from app.models.enums import MemberRole
@@ -94,13 +94,13 @@ async def list_members_endpoint(
         all_members = await list_members(session, topic_id)
     else:
         # Moderator: members in their circles only
-        result = await session.execute(
+        mod_circle_result = await session.execute(
             select(MemberCircleHistory.circle_id).where(
                 MemberCircleHistory.member_id == member.id,
-                MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+                col(MemberCircleHistory.revoked_at).is_(None),
             )
         )
-        circle_ids = list(result.scalars().all())
+        circle_ids = list(mod_circle_result.scalars().all())
         all_members = []
         seen: set[uuid.UUID] = set()
         for cid in circle_ids:
@@ -115,13 +115,13 @@ async def list_members_endpoint(
     # Get active circle for each member in the page
     responses = []
     for m in page:
-        result = await session.execute(
+        active_result = await session.execute(
             select(MemberCircleHistory).where(
                 MemberCircleHistory.member_id == m.id,
-                MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+                col(MemberCircleHistory.revoked_at).is_(None),
             )
         )
-        active = result.scalars().first()
+        active = active_result.scalars().first()
         responses.append(
             MemberResponse(
                 id=m.id,

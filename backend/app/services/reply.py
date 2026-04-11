@@ -15,7 +15,7 @@
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.models.enums import MemberRole, ModResponseScope, RelayStatus
 from app.models.member import Member, MemberCircleHistory
@@ -121,7 +121,7 @@ async def get_replies_for_update(
     """
     if viewer_member.role in (MemberRole.owner, MemberRole.admin, MemberRole.moderator):
         result = await session.execute(
-            select(Reply).where(Reply.update_id == update_id).order_by(Reply.created_at)  # type: ignore[union-attr]
+            select(Reply).where(Reply.update_id == update_id).order_by(col(Reply.created_at))
         )
         return list(result.scalars().all())
 
@@ -139,19 +139,19 @@ async def get_replies_for_update(
     circle_result = await session.execute(
         select(MemberCircleHistory.circle_id).where(
             MemberCircleHistory.member_id == viewer_member.id,
-            MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+            col(MemberCircleHistory.revoked_at).is_(None),
         )
     )
     viewer_circle_ids = [row for row in circle_result.scalars().all()]
 
     relayed_result = await session.execute(
         select(Reply)
-        .join(Relay, Reply.id == Relay.reply_id)
+        .join(Relay, col(Reply.id) == col(Relay.reply_id))
         .where(
             Reply.update_id == update_id,
             Reply.relay_status == RelayStatus.relayed,
             # Relay to all circles (null) or to viewer's circle
-            (Relay.circle_id.is_(None)) | (Relay.circle_id.in_(viewer_circle_ids)),  # type: ignore[union-attr]
+            (col(Relay.circle_id).is_(None)) | (col(Relay.circle_id).in_(viewer_circle_ids)),
         )
     )
     relayed_replies = list(relayed_result.scalars().all())
@@ -177,7 +177,7 @@ async def get_mod_responses_for_reply(
     result = await session.execute(
         select(ModResponse)
         .where(ModResponse.reply_id == reply_id)
-        .order_by(ModResponse.created_at)  # type: ignore[union-attr]
+        .order_by(col(ModResponse.created_at))
     )
     all_responses = list(result.scalars().all())
 
@@ -192,7 +192,7 @@ async def get_mod_responses_for_reply(
     circle_result = await session.execute(
         select(MemberCircleHistory.circle_id).where(
             MemberCircleHistory.member_id == viewer_member.id,
-            MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+            col(MemberCircleHistory.revoked_at).is_(None),
         )
     )
     viewer_circle_ids = set(circle_result.scalars().all())
@@ -201,7 +201,7 @@ async def get_mod_responses_for_reply(
     author_circle_result = await session.execute(
         select(MemberCircleHistory.circle_id).where(
             MemberCircleHistory.member_id == reply.author_member_id,
-            MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+            col(MemberCircleHistory.revoked_at).is_(None),
         )
     )
     author_circle_ids = set(author_circle_result.scalars().all())

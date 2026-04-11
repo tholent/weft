@@ -83,9 +83,9 @@ def create_registry(settings: object) -> ProviderRegistry:
 
             registry.register(
                 SESEmailProvider(
-                    access_key_id=settings.aws_access_key_id,
-                    secret_access_key=settings.aws_secret_access_key,
-                    region=settings.aws_region,
+                    aws_access_key_id=settings.aws_access_key_id,
+                    aws_secret_access_key=settings.aws_secret_access_key,
+                    aws_region=settings.aws_region,
                     from_address=settings.email_from_address,
                 )
             )

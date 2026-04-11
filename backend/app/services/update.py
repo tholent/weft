@@ -14,10 +14,11 @@
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.models.circle import Circle
 from app.models.member import MemberCircleHistory
@@ -105,24 +106,24 @@ async def get_feed(session: AsyncSession, member_id: uuid.UUID) -> list[Update]:
     # stamped to that circle AND created within the access window.
     conditions = []
     for h in history_rows:
-        time_cond = Update.created_at >= h.granted_at
+        time_cond: Any = col(Update.created_at) >= h.granted_at
         if h.revoked_at is not None:
-            time_cond = and_(time_cond, Update.created_at < h.revoked_at)
+            time_cond = and_(time_cond, col(Update.created_at) < h.revoked_at)
 
         conditions.append(
             and_(
-                UpdateCircle.circle_id == h.circle_id,
+                col(UpdateCircle.circle_id) == h.circle_id,
                 time_cond,
             )
         )
 
     stmt = (
         select(Update)
-        .join(UpdateCircle, Update.id == UpdateCircle.update_id)
+        .join(UpdateCircle, col(Update.id) == col(UpdateCircle.update_id))
         .where(or_(*conditions))
-        .where(Update.deleted_at.is_(None))  # type: ignore[union-attr]
+        .where(col(Update.deleted_at).is_(None))
         .distinct()
-        .order_by(Update.created_at.desc())  # type: ignore[union-attr]
+        .order_by(col(Update.created_at).desc())
     )
     result = await session.execute(stmt)
     return list(result.scalars().all())
@@ -135,14 +136,14 @@ async def list_updates_for_topic(
 ) -> list[Update]:
     stmt = select(Update).where(
         Update.topic_id == topic_id,
-        Update.deleted_at.is_(None),  # type: ignore[union-attr]
+        col(Update.deleted_at).is_(None),
     )
     if circle_ids:
         stmt = (
-            stmt.join(UpdateCircle, Update.id == UpdateCircle.update_id)
-            .where(UpdateCircle.circle_id.in_(circle_ids))  # type: ignore[union-attr]
+            stmt.join(UpdateCircle, col(Update.id) == col(UpdateCircle.update_id))
+            .where(col(UpdateCircle.circle_id).in_(circle_ids))
             .distinct()
         )
-    stmt = stmt.order_by(Update.created_at.desc())  # type: ignore[union-attr]
+    stmt = stmt.order_by(col(Update.created_at).desc())
     result = await session.execute(stmt)
     return list(result.scalars().all())

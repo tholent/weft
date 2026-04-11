@@ -37,7 +37,7 @@ class SNSSMSProvider:
         aws_region: str,
         sender_id: str = "Weft",
     ) -> None:
-        import boto3  # type: ignore[import-untyped]
+        import boto3  # type: ignore[import-not-found]
 
         self.sender_id = sender_id
         self._client: Any = boto3.client(

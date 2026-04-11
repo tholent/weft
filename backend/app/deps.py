@@ -40,19 +40,19 @@ async def get_current_member(
     raw_token = auth_header.removeprefix("Bearer ").strip()
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
 
-    result = await session.execute(select(Token).where(Token.token_hash == token_hash))
-    token_row = result.scalar_one_or_none()
+    token_result = await session.execute(select(Token).where(Token.token_hash == token_hash))
+    token_row = token_result.scalar_one_or_none()
     if token_row is None or token_row.revoked_at is not None:
         raise HTTPException(status_code=401, detail="Invalid or revoked token")
 
-    result = await session.execute(select(Member).where(Member.id == token_row.member_id))
-    member = result.scalar_one_or_none()
+    member_result = await session.execute(select(Member).where(Member.id == token_row.member_id))
+    member = member_result.scalar_one_or_none()
     if member is None:
         raise HTTPException(status_code=401, detail="Member not found")
 
     # Check topic status
-    result = await session.execute(select(Topic).where(Topic.id == member.topic_id))
-    topic = result.scalar_one_or_none()
+    topic_result = await session.execute(select(Topic).where(Topic.id == member.topic_id))
+    topic = topic_result.scalar_one_or_none()
     if topic is None:
         raise HTTPException(status_code=404, detail="Topic not found")
     if topic.status in (TopicStatus.closed, TopicStatus.archived):
@@ -64,13 +64,13 @@ async def get_current_member(
 
     # If owner authenticates, cancel any pending dead-man's-switch transfer
     if member.role == MemberRole.owner:
-        result = await session.execute(
+        transfer_result = await session.execute(
             select(CreatorTransfer).where(
                 CreatorTransfer.topic_id == member.topic_id,
                 CreatorTransfer.status == TransferStatus.pending,
             )
         )
-        pending_transfer = result.scalar_one_or_none()
+        pending_transfer = transfer_result.scalar_one_or_none()
         if pending_transfer is not None:
             pending_transfer.status = TransferStatus.denied
             pending_transfer.resolved_at = datetime.now(UTC)

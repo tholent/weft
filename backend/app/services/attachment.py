@@ -18,7 +18,7 @@ import uuid
 from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.config import get_settings
 from app.constants.mime import MIME_GIF, MIME_JPEG, MIME_PNG, MIME_WEBP
@@ -127,7 +127,9 @@ async def get_attachments(
 ) -> list[Attachment]:
     """Return all attachments for a given update, ordered by creation time."""
     result = await session.execute(
-        select(Attachment).where(Attachment.update_id == update_id).order_by(Attachment.created_at)
+        select(Attachment)
+        .where(Attachment.update_id == update_id)
+        .order_by(col(Attachment.created_at))
     )
     return list(result.scalars().all())
 

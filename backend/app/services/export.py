@@ -25,7 +25,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.models.attachment import Attachment
 from app.models.circle import Circle
@@ -66,8 +66,8 @@ async def _load_member_map(
 async def _load_updates(session: AsyncSession, topic_id: uuid.UUID) -> list[Update]:
     result = await session.execute(
         select(Update)
-        .where(Update.topic_id == topic_id, Update.deleted_at.is_(None))  # type: ignore[union-attr]
-        .order_by(Update.created_at)
+        .where(Update.topic_id == topic_id, col(Update.deleted_at).is_(None))
+        .order_by(col(Update.created_at))
     )
     return list(result.scalars().all())
 
@@ -80,7 +80,7 @@ async def _load_update_circles(
     if not update_ids:
         return {}
     result = await session.execute(
-        select(UpdateCircle).where(UpdateCircle.update_id.in_(update_ids))  # type: ignore[union-attr]
+        select(UpdateCircle).where(col(UpdateCircle.update_id).in_(update_ids))
     )
     mapping: dict[uuid.UUID, list[str]] = {}
     for uc in result.scalars().all():
@@ -96,7 +96,7 @@ async def _load_update_attachments(
     if not update_ids:
         return {}
     result = await session.execute(
-        select(Attachment).where(Attachment.update_id.in_(update_ids))  # type: ignore[union-attr]
+        select(Attachment).where(col(Attachment.update_id).in_(update_ids))
     )
     mapping: dict[uuid.UUID, list[dict[str, Any]]] = {}
     for att in result.scalars().all():
@@ -116,9 +116,7 @@ async def _load_replies(session: AsyncSession, update_ids: list[uuid.UUID]) -> l
     if not update_ids:
         return []
     result = await session.execute(
-        select(Reply)
-        .where(Reply.update_id.in_(update_ids))  # type: ignore[union-attr]
-        .order_by(Reply.created_at)
+        select(Reply).where(col(Reply.update_id).in_(update_ids)).order_by(col(Reply.created_at))
     )
     return list(result.scalars().all())
 
@@ -130,8 +128,8 @@ async def _load_mod_responses(
         return {}
     result = await session.execute(
         select(ModResponse)
-        .where(ModResponse.reply_id.in_(reply_ids))  # type: ignore[union-attr]
-        .order_by(ModResponse.created_at)
+        .where(col(ModResponse.reply_id).in_(reply_ids))
+        .order_by(col(ModResponse.created_at))
     )
     mapping: dict[uuid.UUID, list[dict[str, Any]]] = {}
     for mr in result.scalars().all():
@@ -156,9 +154,7 @@ async def _load_relays(
     if not reply_ids:
         return []
     result = await session.execute(
-        select(Relay)
-        .where(Relay.reply_id.in_(reply_ids))  # type: ignore[union-attr]
-        .order_by(Relay.relayed_at)
+        select(Relay).where(col(Relay.reply_id).in_(reply_ids)).order_by(col(Relay.relayed_at))
     )
     return [
         {

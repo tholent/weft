@@ -37,7 +37,7 @@ class SESEmailProvider:
         aws_region: str,
         from_address: str = "Weft <noreply@weft.app>",
     ) -> None:
-        import boto3  # type: ignore[import-untyped]
+        import boto3  # type: ignore[import-not-found]
 
         self.from_address = from_address
         self._client: Any = boto3.client(

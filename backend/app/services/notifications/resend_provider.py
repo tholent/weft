@@ -15,6 +15,7 @@
 import asyncio
 import logging
 import threading
+from typing import Any
 
 from app.models.enums import NotificationChannel
 
@@ -45,7 +46,10 @@ class ResendEmailProvider:
         html_body: str | None = None,
     ) -> str:
         """Send an email via Resend. Returns the provider message ID."""
-        payload: dict[str, object] = {
+        # Resend's Emails.send expects a SendParams TypedDict — we build a
+        # plain dict and rely on the structural match. Annotated as Any so
+        # mypy does not fight the TypedDict invariance.
+        payload: Any = {
             "from": self.from_address,
             "to": [recipient],
             "subject": subject,

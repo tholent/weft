@@ -18,13 +18,13 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.deps import SessionDep, TopicMemberDep, TopicModeratorDep
 from app.models.enums import MemberRole, RelayStatus
 from app.models.member import Member, MemberCircleHistory
 from app.models.reply import Reply
-from app.models.update import UpdateCircle
+from app.models.update import Update, UpdateCircle
 from app.schemas.attachment import AttachmentResponse
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.update import UpdateCreate, UpdateEdit, UpdateResponse
@@ -41,57 +41,61 @@ router = APIRouter(prefix="/topics/{topic_id}/updates", tags=["updates"])
 
 
 async def _build_update_response(
-    session: AsyncSession, update, member: Member | None = None
+    session: AsyncSession, update: Update, member: Member | None = None
 ) -> UpdateResponse:
     # Get UpdateCircle rows (id + variant body)
-    result = await session.execute(select(UpdateCircle).where(UpdateCircle.update_id == update.id))
-    uc_rows = list(result.scalars().all())
+    uc_result = await session.execute(
+        select(UpdateCircle).where(UpdateCircle.update_id == update.id)
+    )
+    uc_rows = list(uc_result.scalars().all())
     circle_ids = [uc.circle_id for uc in uc_rows]
 
     # Get reply count (scoped by role)
-    is_recipient = member and member.role == MemberRole.recipient
-    if is_recipient:
+    is_recipient = member is not None and member.role == MemberRole.recipient
+    if is_recipient and member is not None:
         reply_query = select(Reply).where(
             Reply.update_id == update.id,
             or_(
-                Reply.author_member_id == member.id,
-                Reply.relay_status == RelayStatus.relayed,
+                col(Reply.author_member_id) == member.id,
+                col(Reply.relay_status) == RelayStatus.relayed,
             ),
         )
     else:
         reply_query = select(Reply).where(Reply.update_id == update.id)
-    result = await session.execute(reply_query)
-    reply_count = len(result.scalars().all())
+    reply_result = await session.execute(reply_query)
+    reply_count = len(reply_result.scalars().all())
 
     # Pending reply count for moderators+
     pending_reply_count = 0
     if not is_recipient:
-        result = await session.execute(
+        pending_result = await session.execute(
             select(Reply).where(
                 Reply.update_id == update.id,
                 Reply.relay_status == RelayStatus.pending,
             )
         )
-        pending_reply_count = len(result.scalars().all())
+        pending_reply_count = len(pending_result.scalars().all())
 
     # Get author handle
-    result = await session.execute(select(Member).where(Member.id == update.author_member_id))
-    author = result.scalar_one_or_none()
+    author_result = await session.execute(
+        select(Member).where(Member.id == update.author_member_id)
+    )
+    author = author_result.scalar_one_or_none()
 
     # For recipients, resolve their circle's variant body if one exists
     resolved_body = update.body
     if is_recipient and member:
-        result = await session.execute(
+        variant_result = await session.execute(
             select(UpdateCircle).where(
                 UpdateCircle.update_id == update.id,
-                UpdateCircle.circle_id.in_(  # type: ignore[union-attr]
+                col(UpdateCircle.circle_id).in_(
                     select(MemberCircleHistory.circle_id).where(
                         MemberCircleHistory.member_id == member.id
                     )
                 ),
             )
         )
-        matching_uc = result.scalars().first()
+        matching_uc = variant_result.scalars().first()
         if matching_uc and matching_uc.body:
             resolved_body = matching_uc.body
 

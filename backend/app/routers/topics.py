@@ -15,9 +15,11 @@
 import uuid
 
 from fastapi import APIRouter, Request
+from sqlmodel import col, select
 
 from app.config import get_settings
 from app.deps import SessionDep, TopicMemberDep, TopicOwnerDep
+from app.models.circle import Circle
 from app.models.enums import MemberRole
 from app.models.member import MemberCircleHistory
 from app.rate_limit import limiter
@@ -70,22 +72,18 @@ async def get_topic_endpoint(
     scoped_title = None
     if member.role == MemberRole.recipient:
         # Get member's active circle and its scoped title
-        from sqlmodel import select
-
-        from app.models.circle import Circle
-
-        result = await session.execute(
+        history_result = await session.execute(
             select(MemberCircleHistory).where(
                 MemberCircleHistory.member_id == member.id,
-                MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+                col(MemberCircleHistory.revoked_at).is_(None),
             )
         )
-        active_history = result.scalars().first()
+        active_history = history_result.scalars().first()
         if active_history:
-            result = await session.execute(
+            circle_result = await session.execute(
                 select(Circle).where(Circle.id == active_history.circle_id)
             )
-            circle = result.scalar_one_or_none()
+            circle = circle_result.scalar_one_or_none()
             if circle and circle.scoped_title:
                 scoped_title = circle.scoped_title
 

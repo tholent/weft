@@ -15,7 +15,7 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.config import Settings, get_settings
 from app.db.session import async_session_factory
@@ -54,16 +54,16 @@ async def auto_archive_task() -> None:
 
         for topic in topics:
             # Check if any token has been used recently
-            result = await session.execute(
+            token_result = await session.execute(
                 select(Token)
-                .join(Member, Token.member_id == Member.id)
+                .join(Member, col(Token.member_id) == col(Member.id))
                 .where(
                     Member.topic_id == topic.id,
-                    Token.last_used_at.is_not(None),  # type: ignore[union-attr]
-                    Token.last_used_at > cutoff,
+                    col(Token.last_used_at).is_not(None),
+                    col(Token.last_used_at) > cutoff,
                 )
             )
-            if result.scalars().first() is not None:
+            if token_result.scalars().first() is not None:
                 continue
 
             logger.info("Auto-archiving topic %s", topic.id)
@@ -89,24 +89,24 @@ async def transfer_deadline_task() -> None:
 
         for transfer in transfers:
             # Check if creator has been active since transfer was requested
-            result = await session.execute(
+            creator_result = await session.execute(
                 select(Member).where(
                     Member.topic_id == transfer.topic_id,
                     Member.role == MemberRole.owner,
                 )
             )
-            creator = result.scalar_one_or_none()
+            creator = creator_result.scalar_one_or_none()
             if creator is None:
                 continue
 
-            result = await session.execute(
+            active_token_result = await session.execute(
                 select(Token).where(
                     Token.member_id == creator.id,
-                    Token.last_used_at.is_not(None),  # type: ignore[union-attr]
-                    Token.last_used_at > transfer.created_at,
+                    col(Token.last_used_at).is_not(None),
+                    col(Token.last_used_at) > transfer.created_at,
                 )
             )
-            if result.scalars().first() is not None:
+            if active_token_result.scalars().first() is not None:
                 # Creator was active, cancel transfer
                 transfer.status = TransferStatus.denied
                 transfer.resolved_at = now
@@ -203,13 +203,21 @@ async def _send_topic_digest(
         await _mark_logs(session, topic_logs, NotificationStatus.skipped, now)
         return
 
+    recipient = (
+        member.email if member.notification_channel == NotificationChannel.email else member.phone
+    )
+    if recipient is None:
+        logger.warning(
+            "Skipping digest for member %s: no contact address for channel %s",
+            member.id,
+            member.notification_channel,
+        )
+        await _mark_logs(session, topic_logs, NotificationStatus.skipped, now)
+        return
+
     try:
         message_id = await provider.send(
-            recipient=(
-                member.email
-                if member.notification_channel == NotificationChannel.email
-                else member.phone
-            ),
+            recipient=recipient,
             subject=subject,
             body=body,
         )

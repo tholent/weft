@@ -26,7 +26,7 @@ import logging
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.config import get_settings
 from app.models.attachment import Attachment
@@ -71,7 +71,7 @@ async def _get_attachment_links(
             Attachment.update_id == update_id,
             Attachment.topic_id == topic_id,
         )
-        .order_by(Attachment.created_at)
+        .order_by(col(Attachment.created_at))
     )
     attachments = list(result.scalars().all())
     base = settings.base_url.rstrip("/")
@@ -101,10 +101,10 @@ async def _get_circle_members(
     else:
         result = await session.execute(
             select(Member)
-            .join(MemberCircleHistory, Member.id == MemberCircleHistory.member_id)
+            .join(MemberCircleHistory, col(Member.id) == col(MemberCircleHistory.member_id))
             .where(
-                MemberCircleHistory.circle_id.in_(circle_ids),  # type: ignore[union-attr]
-                MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+                col(MemberCircleHistory.circle_id).in_(circle_ids),
+                col(MemberCircleHistory.revoked_at).is_(None),
             )
             .distinct()
         )

@@ -16,7 +16,7 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.models.circle import Circle
 from app.models.member import MemberCircleHistory
@@ -58,19 +58,19 @@ async def rename_circle(
 
 
 async def delete_circle(session: AsyncSession, circle_id: uuid.UUID, topic_id: uuid.UUID) -> None:
-    result = await session.execute(select(Circle).where(Circle.id == circle_id))
-    circle = result.scalar_one_or_none()
+    circle_result = await session.execute(select(Circle).where(Circle.id == circle_id))
+    circle = circle_result.scalar_one_or_none()
     if circle is None or circle.topic_id != topic_id:
         raise ValueError("Circle not found")
 
     # Check for active members
-    result = await session.execute(
+    mch_result = await session.execute(
         select(MemberCircleHistory).where(
             MemberCircleHistory.circle_id == circle_id,
-            MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+            col(MemberCircleHistory.revoked_at).is_(None),
         )
     )
-    if result.scalars().first() is not None:
+    if mch_result.scalars().first() is not None:
         raise ValueError("Cannot delete circle with active members")
 
     # Soft-delete to preserve update_circle and member_circle_history references

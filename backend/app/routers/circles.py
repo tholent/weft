@@ -15,8 +15,10 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException
+from sqlmodel import col, select
 
 from app.deps import SessionDep, TopicAdminDep, TopicMemberDep
+from app.models.circle import Circle
 from app.models.enums import MemberRole
 from app.models.member import MemberCircleHistory
 from app.schemas.circle import CircleCreate, CircleResponse, CircleUpdate
@@ -52,20 +54,18 @@ async def list_circles_endpoint(
         circles = await list_circles(session, topic_id)
     else:
         # Recipient: only their active circle
-        from sqlmodel import select
-
-        from app.models.circle import Circle
-
-        result = await session.execute(
+        history_result = await session.execute(
             select(MemberCircleHistory).where(
                 MemberCircleHistory.member_id == member.id,
-                MemberCircleHistory.revoked_at.is_(None),  # type: ignore[union-attr]
+                col(MemberCircleHistory.revoked_at).is_(None),
             )
         )
-        active = result.scalars().first()
+        active = history_result.scalars().first()
         if active:
-            result = await session.execute(select(Circle).where(Circle.id == active.circle_id))
-            circle = result.scalar_one_or_none()
+            circle_result = await session.execute(
+                select(Circle).where(Circle.id == active.circle_id)
+            )
+            circle = circle_result.scalar_one_or_none()
             circles = [circle] if circle else []
         else:
             circles = []

@@ -34,11 +34,41 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage
 
+      - name: Verify coverage file exists
+        run: |
+          if [ ! -f coverage/lcov.info ]; then
+            echo "::error::frontend/coverage/lcov.info was not produced by the test run"
+            exit 1
+          fi
+          echo "lcov.info size: $(wc -c < coverage/lcov.info) bytes"
+
+      - name: Coverage summary
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          p = pathlib.Path("frontend/coverage/coverage-summary.json")
+          if not p.exists():
+              print("## Frontend coverage")
+              print("_coverage-summary.json not found; configure vitest coverage with the `json-summary` reporter._")
+          else:
+              total = json.loads(p.read_text())["total"]
+              print("## Frontend coverage")
+              print("| metric | value |")
+              print("| --- | --- |")
+              for key in ("lines", "statements", "branches", "functions"):
+                  m = total[key]
+                  print(f"| {key.capitalize()} | {m['pct']:.2f}% ({m['covered']} / {m['total']}) |")
+              print()
+              print("Download the full LCOV report from the **frontend-coverage** artifact.")
+          EOF
+
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
           path: frontend/coverage/lcov.info
           retention-days: 7
+          if-no-files-found: error
 
   lint:
     name: Lint

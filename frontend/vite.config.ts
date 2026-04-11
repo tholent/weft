@@ -44,7 +44,9 @@ export default defineConfig({
 		},
 		coverage: {
 			provider: 'v8',
-			reporter: ['lcov', 'text'],
+			// json-summary emits coverage-summary.json, which CI parses to
+			// surface the overall coverage percentage in the job summary.
+			reporter: ['lcov', 'text', 'json-summary'],
 			reportsDirectory: 'coverage',
 			include: ['src/**/*.{ts,svelte}'],
 			exclude: [
@@ -52,6 +54,12 @@ export default defineConfig({
 				'src/**/*.spec.ts',
 				'tests/unit/**',
 				'src/app.d.ts',
+				// Route page files are E2E-covered only — see tests/README.md
+				// "Policy: route +page.svelte files are E2E-covered only".
+				// Including them in the Vitest metric drags the number down
+				// without reflecting actual coverage gaps.
+				'src/routes/**/+page.svelte',
+				'src/routes/**/+layout.svelte',
 				'src/routes/+layout.ts',
 				'src/lib/types/**',
 				'**/*.svelte.d.ts'

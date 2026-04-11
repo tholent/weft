@@ -1,0 +1,66 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel in-flight runs on the same ref so only the latest gets scanned.
+concurrency:
+  group: sonarcloud-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Scan (backend + frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Shallow clones disable many Sonar features — fetch all history.
+          fetch-depth: 0
+
+      # --------- Backend coverage ---------
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Run backend tests with coverage
+        working-directory: backend
+        run: uv run tox -e py312
+
+      # --------- Frontend coverage ---------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests with coverage
+        working-directory: frontend
+        run: npm run test:coverage
+
+      # --------- Verify both coverage files exist before the scan ---------
+      - name: Verify coverage files
+        run: |
+          set -e
+          test -f backend/coverage.xml || { echo "::error::backend/coverage.xml missing"; exit 1; }
+          test -f frontend/coverage/lcov.info || { echo "::error::frontend/coverage/lcov.info missing"; exit 1; }
+          echo "Backend coverage.xml:    $(wc -c < backend/coverage.xml) bytes"
+          echo "Frontend lcov.info:      $(wc -c < frontend/coverage/lcov.info) bytes"
+
+      # --------- Run SonarCloud Scan ---------
+      # Requires a SONAR_TOKEN secret set in repo settings
+      # (Settings → Secrets and variables → Actions → New repository secret).
+      # Configuration is pulled from sonar-project.properties at the repo root.
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

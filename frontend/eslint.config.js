@@ -42,5 +42,7 @@ export default ts.config(
 			]
 		}
 	},
-	{ ignores: ['build/', '.svelte-kit/', 'dist/'] }
+	{
+		ignores: ['build/', '.svelte-kit/', 'dist/', 'coverage/', 'playwright-report/', 'test-results/']
+	}
 );

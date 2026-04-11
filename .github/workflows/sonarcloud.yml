@@ -60,7 +60,7 @@ jobs:
       # (Settings → Secrets and variables → Actions → New repository secret).
       # Configuration is pulled from sonar-project.properties at the repo root.
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v4
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io

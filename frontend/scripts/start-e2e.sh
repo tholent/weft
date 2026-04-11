@@ -19,6 +19,13 @@ set -euo pipefail
 # so a crash does not leave multi-GB core files in the working directory.
 ulimit -c 0
 
+# Resolve frontend and backend paths relative to this script so the same
+# script works in the local dev environment and in GitHub Actions (where
+# the repo is checked out at $GITHUB_WORKSPACE rather than /workspace).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FRONTEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+BACKEND_DIR="$(cd "$FRONTEND_DIR/../backend" && pwd)"
+
 # --- Backend setup ---
 
 # Export shared backend env vars so both alembic and uvicorn see them
@@ -27,23 +34,22 @@ export DATABASE_URL="sqlite+aiosqlite:////tmp/weft_e2e.db"
 export SECRET_KEY="e2e-test-secret-key-do-not-use-in-prod"
 export BASE_URL="http://127.0.0.1:4173"
 export ATTACHMENT_MAX_SIZE_BYTES=2048
+export UV_PROJECT_ENVIRONMENT="$BACKEND_DIR/.venv"
 
 # Remove stale E2E database so each run starts fresh
 rm -f /tmp/weft_e2e.db
 
 # Run Alembic migrations to create the schema
-cd /workspace/backend
-UV_PROJECT_ENVIRONMENT=/workspace/backend/.venv \
+cd "$BACKEND_DIR"
 uv run alembic upgrade head
 
 # Launch uvicorn in the background
-UV_PROJECT_ENVIRONMENT=/workspace/backend/.venv \
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8001 &
 BACKEND_PID=$!
 
 # --- Frontend setup ---
 
-cd /workspace/frontend
+cd "$FRONTEND_DIR"
 
 # Build frontend with backend URL baked in
 VITE_API_BASE=http://127.0.0.1:8001 npm run build

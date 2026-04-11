@@ -28,10 +28,12 @@ import { test, expect } from './support/fixtures';
 
 // Apply at the top of the file so every test in this spec only runs on mobile.
 // Playwright's top-level `test.skip(condition, reason)` is only valid inside
-// a describe/test body — use beforeEach with testInfo instead.
-// The first parameter is the fixtures object which we deliberately ignore;
-// eslint's no-empty-pattern flags `{}` so we use an underscore-prefixed name.
-test.beforeEach((_fixtures, testInfo) => {
+// a describe/test body — use beforeEach with testInfo instead. Playwright's
+// runtime requires the first parameter to be an empty-object destructuring
+// pattern, which eslint's `no-empty-pattern` rule flags; disable it for the
+// next line only.
+// eslint-disable-next-line no-empty-pattern
+test.beforeEach(({}, testInfo) => {
 	test.skip(testInfo.project.name !== 'chromium-mobile', 'mobile viewport smoke — skip on desktop');
 });
 

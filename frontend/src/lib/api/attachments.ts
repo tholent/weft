@@ -15,7 +15,7 @@
 import type { Attachment } from '$lib/types/attachment';
 import { ApiError } from './client';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 function getAuthHeaders(): Record<string, string> {
 	const token = localStorage.getItem('weft_token');

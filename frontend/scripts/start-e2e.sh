@@ -26,6 +26,7 @@ export ENV=test
 export DATABASE_URL="sqlite+aiosqlite:////tmp/weft_e2e.db"
 export SECRET_KEY="e2e-test-secret-key-do-not-use-in-prod"
 export BASE_URL="http://127.0.0.1:4173"
+export ATTACHMENT_MAX_SIZE_BYTES=2048
 
 # Remove stale E2E database so each run starts fresh
 rm -f /tmp/weft_e2e.db

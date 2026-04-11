@@ -206,8 +206,14 @@ async def dispatch_update_notifications(
     service = _get_service(registry)
     for member in members:
         await _dispatch_email(
-            session, service, member, topic_id,
-            NotificationTrigger.new_update, email_subject, sms_body, email_body,
+            session,
+            service,
+            member,
+            topic_id,
+            NotificationTrigger.new_update,
+            email_subject,
+            sms_body,
+            email_body,
         )
 
 
@@ -237,8 +243,14 @@ async def dispatch_relay_notifications(
     service = _get_service(registry)
     for member in members:
         await _dispatch_email(
-            session, service, member, topic_id,
-            NotificationTrigger.relay, email_subject, sms_body, reply_body,
+            session,
+            service,
+            member,
+            topic_id,
+            NotificationTrigger.relay,
+            email_subject,
+            sms_body,
+            reply_body,
         )
 
 
@@ -268,6 +280,12 @@ async def dispatch_invite_notification(
 
     service = _get_service(registry)
     await _dispatch_email(
-        session, service, member, topic_id,
-        NotificationTrigger.invite, email_subject, sms_body, email_body,
+        session,
+        service,
+        member,
+        topic_id,
+        NotificationTrigger.invite,
+        email_subject,
+        sms_body,
+        email_body,
     )

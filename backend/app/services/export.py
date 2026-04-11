@@ -63,9 +63,7 @@ async def _load_member_map(
     return {m.id: m.display_handle for m in result.scalars().all()}
 
 
-async def _load_updates(
-    session: AsyncSession, topic_id: uuid.UUID
-) -> list[Update]:
+async def _load_updates(session: AsyncSession, topic_id: uuid.UUID) -> list[Update]:
     result = await session.execute(
         select(Update)
         .where(Update.topic_id == topic_id, Update.deleted_at.is_(None))  # type: ignore[union-attr]
@@ -114,9 +112,7 @@ async def _load_update_attachments(
     return mapping
 
 
-async def _load_replies(
-    session: AsyncSession, update_ids: list[uuid.UUID]
-) -> list[Reply]:
+async def _load_replies(session: AsyncSession, update_ids: list[uuid.UUID]) -> list[Reply]:
     if not update_ids:
         return []
     result = await session.execute(

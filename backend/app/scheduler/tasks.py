@@ -245,9 +245,7 @@ async def _process_member_digest(
         return
 
     address = (
-        member.email
-        if member.notification_channel == NotificationChannel.email
-        else member.phone
+        member.email if member.notification_channel == NotificationChannel.email else member.phone
     )
     if not address:
         # No contact address; mark logs skipped to avoid reprocessing

@@ -198,13 +198,9 @@ async def seed_topic(
                 )
                 session.add(admin_member)
                 await session.flush()
-                history = MemberCircleHistory(
-                    member_id=admin_member.id, circle_id=circle.id
-                )
+                history = MemberCircleHistory(member_id=admin_member.id, circle_id=circle.id)
                 session.add(history)
-                await create_defaults(
-                    session, admin_member.id, NotificationChannel.email
-                )
+                await create_defaults(session, admin_member.id, NotificationChannel.email)
                 raw_token = await generate_token(session, admin_member.id)
                 member_id_by_email[member_spec.email] = admin_member.id
                 admin_tokens[member_spec.email] = raw_token
